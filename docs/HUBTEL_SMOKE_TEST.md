@@ -49,3 +49,17 @@ on the Hubtel sandbox first, then once more on live with a GHS 1 vote.
   `docs/USSD_AND_PAYMENTS.md`.
 - Hubtel's reported charges on the test payment, as input to
   OPEN_QUESTIONS #36.
+
+## USSD
+
+1. In the Hubtel dashboard, point the shortcode (or your extension of the
+   shared code) at `https://<your host>/api/ussd/hubtel`. If Hubtel lets you
+   set credentials for the callback, put the password in
+   `USSD_WEBHOOK_SECRET`.
+2. Dial the code from a test phone and walk the menu: 1, the nominee's code,
+   a quantity, 1 to confirm. If the first screen does not appear, log one raw
+   request body from the route and compare it with the fixtures in
+   `src/lib/__tests__/ussd-handler.test.ts` ("Hubtel USSD transport"); only
+   `src/lib/ussd/hubtel.ts` needs to change.
+3. Approve the MoMo prompt. From here it is the payment smoke test above: the
+   callback, the status check, one vote, one ledger row.

@@ -12,8 +12,10 @@ import { createEvent, setEventStatus } from '../events-server'
 import { createCategory, createNominee } from '../nominees-server'
 import { MockPaymentProvider, signMockPayload } from '../payments/mock'
 import type { CallbackResult, PaymentProvider } from '../payments/provider'
+import { resetRateLimits } from '../rate-limit'
 import { closeRound } from '../rounds-server'
 import {
+  INITIATIONS_PER_PHONE_PER_MINUTE,
   VoteError,
   confirmPayment,
   eventFigures,
@@ -73,6 +75,7 @@ beforeEach(() => {
     commissionRate: null,
     moraleCandidatesEnabled: false,
   })
+  resetRateLimits()
 })
 
 afterEach(() => {
@@ -193,6 +196,27 @@ describe('initiateVotePayment (rules 1, 4a, 6)', () => {
     expect(payment.amount).toBe(300)
     expect(payment.platformFee).toBe(21)
     expect(payment.organizerNet).toBe(279)
+  })
+})
+
+describe('per-phone initiation budget (#27 placeholder, shared by web and USSD)', () => {
+  test('the next initiation for one number within a minute is refused', async () => {
+    const { nominee } = await seedLiveEvent()
+    for (let i = 0; i < INITIATIONS_PER_PHONE_PER_MINUTE; i++) {
+      await initiateVotePayment({ code: nominee.code, quantity: 1, phone: '0241234567' }, { provider, now: NOW })
+    }
+    await expect(
+      initiateVotePayment({ code: nominee.code, quantity: 1, phone: '024 123 4567' }, { provider, now: NOW })
+    ).rejects.toThrow(/rateLimited/)
+    // Another number is unaffected, and the budget resets after the window.
+    await expect(
+      initiateVotePayment({ code: nominee.code, quantity: 1, phone: '0551234567' }, { provider, now: NOW })
+    ).resolves.toBeTruthy()
+    const later = new Date(NOW.getTime() + 61_000)
+    await expect(
+      initiateVotePayment({ code: nominee.code, quantity: 1, phone: '0241234567' }, { provider, now: later })
+    ).resolves.toBeTruthy()
+    expect(fake.dump('payments')).toHaveLength(INITIATIONS_PER_PHONE_PER_MINUTE + 2)
   })
 })
 

@@ -190,3 +190,18 @@ export interface LedgerEntryDoc extends TenantDoc {
   paymentId: string | null
   note: string | null
 }
+
+// ─── USSD ─────────────────────────────────────────────────────
+
+export interface UssdSessionDoc extends AppwriteDoc {
+  /** The aggregator's session id. */
+  sessionId: string
+  /** E.164 digits, from the aggregator, never typed by the caller. */
+  phone: string
+  network: string | null
+  /** Serialized `MenuState`. */
+  state: string
+  lastStep: string
+  status: 'active' | 'released'
+  expiresAt: string
+}

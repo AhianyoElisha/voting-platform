@@ -1,5 +1,4 @@
 import { getTranslations } from '@/lib/i18n-server'
-import { normalizeGhanaPhone } from '@/lib/phone'
 import { rateLimit } from '@/lib/rate-limit'
 import { VoteError, initiateVotePayment } from '@/lib/votes-server'
 import { NextResponse } from 'next/server'
@@ -18,12 +17,12 @@ export async function POST(req: Request) {
   const phone = typeof body?.phone === 'string' ? body.phone : ''
   const quantity = body?.quantity
 
-  // PLACEHOLDER (#27): per-instance limits by client IP and by phone.
+  // PLACEHOLDER (#27): a per-instance limit by client IP here; the per-phone
+  // budget lives in initiateVotePayment so USSD shares it.
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   const byIp = rateLimit(`initiate:ip:${ip}`, 20, 60_000)
-  const byPhone = rateLimit(`initiate:phone:${normalizeGhanaPhone(phone) ?? phone.replace(/\D/g, '')}`, 6, 60_000)
-  if (!byIp.ok || !byPhone.ok) {
-    const retry = Math.ceil(Math.max(byIp.retryAfterMs, byPhone.retryAfterMs) / 1000)
+  if (!byIp.ok) {
+    const retry = Math.ceil(byIp.retryAfterMs / 1000)
     return NextResponse.json(
       { error: t('errors:vote.rateLimited'), code: 'rateLimited' },
       { status: 429, headers: { 'Retry-After': String(retry) } }
@@ -59,8 +58,13 @@ export async function POST(req: Request) {
           ? 503
           : err.problem === 'providerFailed'
             ? 502
-            : 400
-      return NextResponse.json({ error: t(`errors:vote.${err.problem}`), code: err.problem }, { status })
+            : err.problem === 'rateLimited'
+              ? 429
+              : 400
+      return NextResponse.json(
+        { error: t(`errors:vote.${err.problem}`), code: err.problem },
+        { status, headers: status === 429 ? { 'Retry-After': '60' } : undefined }
+      )
     }
     console.error('[votes.initiate] Error:', err)
     return NextResponse.json({ error: t('errors:auth.unknown') }, { status: 500 })

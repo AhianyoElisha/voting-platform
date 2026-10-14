@@ -12,7 +12,18 @@ import {
   type PaymentProvider,
 } from './payments'
 import { normalizeGhanaPhone } from './phone'
-import type { EventDoc, LedgerEntryDoc, NomineeDoc, PaymentDoc, RoundDoc, RoundEntryDoc, VoteDoc } from './types'
+import { rateLimit } from './rate-limit'
+import type {
+  CategoryDoc,
+  EventDoc,
+  LedgerEntryDoc,
+  NomineeDoc,
+  OrganizationDoc,
+  PaymentDoc,
+  RoundDoc,
+  RoundEntryDoc,
+  VoteDoc,
+} from './types'
 
 /**
  * The paid-vote pipeline (USSD_AND_PAYMENTS.md "Payment rules", CLAUDE.md
@@ -40,6 +51,7 @@ export type VoteProblem =
   | 'feesNotConfigured'
   | 'providerNotConfigured'
   | 'providerFailed'
+  | 'rateLimited'
 
 export class VoteError extends Error {
   constructor(public readonly problem: VoteProblem) {
@@ -57,6 +69,8 @@ export function parseQuantity(input: unknown): number {
   if (n < VOTE_QUANTITY_MIN || n > VOTE_QUANTITY_MAX_PLACEHOLDER) throw new VoteError('quantityInvalid')
   return n
 }
+
+export const INITIATIONS_PER_PHONE_PER_MINUTE = 6
 
 export interface InitiateVoteInput {
   code: string
@@ -76,16 +90,25 @@ export interface InitiateVoteResult {
  * Rule 1: the Payment exists as `pending` before the provider is asked to
  * debit anyone. Rule 4a: it records the round that is live right now.
  */
-export async function initiateVotePayment(
-  input: InitiateVoteInput,
-  opts: { provider?: PaymentProvider; now?: Date } = {}
-): Promise<InitiateVoteResult> {
-  const now = opts.now ?? new Date()
-  const quantity = parseQuantity(input.quantity)
-  const payerPhone = normalizeGhanaPhone(input.phone ?? '')
-  if (!payerPhone) throw new VoteError('phoneInvalid')
+export interface VoteQuote {
+  nominee: Doc<NomineeDoc>
+  event: Doc<EventDoc>
+  round: Doc<RoundDoc>
+  organization: Doc<OrganizationDoc>
+  categoryName: string
+  /** Pesewas per vote. */
+  votePrice: number
+}
 
-  const nominee = await findNomineeByCode(input.code ?? '')
+/**
+ * Everything a voter needs to see before paying, and every check a vote
+ * must pass before a payment may start: nominee active, organization active,
+ * event live and inside its window, a live round, and the nominee in it.
+ * Shared by the web vote page and the USSD menu so the two paths cannot
+ * drift (PRD 5.3, "one tally").
+ */
+export async function quoteVote(code: string, now = new Date()): Promise<VoteQuote> {
+  const nominee = await findNomineeByCode(code ?? '')
   if (!nominee) throw new VoteError('nomineeNotFound')
   if (nominee.status !== 'active') throw new VoteError('nomineeInactive')
 
@@ -116,6 +139,39 @@ export async function initiateVotePayment(
     Query.limit(1),
   ])
   if (!entries.documents[0]) throw new VoteError('notInRound')
+
+  const categories = await listTenantDocuments<CategoryDoc>(ctx, APPWRITE.TABLES.CATEGORIES, [
+    Query.equal('$id', [nominee.categoryId]),
+    Query.limit(1),
+  ])
+
+  return {
+    nominee,
+    event,
+    round,
+    organization,
+    categoryName: categories.documents[0]?.name ?? '',
+    votePrice: event.votePrice,
+  }
+}
+
+export async function initiateVotePayment(
+  input: InitiateVoteInput,
+  opts: { provider?: PaymentProvider; now?: Date } = {}
+): Promise<InitiateVoteResult> {
+  const now = opts.now ?? new Date()
+  const quantity = parseQuantity(input.quantity)
+  const payerPhone = normalizeGhanaPhone(input.phone ?? '')
+  if (!payerPhone) throw new VoteError('phoneInvalid')
+
+  // One budget per payer number across every channel (#27 placeholder): each
+  // initiation sends a real MoMo prompt to that phone.
+  if (!rateLimit(`initiate:phone:${payerPhone}`, INITIATIONS_PER_PHONE_PER_MINUTE, 60_000, now.getTime()).ok) {
+    throw new VoteError('rateLimited')
+  }
+
+  const { nominee, event, round, organization } = await quoteVote(input.code, now)
+  const { databases } = createAdminClient()
 
   let bps: number
   try {

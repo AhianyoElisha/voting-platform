@@ -23,7 +23,7 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
   - Paid votes: one Vote row per successful payment, with a quantity; `paymentId` is required and the Vote's id is `v_<paymentId>`, so a replayed confirmation collides instead of double counting. Built 2026-10-14 (`votes` table).
   - Free votes: `paymentId` is null, `source = free`, `grantedBy` is set, and an AuditLog entry is written in the same transaction.
   - Tallies are always computed per round and can be split by source.
-- **UssdSession**: id, sessionId (from aggregator), phone, network, state (JSON), lastStep, createdAt, updatedAt
+- **UssdSession**: id, sessionId (from the aggregator, unique), phone (from the aggregator, never typed), network, state (JSON, the menu state), lastStep, status (`active` | `released`), expiresAt (3 minutes after the last step). Built 2026-10-14 (`ussd_sessions` table).
 
 ### Ticketing
 - **TicketTier**: id, eventId, organizationId, name, price (pesewas), quantityAvailable, salesStart, salesEnd

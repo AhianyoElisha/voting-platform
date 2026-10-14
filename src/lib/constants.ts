@@ -19,6 +19,7 @@ export const APPWRITE = {
     PAYMENTS: 'payments',
     VOTES: 'votes',
     LEDGER_ENTRIES: 'ledger_entries',
+    USSD_SESSIONS: 'ussd_sessions',
   },
 
   BUCKETS: {
