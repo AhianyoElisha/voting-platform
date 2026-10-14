@@ -102,7 +102,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - Full detail in `FLYER_ENGINE.md`.
 
 ### 5.6 Payments and payouts
-- Votes are paid with mobile money via a Ghanaian aggregator (provider TBD).
+- Votes are paid with mobile money via Hubtel (decided 2026-10-14, see DECISIONS). Hubtel also provides the USSD shortcode.
 - The platform takes a commission; the rest goes to the organizer's balance.
 - Organizers request payouts; the super admin approves them (flow TBD).
 

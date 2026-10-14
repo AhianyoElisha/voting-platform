@@ -23,3 +23,4 @@ Format: date, decision, reasoning.
 | 2026-10-14 | Object storage is Appwrite Storage (the storage half of #24; app hosting and Appwrite region still open) | Follows from adopting the pickLT stack |
 | 2026-10-14 | Nominee codes are unique across the whole platform. A USSD voter enters only the nominee code; no event code is needed to vote. Settles #12 | Developer decision |
 | 2026-10-14 | Organizer onboarding is self-serve: anyone can sign up and create an organization, and the workspace is `active` immediately with no super-admin approval step. The super admin can still suspend an organization. Settles #9 | Developer decision |
+| 2026-10-14 | Hubtel is the aggregator for both mobile-money payments and USSD. Settles #11. Costs, setup time and whether the shortcode is dedicated or shared are confirmed during Hubtel onboarding, not open questions | Developer decision |

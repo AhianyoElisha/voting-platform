@@ -15,7 +15,7 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 10. **Partner arrangement** with the sales partner (revenue share, access level in the system).
 
 ## USSD and payments
-11. **Aggregator:** Hubtel, Nsano, Arkesel or another? Costs, setup time, dedicated or shared shortcode.
+11. ~~**Aggregator:** Hubtel, Nsano, Arkesel or another? Costs, setup time, dedicated or shared shortcode.~~ Settled 2026-10-14: Hubtel, for payments and USSD. Costs and shortcode type are confirmed during onboarding. See DECISIONS.
 12. ~~**Nominee code scheme:** platform-wide unique codes, or event code plus nominee code?~~ Settled 2026-10-14: platform-wide unique codes. See DECISIONS.
 13. **Late payments** after an event closes: honour them or refund?
 14. **SMS receipts** to voters: yes or no? Which provider?

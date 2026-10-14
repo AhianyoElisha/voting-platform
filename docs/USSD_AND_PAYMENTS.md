@@ -7,7 +7,7 @@
 - Each nominee has a short code, unique across the platform, used on both paths.
 
 ## How USSD works (background)
-We don't run a USSD gateway ourselves. An aggregator provides a shortcode (or an extension of a shared code) and forwards each step of a session to our webhook. We reply with the next menu text. Candidates in Ghana include Hubtel, Nsano and Arkesel; **the provider is TBD**.
+We don't run a USSD gateway ourselves. An aggregator provides a shortcode (or an extension of a shared code) and forwards each step of a session to our webhook. We reply with the next menu text. **The aggregator is Hubtel** for both USSD and mobile-money payments (decided 2026-10-14, #11). Whether the shortcode is dedicated or shared, and the fees, are confirmed during Hubtel onboarding.
 
 ## Proposed USSD flow (draft)
 
@@ -59,7 +59,7 @@ Considerations:
 
 ## Built (2026-10-14): web votes behind a provider interface
 
-`src/lib/votes-server.ts` implements the rules below for the web path. `src/lib/payments/provider.ts` is the aggregator boundary (#11); only the `mock` adapter exists, it refuses to run in production, and its callbacks are HMAC-signed so the verification path is real. The commission rate comes from `PLATFORM_COMMISSION_BPS` with no default (#2). Late callbacks are honoured against the round recorded at initiation and audited as `vote.late` (#13, placeholder in `applyLatePaymentPolicy`). Quantity has a placeholder ceiling (#16). Rate limiting is per instance (#27). Reconciliation runs through `POST /api/internal/payments/reconcile` behind `INTERNAL_JOB_SECRET`; scheduling waits on hosting (#24). If the provider's reference cannot be stored after `initiate`, the payment stays `pending` under its `local_<id>` placeholder: a callback that echoes our payment id (`clientReference`) still matches it, and reconciliation re-checks it by payment id, so a started debit is never orphaned.
+`src/lib/votes-server.ts` implements the rules below for the web path. `src/lib/payments/provider.ts` is the aggregator boundary; the Hubtel adapter (#11, decided) is not built yet, so only the `mock` adapter exists, it refuses to run in production, and its callbacks are HMAC-signed so the verification path is real. The commission rate comes from `PLATFORM_COMMISSION_BPS` with no default (#2). Late callbacks are honoured against the round recorded at initiation and audited as `vote.late` (#13, placeholder in `applyLatePaymentPolicy`). Quantity has a placeholder ceiling (#16). Rate limiting is per instance (#27). Reconciliation runs through `POST /api/internal/payments/reconcile` behind `INTERNAL_JOB_SECRET`; scheduling waits on hosting (#24). If the provider's reference cannot be stored after `initiate`, the payment stays `pending` under its `local_<id>` placeholder: a callback that echoes our payment id (`clientReference`) still matches it, and reconciliation re-checks it by payment id, so a started debit is never orphaned.
 
 ## Payment rules (non-negotiable)
 
@@ -78,4 +78,4 @@ Free votes (see PRD 5.4a) never pass through this pipeline. They have no Payment
 ## Fees
 - The platform takes a commission per paid vote and per ticket; the organizer's net share goes to their wallet.
 - Rates and the model (commission only, or subscription plus commission) are TBD. For reference, the main competitor charges 7–10% plus optional subscriptions.
-- Aggregator and MoMo charges need to be known before rates are set.
+- Hubtel's charges and the MoMo network fees need to be known before rates are set (#2).

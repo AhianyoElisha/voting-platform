@@ -68,8 +68,8 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
                transactions)      (photos,     reconciliation,
                        ▲           fonts,      emails)
                        │           templates,
-   USSD aggregator ────┤           flyers)
-   MoMo / payment ─────┘  webhooks → Next.js route handlers
+   Hubtel (USSD) ──────┤           flyers)
+   Hubtel (MoMo) ──────┘  webhooks → Next.js route handlers
 ```
 
 ## Multi-tenancy
@@ -82,7 +82,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 ## Key flows
 
 1. **Web vote:** voter picks nominee and quantity → server creates a `Payment` document (`pending`) → provider sends MoMo prompt → provider callback (verified) → in one Appwrite database transaction: mark payment `success`, create the `Vote`, bump the `RoundEntry` tally, credit the ledger → live tally updates.
-2. **USSD vote:** aggregator posts each session step to a route handler → server returns menu text → on confirmation, server starts a MoMo debit → the payment callback follows the same path as step 1. See `USSD_AND_PAYMENTS.md`.
+2. **USSD vote:** Hubtel posts each session step to a route handler → server returns menu text → on confirmation, server starts a MoMo debit → the payment callback follows the same path as step 1. See `USSD_AND_PAYMENTS.md`.
 3. **Flyer generation:** nominee photo uploaded → render function invoked → loads template, fills slots, exports PNG/JPG → stored in Appwrite Storage and linked to the nominee. See `FLYER_ENGINE.md`.
 
 ## Real-time results
