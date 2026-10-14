@@ -23,6 +23,9 @@ export const APPWRITE = {
     FLYER_TEMPLATES: 'flyer_templates',
     FONTS: 'fonts',
     GENERATED_FLYERS: 'generated_flyers',
+    TICKET_TIERS: 'ticket_tiers',
+    TICKETS: 'tickets',
+    TICKET_SCANS: 'ticket_scans',
   },
 
   BUCKETS: {
@@ -49,3 +52,6 @@ export function moraleCandidatesEnabledOnPlatform(): boolean {
  */
 export const VOTE_QUANTITY_MIN = 1
 export const VOTE_QUANTITY_MAX_PLACEHOLDER = 10_000
+
+/** PLACEHOLDER like #16: a technical ceiling on tickets per purchase. */
+export const TICKET_QUANTITY_MAX_PLACEHOLDER = 20

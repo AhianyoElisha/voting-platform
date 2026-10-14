@@ -496,5 +496,85 @@
       "upload": "Upload font",
       "uploading": "Uploading…"
     }
+  },
+  "tickets": {
+    "section": {
+      "title": "Tickets",
+      "helper": "Buy with mobile money. Your ticket QR codes appear here once the payment is confirmed."
+    },
+    "form": {
+      "tier": "Ticket type",
+      "quantity": "How many",
+      "name": "Your name (optional)",
+      "phone": "Mobile money number",
+      "email": "Email (optional)",
+      "emailHelper": "We will email your tickets when email delivery is set up. Keep the links below either way.",
+      "soldOut": "sold out"
+    },
+    "success": {
+      "title_one": "{{count}} {{tier}} ticket is yours.",
+      "title_other": "{{count}} {{tier}} tickets are yours.",
+      "body": "Save these links or take a screenshot of each QR code. Show it at the entrance.",
+      "ticketLink": "Ticket {{n}}: open QR code"
+    },
+    "failed": {
+      "body": "The payment was declined or timed out. No ticket was issued and nothing was charged."
+    },
+    "panel": {
+      "title": "Ticket sales",
+      "empty": "No ticket types yet.",
+      "name": "Name",
+      "price": "Price (GHS)",
+      "quantity": "Quantity",
+      "unlimited": "unlimited",
+      "add": "Add ticket type",
+      "soldOf": "{{sold}} of {{total}} sold",
+      "soldUnlimited": "{{sold}} sold",
+      "hidden": "hidden",
+      "hide": "Hide",
+      "show": "Show",
+      "figures": {
+        "sold": "Tickets sold",
+        "used": "Scanned in",
+        "gross": "Ticket gross",
+        "organizerShare": "Your share"
+      },
+      "scan": "Open the scanner",
+      "list": {
+        "title": "Tickets",
+        "buyer": "Buyer",
+        "tier": "Type",
+        "status": "Status",
+        "empty": "No tickets sold yet."
+      },
+      "status": {
+        "valid": "Valid",
+        "used": "Used",
+        "cancelled": "Cancelled"
+      }
+    }
+  },
+  "ticket": {
+    "used": "This ticket was scanned at {{time}}.",
+    "cancelled": "This ticket was cancelled.",
+    "showAtDoor": "Show this screen at the entrance. One scan per ticket."
+  },
+  "scan": {
+    "title": "Scan tickets",
+    "intro": "Point the camera at the QR code, or paste the code from the ticket.",
+    "startCamera": "Start camera",
+    "stopCamera": "Stop camera",
+    "noCamera": "This browser has no built-in QR detector; paste the code instead.",
+    "pastePlaceholder": "Paste ticket code or link",
+    "check": "Check",
+    "ready": "Ready.",
+    "outcome": {
+      "admitted": "Admitted",
+      "alreadyUsed": "Already used",
+      "cancelled": "Cancelled",
+      "invalid": "Not a valid ticket",
+      "wrongEvent": "Ticket for a different event"
+    },
+    "usedAt": "at {{time}}"
   }
 }

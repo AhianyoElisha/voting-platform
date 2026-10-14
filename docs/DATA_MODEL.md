@@ -26,8 +26,9 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 - **UssdSession**: id, sessionId (from the aggregator, unique), phone (from the aggregator, never typed), network, state (JSON, the menu state), lastStep, status (`active` | `released`), expiresAt (3 minutes after the last step). Built 2026-10-14 (`ussd_sessions` table).
 
 ### Ticketing
-- **TicketTier**: id, eventId, organizationId, name, price (pesewas), quantityAvailable, salesStart, salesEnd
-- **Ticket**: id, tierId, eventId, organizationId, paymentId, buyerName, buyerPhone, buyerEmail, qrToken (signed, unique), status (`valid` | `used` | `cancelled`), usedAt, scannedBy, emailSentAt
+- **TicketTier**: id, eventId, organizationId, name, price (pesewas), quantityAvailable (null = unlimited), quantitySold (cached counter), salesStart, salesEnd, status (`active` | `hidden`), order. Built 2026-10-14 (`ticket_tiers` table).
+- **Ticket**: id (`tk_<paymentId>_<n>`, so a replayed confirmation collides), tierId, eventId, organizationId, paymentId, buyerName, buyerPhone, buyerEmail, qrToken (signed, unique), status (`valid` | `used` | `cancelled`), usedAt, scannedBy, emailSentAt. Built 2026-10-14 (`tickets` table).
+- **TicketScan**: id = the ticket id, organizationId, eventId, ticketId, scannedBy. Created inside the scan transaction; its id collision is what makes `valid → used` atomic. Built 2026-10-14 (`ticket_scans` table).
   - The QR code encodes a signed token (e.g. HMAC of ticket id), never the bare id, so tickets can't be forged by guessing ids.
 
 ### Money out
@@ -60,5 +61,5 @@ Nominee 1–* GeneratedFlyer
 - Free votes require `grantedBy`, are only creatable by organizer admins or super admins, and always write an AuditLog entry in the same transaction.
 - A Vote's `roundId` must be the event's currently live round at the time of creation.
 - Once a Round is `closed`, its Votes and RoundEntry tallies are immutable.
-- `Ticket.qrToken` is unique; scanning is an atomic `valid → used` transition so a ticket can't be used twice.
+- `Ticket.qrToken` is unique and signed (`<id>.<HMAC-SHA256(TICKET_SECRET, id)>`); scanning is an atomic `valid → used` transition (the `ticket_scans` row with the ticket's id) so a ticket can't be used twice. Payment `roundId` is null for ticket payments; `tierId` and `payerName` were added for them.
 - `Nominee.code` has a platform-wide unique index (not per event or per organization), so a code entered over USSD resolves to exactly one nominee without an event code.

@@ -128,6 +128,9 @@ export function createFakeDatabases(uniqueIndexes: Record<string, string[][]> = 
           list = list.filter((r) => values.includes(r[q.attribute!]))
         } else if (q.method === 'isNull') {
           list = list.filter((r) => r[q.attribute!] === null || r[q.attribute!] === undefined)
+        } else if (q.method === 'greaterThan') {
+          const v = q.values?.[0] as string | number
+          list = list.filter((r) => (r[q.attribute!] as string | number) > v)
         } else if (q.method === 'lessThan') {
           const v = q.values?.[0] as string | number
           list = list.filter((r) => (r[q.attribute!] as string | number) < v)

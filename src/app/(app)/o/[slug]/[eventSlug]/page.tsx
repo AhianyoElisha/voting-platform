@@ -1,8 +1,12 @@
+import TicketBuyForm from '@/components/tickets/TicketBuyForm'
 import { APPWRITE } from '@/lib/constants'
 import { getOrganizationBySlug, listTenantDocuments, type TenantContext } from '@/lib/db'
 import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
+import { isMockProviderActive } from '@/lib/payments'
 import { shapeResults } from '@/lib/results'
+import { availableNow } from '@/lib/tickets/purchase-server'
+import { listPublicTiers } from '@/lib/tickets/tiers-server'
 import type { CategoryDoc, EventDoc, NomineeDoc, RoundDoc, RoundEntryDoc } from '@/lib/types'
 import { Heading } from '@/shared/Heading'
 import Link from 'next/link'
@@ -73,6 +77,15 @@ export default async function PublicEventPage({ params }: Props) {
   }
   const resultFor = (nomineeId: string) => results?.find((r) => r.nomineeId === nomineeId)
   const live = event.status === 'live'
+  const tiers = await listPublicTiers(organization.$id, event.$id)
+  const tierOptions = await Promise.all(
+    tiers.map(async (tier) => ({
+      id: tier.$id,
+      name: tier.name,
+      price: tier.price,
+      remaining: await availableNow(ctx, tier, new Date()),
+    }))
+  )
 
   return (
     <main className="container py-16 lg:py-24">
@@ -133,6 +146,17 @@ export default async function PublicEventPage({ params }: Props) {
           </section>
         ))}
       </div>
+      {tierOptions.length > 0 && (
+        <section className="mt-12 max-w-xl space-y-4">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:tickets.section.title')}</h2>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:tickets.section.helper')}</p>
+          <TicketBuyForm
+            tiers={tierOptions}
+            mockProvider={process.env.NODE_ENV !== 'production' && isMockProviderActive()}
+          />
+        </section>
+      )}
+
       {!live && <p className="mt-10 text-sm text-neutral-500 dark:text-neutral-400">{t('web:publicEvent.notLive')}</p>}
     </main>
   )

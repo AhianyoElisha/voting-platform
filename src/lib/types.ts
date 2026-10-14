@@ -145,9 +145,12 @@ export type PaymentStatus = 'pending' | 'success' | 'failed' | 'refunded'
 
 export interface PaymentDoc extends TenantDoc {
   eventId: string
-  /** The round that was live when the payment was initiated (rule 4a). */
-  roundId: string
+  /** The round that was live when a vote payment was initiated (rule 4a); null for tickets. */
+  roundId: string | null
   nomineeId: string | null
+  /** For ticket payments. */
+  tierId: string | null
+  payerName: string | null
   channel: PaymentChannel
   purpose: PaymentPurpose
   payerPhone: string
@@ -235,4 +238,43 @@ export interface GeneratedFlyerDoc extends TenantDoc {
   templateVersion: number
   fileId: string
   sourceHash: string
+}
+
+// ─── Ticketing (PRD 5.4b) ─────────────────────────────────────
+
+export interface TicketTierDoc extends TenantDoc {
+  eventId: string
+  name: string
+  /** Pesewas. */
+  price: number
+  /** null = unlimited. */
+  quantityAvailable: number | null
+  quantitySold: number
+  salesStart: string | null
+  salesEnd: string | null
+  status: 'active' | 'hidden'
+  order: number
+}
+
+export type TicketStatus = 'valid' | 'used' | 'cancelled'
+
+export interface TicketDoc extends TenantDoc {
+  eventId: string
+  tierId: string
+  paymentId: string
+  buyerName: string | null
+  buyerPhone: string
+  buyerEmail: string | null
+  /** Signed token, never the bare id. */
+  qrToken: string
+  status: TicketStatus
+  usedAt: string | null
+  scannedBy: string | null
+  emailSentAt: string | null
+}
+
+export interface TicketScanDoc extends TenantDoc {
+  eventId: string
+  ticketId: string
+  scannedBy: string
 }

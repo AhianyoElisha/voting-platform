@@ -92,6 +92,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - On confirmed payment the buyer receives an **email with a QR code**. Staff scan the QR code at the entrance; no serial number or ID check is needed.
 - Scanning marks the ticket as used so it cannot be reused.
 - Ticket revenue is split like vote revenue (platform share and organizer share).
+- *Built 2026-10-14 for the web path. The QR code encodes the ticket's own page URL; staff scan it with the browser's built-in detector or paste the code (#34). USSD purchase waits on #31; email delivery on #32.*
 
 ### 5.5 Flyer engine (differentiator)
 - Upload a template (designed in Photoshop or Photopea and exported).

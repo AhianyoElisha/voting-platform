@@ -22,6 +22,8 @@ import type {
   PaymentDoc,
   RoundDoc,
   RoundEntryDoc,
+  TicketDoc,
+  TicketTierDoc,
   VoteDoc,
 } from './types'
 
@@ -199,6 +201,8 @@ export async function initiateVotePayment(
       eventId: event.$id,
       roundId: round.$id,
       nomineeId: nominee.$id,
+      tierId: null,
+      payerName: null,
       channel: input.channel ?? 'web',
       purpose: 'vote',
       payerPhone,
@@ -217,18 +221,40 @@ export async function initiateVotePayment(
     })
   )
 
+  const started = await startProviderDebit(
+    payment,
+    provider,
+    `${quantity} vote${quantity === 1 ? '' : 's'} for ${nominee.name} (${nominee.code})`
+  )
+  return { payment: started.payment, nominee, event, instructions: started.instructions }
+}
+
+/**
+ * Asks the provider to debit the payer for an existing `pending` Payment and
+ * stores the provider's reference. Shared by votes and tickets.
+ *
+ * If the provider refuses, no debit started and the payment is marked
+ * `failed`. If the provider accepted but the reference could not be stored,
+ * the payment must stay `pending`: a callback can still match it by client
+ * reference, and reconciliation re-checks it by payment id.
+ */
+export async function startProviderDebit(
+  payment: Doc<PaymentDoc>,
+  provider: PaymentProvider,
+  description: string
+): Promise<{ payment: Doc<PaymentDoc>; instructions?: string }> {
+  const { databases } = createAdminClient()
   let initiated: Awaited<ReturnType<PaymentProvider['initiate']>>
   try {
     initiated = await provider.initiate({
-      paymentId,
-      amount,
-      payerPhone,
-      description: `${quantity} vote${quantity === 1 ? '' : 's'} for ${nominee.name} (${nominee.code})`,
+      paymentId: payment.$id,
+      amount: payment.amount,
+      payerPhone: payment.payerPhone,
+      description,
     })
   } catch (err) {
-    // The provider refused: no debit started, so the payment is dead.
     await databases
-      .updateDocument(db(), APPWRITE.TABLES.PAYMENTS, paymentId, {
+      .updateDocument(db(), APPWRITE.TABLES.PAYMENTS, payment.$id, {
         status: 'failed',
         rawCallback: JSON.stringify({
           error: 'initiate_failed',
@@ -238,23 +264,16 @@ export async function initiateVotePayment(
       .catch(() => {})
     throw new VoteError('providerFailed')
   }
-
-  // From here the provider may already be debiting the payer, so the payment
-  // must stay `pending` whatever happens: a callback can still match it by
-  // client reference, and reconciliation re-checks it by payment id.
   try {
     const updated = await withRetry(() =>
-      databases.updateDocument<Doc<PaymentDoc>>(db(), APPWRITE.TABLES.PAYMENTS, paymentId, {
+      databases.updateDocument<Doc<PaymentDoc>>(db(), APPWRITE.TABLES.PAYMENTS, payment.$id, {
         providerReference: initiated.providerReference,
       })
     )
-    return { payment: updated, nominee, event, instructions: initiated.instructions }
+    return { payment: updated, instructions: initiated.instructions }
   } catch (err) {
-    console.error(
-      `[votes.initiate] payment ${paymentId}: provider reference ${initiated.providerReference} not stored`,
-      err
-    )
-    return { payment, nominee, event, instructions: initiated.instructions }
+    console.error(`[payments] ${payment.$id}: provider reference ${initiated.providerReference} not stored`, err)
+    return { payment, instructions: initiated.instructions }
   }
 }
 
@@ -340,8 +359,6 @@ export async function confirmPayment(
     return { outcome: 'failed', payment: updated }
   }
 
-  if (payment.purpose !== 'vote' || !payment.nomineeId) return { outcome: 'ignored', payment }
-
   // Rule 6 and the fee split both assume the provider took exactly what we
   // asked for. A different amount is never credited; it is logged for a human.
   if (result.amountPesewas !== undefined && result.amountPesewas !== payment.amount) {
@@ -375,9 +392,12 @@ export async function confirmPayment(
     return { outcome: 'mismatch', payment }
   }
 
+  if (payment.purpose === 'ticket') return confirmTicketPayment(payment, result, raw)
+  if (payment.purpose !== 'vote' || !payment.nomineeId || !payment.roundId) return { outcome: 'ignored', payment }
+
   const entries = await withRetry(() =>
     databases.listDocuments<Doc<RoundEntryDoc>>(db(), APPWRITE.TABLES.ROUND_ENTRIES, [
-      Query.equal('roundId', [payment.roundId]),
+      Query.equal('roundId', [payment.roundId as string]),
       Query.equal('nomineeId', [payment.nomineeId as string]),
       Query.limit(1),
     ])
@@ -386,7 +406,7 @@ export async function confirmPayment(
   if (!entry)
     throw new Error(`Payment ${payment.$id}: nominee ${payment.nomineeId} has no entry in round ${payment.roundId}`)
   const round = await withRetry(() =>
-    databases.getDocument<Doc<RoundDoc>>(db(), APPWRITE.TABLES.ROUNDS, payment.roundId)
+    databases.getDocument<Doc<RoundDoc>>(db(), APPWRITE.TABLES.ROUNDS, payment.roundId as string)
   )
   applyLatePaymentPolicy(round)
 
@@ -420,7 +440,7 @@ export async function confirmPayment(
         {
           organizationId: payment.organizationId,
           eventId: payment.eventId,
-          roundId: payment.roundId,
+          roundId: payment.roundId as string,
           nomineeId: payment.nomineeId as string,
           paymentId: payment.$id,
           quantity: payment.quantity,
@@ -486,6 +506,151 @@ export async function confirmPayment(
   }
 
   return { outcome: 'confirmed', payment: (await getPayment(payment.$id)) ?? payment }
+}
+
+/**
+ * Ticket confirmation (PRD 5.4b): in one transaction the Payment becomes
+ * `success`, one Ticket row per ticket is created with a deterministic id
+ * and a signed QR token, the tier's sold counter grows, and the ledger is
+ * credited. Replays collide on the ticket ids. Email goes out after commit;
+ * the buyer always has the ticket links on the confirmation page as well.
+ */
+async function confirmTicketPayment(
+  payment: Doc<PaymentDoc>,
+  result: CallbackResult,
+  raw: string
+): Promise<{ outcome: ConfirmOutcome; payment: Doc<PaymentDoc> | null }> {
+  const { databases } = createAdminClient()
+  if (!payment.tierId) return { outcome: 'ignored', payment }
+  const tier = await withRetry(() =>
+    databases.getDocument<Doc<TicketTierDoc>>(db(), APPWRITE.TABLES.TICKET_TIERS, payment.tierId as string)
+  )
+  const now = new Date().toISOString()
+  const { signTicketToken, ticketId } = await import('./tickets/token')
+  try {
+    await runInTransaction(async (tx) => {
+      const fresh = await databases.getDocument<Doc<PaymentDoc>>(db(), APPWRITE.TABLES.PAYMENTS, payment.$id, [], tx)
+      if (fresh.status === 'success') throw new AlreadyConfirmed()
+      await databases.updateDocument<Doc<PaymentDoc>>(
+        db(),
+        APPWRITE.TABLES.PAYMENTS,
+        payment.$id,
+        {
+          status: 'success',
+          confirmedAt: now,
+          rawCallback: raw,
+          network: result.network ?? payment.network,
+          ...(payment.providerReference.startsWith('local_') && result.providerReference !== payment.providerReference
+            ? { providerReference: result.providerReference }
+            : {}),
+        },
+        undefined,
+        tx
+      )
+      for (let i = 0; i < payment.quantity; i++) {
+        const id = ticketId(payment.$id, i)
+        await databases.createDocument<Doc<TicketDoc>>(
+          db(),
+          APPWRITE.TABLES.TICKETS,
+          id,
+          {
+            organizationId: payment.organizationId,
+            eventId: payment.eventId,
+            tierId: tier.$id,
+            paymentId: payment.$id,
+            buyerName: payment.payerName,
+            buyerPhone: payment.payerPhone,
+            buyerEmail: payment.payerEmail,
+            qrToken: signTicketToken(id),
+            status: 'valid',
+            usedAt: null,
+            scannedBy: null,
+            emailSentAt: null,
+          },
+          undefined,
+          tx
+        )
+      }
+      await databases.incrementDocumentAttribute(
+        db(),
+        APPWRITE.TABLES.TICKET_TIERS,
+        tier.$id,
+        'quantitySold',
+        payment.quantity,
+        undefined,
+        tx
+      )
+      await databases.createDocument<Doc<LedgerEntryDoc>>(
+        db(),
+        APPWRITE.TABLES.LEDGER_ENTRIES,
+        ledgerEntryId(payment.$id),
+        {
+          organizationId: payment.organizationId,
+          type: 'ticket_credit',
+          amount: payment.organizerNet,
+          paymentId: payment.$id,
+          note: null,
+        },
+        undefined,
+        tx
+      )
+    })
+  } catch (err) {
+    if (err instanceof AlreadyConfirmed)
+      return { outcome: 'duplicate', payment: (await getPayment(payment.$id)) ?? payment }
+    const current = await getPayment(payment.$id)
+    if (current?.status === 'success') return { outcome: 'duplicate', payment: current }
+    if (isConflict(err)) return { outcome: 'duplicate', payment: current ?? payment }
+    throw err
+  }
+
+  // Oversold past the cap by in-flight payments: the money moved, so the tickets stand; a human is told.
+  const after = await withRetry(() =>
+    databases.getDocument<Doc<TicketTierDoc>>(db(), APPWRITE.TABLES.TICKET_TIERS, tier.$id)
+  )
+  if (after.quantityAvailable !== null && after.quantitySold > after.quantityAvailable) {
+    await writeAuditLog({
+      actorId: 'system',
+      organizationId: payment.organizationId,
+      action: 'ticket.oversold',
+      target: `ticket_tiers/${tier.$id}`,
+      metadata: { sold: after.quantitySold, available: after.quantityAvailable, paymentId: payment.$id },
+    })
+  }
+
+  await sendTicketEmail(payment, tier).catch((err) => console.error('[tickets] email failed', err))
+  return { outcome: 'confirmed', payment: (await getPayment(payment.$id)) ?? payment }
+}
+
+async function sendTicketEmail(payment: Doc<PaymentDoc>, tier: Doc<TicketTierDoc>): Promise<void> {
+  if (!payment.payerEmail) return
+  const { databases } = createAdminClient()
+  const [event, organization, tickets] = await Promise.all([
+    withRetry(() => databases.getDocument<Doc<EventDoc>>(db(), APPWRITE.TABLES.EVENTS, payment.eventId)),
+    getOrganization(payment.organizationId),
+    withRetry(() =>
+      databases.listDocuments<Doc<TicketDoc>>(db(), APPWRITE.TABLES.TICKETS, [
+        Query.equal('paymentId', [payment.$id]),
+        Query.limit(100),
+      ])
+    ),
+  ])
+  const { getEmailProvider } = await import('./email')
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
+  const sent = await getEmailProvider().sendTickets({
+    to: payment.payerEmail,
+    buyerName: payment.payerName,
+    eventTitle: event.title,
+    organizationName: organization?.name ?? '',
+    tierName: tier.name,
+    ticketUrls: tickets.documents.map((t) => `${base}/t/${t.qrToken}`),
+  })
+  if (sent.sent) {
+    const at = new Date().toISOString()
+    await Promise.all(
+      tickets.documents.map((t) => databases.updateDocument(db(), APPWRITE.TABLES.TICKETS, t.$id, { emailSentAt: at }))
+    )
+  }
 }
 
 /** PLACEHOLDER (#13). Honour: do nothing. Refund: throw here and handle upstream. */

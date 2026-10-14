@@ -67,6 +67,10 @@ Considerations:
 
 Menu as built: `Vote / 1. Vote 2. Buy ticket 3. Help` → `Enter nominee code:` → `<category> / <nominee> / GHS x.xx per vote / Enter number of votes:` → `Pay GHS y.yy for n votes for <nominee>? 1. Confirm 2. Cancel` → `A MoMo prompt has been sent to your phone…`.
 
+## Built (2026-10-14): tickets on the web
+
+`src/lib/tickets/`: tiers, purchase initiation (same shape as a vote: pending Payment with `purpose = ticket` before the debit, availability counts recent pending payments as soft reservations), confirmation inside `confirmPayment`'s transaction (Payment success, one Ticket per seat with a signed QR token, tier counter, `ticket_credit` ledger row), and the atomic entrance scan. An oversell by in-flight payments issues the paid tickets and writes a `ticket.oversold` audit row rather than stranding a buyer. Tickets by USSD stay "coming soon" until delivery is decided (#31). Email delivery follows #32; the buyer always has the ticket links on the confirmation page and at `/t/<token>`.
+
 ## Payment rules (non-negotiable)
 
 1. Create the `Payment` as `pending` before starting a debit.

@@ -107,5 +107,35 @@
     "familyInvalid": "Enter a font family name without quotes.",
     "badFontFile": "Use a TTF or OTF font file.",
     "weightInvalid": "Weight must be between 100 and 900."
+  },
+  "tier": {
+    "nameTooShort": "Tier name is too short.",
+    "nameTooLong": "Tier name is too long.",
+    "priceInvalid": "Enter the price in cedis, e.g. 50.00.",
+    "quantityInvalid": "Quantity must be a whole number, or empty for unlimited.",
+    "datesInvalid": "Sales must end after they start.",
+    "eventClosed": "This event is closed."
+  },
+  "ticket": {
+    "nomineeNotFound": "No nominee has that code.",
+    "nomineeInactive": "This nominee is no longer in the running.",
+    "organizationInactive": "This organizer is not accepting votes.",
+    "eventNotLive": "Voting is not open for this event right now.",
+    "outsideWindow": "Voting for this event is outside its voting window.",
+    "noLiveRound": "No round is open for voting right now.",
+    "notInRound": "This nominee is not in the current round.",
+    "quantityInvalid": "Enter a whole number of tickets, 1 to 20.",
+    "phoneInvalid": "Enter a valid Ghanaian mobile money number.",
+    "feesNotConfigured": "Payments are not configured yet. Please try again later.",
+    "providerNotConfigured": "Payments are not configured yet. Please try again later.",
+    "providerFailed": "The payment could not be started. Please try again.",
+    "rateLimited": "Too many attempts. Please wait a minute and try again.",
+    "tierNotFound": "That ticket type does not exist.",
+    "tierHidden": "That ticket type is not on sale.",
+    "salesClosed": "Ticket sales are closed for this event.",
+    "soldOut": "Not enough tickets left in that type.",
+    "emailInvalid": "Enter a valid email address, or leave it empty.",
+    "nameTooLong": "Name is too long.",
+    "ticketsNotConfigured": "Ticket sales are not set up yet. Please try again later."
   }
 }

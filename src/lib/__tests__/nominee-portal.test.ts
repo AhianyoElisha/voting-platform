@@ -53,10 +53,16 @@ const realEmail: EmailProvider = {
     sentEmails.push({ to: e.to, claimUrl: e.claimUrl })
     return { sent: true, provider: 'test' }
   },
+  async sendTickets() {
+    return { sent: true, provider: 'test' }
+  },
 }
 const noEmail: EmailProvider = {
   name: 'none',
   async sendNomineeInvite() {
+    return { sent: false, provider: 'none', reason: 'not_configured' }
+  },
+  async sendTickets() {
     return { sent: false, provider: 'none', reason: 'not_configured' }
   },
 }
@@ -155,6 +161,9 @@ describe('inviteNominee', () => {
       async sendNomineeInvite(e) {
         modes.push(`${e.mode}:${e.claimUrl ?? 'none'}:${e.signInUrl}`)
         return { sent: true, provider: 'spy' }
+      },
+      async sendTickets() {
+        return { sent: false, provider: 'spy', reason: 'not_configured' }
       },
     }
     await inviteNominee(owner, nominee.$id, { email: spy, baseUrl: 'https://vote.example' })

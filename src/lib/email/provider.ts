@@ -21,7 +21,18 @@ export interface SendResult {
   reason?: 'not_configured' | 'failed'
 }
 
+export interface TicketEmail {
+  to: string
+  buyerName: string | null
+  eventTitle: string
+  organizationName: string
+  tierName: string
+  /** One public link per ticket, each showing its QR code. */
+  ticketUrls: string[]
+}
+
 export interface EmailProvider {
   readonly name: string
   sendNomineeInvite(email: NomineeInviteEmail): Promise<SendResult>
+  sendTickets(email: TicketEmail): Promise<SendResult>
 }

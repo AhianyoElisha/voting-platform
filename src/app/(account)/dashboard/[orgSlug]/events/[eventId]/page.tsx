@@ -1,6 +1,7 @@
 import { AddCategoryForm, AddNomineeForm, EventStatusControls, RoundControls } from '@/components/events/EventControls'
 import InviteButton from '@/components/events/InviteButton'
 import FlyerPanel from '@/components/flyer/FlyerPanel'
+import TiersPanel from '@/components/tickets/TiersPanel'
 import { TenantMismatchError } from '@/lib/db'
 import { getEvent } from '@/lib/events-server'
 import { flyerUrl, flyersForEvent } from '@/lib/flyer/generate-server'
@@ -11,6 +12,8 @@ import { listCategories, listNominees } from '@/lib/nominees-server'
 import { resolveWorkspace } from '@/lib/page-tenant'
 import { listRounds } from '@/lib/rounds-server'
 import { canDesign, canManage } from '@/lib/tenant'
+import { canScan } from '@/lib/tickets/scan-server'
+import { listTickets, listTiers, ticketFigures } from '@/lib/tickets/tiers-server'
 import { eventFigures, tallyForRound } from '@/lib/votes-server'
 import { Badge } from '@/shared/Badge'
 import { Heading } from '@/shared/Heading'
@@ -40,7 +43,14 @@ export default async function EventDetailPage({ params }: Props) {
     eventFigures(ctx, eventId),
   ])
   const tallies = await Promise.all(rounds.map(async (round) => ({ round, rows: await tallyForRound(ctx, round.$id) })))
-  const [templates, flyers] = await Promise.all([listTemplates(ctx, eventId), flyersForEvent(ctx, eventId)])
+  const [templates, flyers, tiers, tickets, tFigures] = await Promise.all([
+    listTemplates(ctx, eventId),
+    flyersForEvent(ctx, eventId),
+    listTiers(ctx, eventId),
+    listTickets(ctx, eventId),
+    ticketFigures(ctx, eventId),
+  ])
+  const tierName = new Map(tiers.map((tier) => [tier.$id, tier.name]))
   const flyerByNominee = new Map(flyers.map(({ flyer, nominee }) => [nominee.$id, flyer]))
   const categoryName = new Map(categories.map((c) => [c.$id, c.name]))
   const manager = canManage(ctx.role)
@@ -156,6 +166,77 @@ export default async function EventDetailPage({ params }: Props) {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.rounds.title')}</h2>
         <RoundControls orgId={organization.$id} eventId={event.$id} rounds={rounds} canManage={manager && open} />
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:tickets.panel.title')}</h2>
+          {canScan(ctx.role) && (
+            <Link
+              href={`/dashboard/${orgSlug}/events/${eventId}/scan`}
+              className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              {t('web:tickets.panel.scan')}
+            </Link>
+          )}
+        </div>
+        <dl className="grid gap-4 sm:grid-cols-4">
+          {(
+            [
+              ['sold', String(tFigures.ticketsSold)],
+              ['used', String(tFigures.ticketsUsed)],
+              ['gross', formatPesewas(tFigures.gross)],
+              ['organizerShare', formatPesewas(tFigures.organizerShare)],
+            ] as const
+          ).map(([key, value]) => (
+            <div key={key} className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
+              <dt className="text-xs text-neutral-500 uppercase dark:text-neutral-400">
+                {t(`web:tickets.panel.figures.${key}`)}
+              </dt>
+              <dd className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <TiersPanel
+          orgId={organization.$id}
+          eventId={event.$id}
+          tiers={tiers.map((tier) => ({
+            id: tier.$id,
+            name: tier.name,
+            price: tier.price,
+            quantityAvailable: tier.quantityAvailable,
+            quantitySold: tier.quantitySold,
+            status: tier.status,
+          }))}
+          canManage={manager && open}
+        />
+        {tickets.length > 0 && (
+          <details>
+            <summary className="cursor-pointer text-sm font-medium text-primary-600 dark:text-primary-400">
+              {t('web:tickets.panel.list.title')} ({tickets.length})
+            </summary>
+            <table className="mt-3 w-full text-sm">
+              <thead className="text-left text-xs text-neutral-500 uppercase dark:text-neutral-400">
+                <tr>
+                  <th className="px-3 py-2">{t('web:tickets.panel.list.buyer')}</th>
+                  <th className="px-3 py-2">{t('web:tickets.panel.list.tier')}</th>
+                  <th className="px-3 py-2">{t('web:tickets.panel.list.status')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
+                {tickets.slice(0, 200).map((tk) => (
+                  <tr key={tk.$id}>
+                    <td className="px-3 py-2 text-neutral-900 dark:text-white">
+                      {tk.buyerName ?? ''} <span className="text-neutral-500">{tk.buyerPhone}</span>
+                    </td>
+                    <td className="px-3 py-2">{tierName.get(tk.tierId) ?? ''}</td>
+                    <td className="px-3 py-2">{t(`web:tickets.panel.status.${tk.status}`)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </details>
+        )}
       </section>
 
       <section className="space-y-4">
