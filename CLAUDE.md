@@ -44,15 +44,27 @@ Slash commands in `.claude/skills/` (see `.claude/skills/README.md`): `/onboard`
 7. **Keep the flyer engine lightweight.** It is a template personalizer, not a Photoshop clone. See the scope limits in `FLYER_ENGINE.md`.
 8. **Mobile first.** Most voters and many organizers use phones on mobile data. Keep pages light and fast.
 9. Write tests for vote counting, payment handling, tenant scoping and nominee-code lookup before calling those features done.
+10. **Build it the pickLT way.** Reuse pickLT's shared components, lib patterns (`appwrite.ts`, `appwrite-server.ts`, `withRetry`, session cookie) and conventions rather than introducing new libraries or layouts. If something genuinely has no pickLT equivalent, add it and note it in `ARCHITECTURE.md` under "Added for this product".
 
-## Conventions (proposed; confirm in DECISIONS.md once agreed)
+## Conventions (decided 2026-10-14; see DECISIONS.md and ARCHITECTURE.md)
 
-- TypeScript everywhere, strict mode.
-- Next.js App Router for the web app and API routes.
-- PostgreSQL with Prisma.
+- **Mirror pickLT** (`../moverapp/pickLT`). Stack, folder layout, config files, shared components, icons (Heroicons, Hugeicons), font (Poppins) and the Tailwind theme all come from there. Before building a screen or helper, look for how pickLT does it and copy that.
+- TypeScript everywhere, strict mode. Next.js 15 App Router for the web app and API routes.
+- Appwrite for auth, database, storage, functions and realtime. Browser uses the `appwrite` SDK; API routes use `node-appwrite`. Sensitive writes go through Appwrite Functions or server-only routes, never the browser SDK.
+- Tailwind CSS 4 with pickLT's theme tokens; Headless UI; Framer Motion; Vitest for `src/lib`.
 - Environment variables are documented in `.env.example` and never committed.
 - Currency: GHS. Time zone: Africa/Accra (UTC+0). Store timestamps in UTC.
 
 ## Commands
 
-_To be filled in once the project is scaffolded (dev, test, lint, migrate, seed)._
+Same scripts as pickLT (the project is not scaffolded yet; these are the targets):
+
+```
+npm run dev          # next dev
+npm run build        # next build
+npm run lint         # next lint
+npm test             # vitest run (src/**/__tests__/**/*.test.ts)
+npm run test:watch   # vitest
+```
+
+Appwrite schema and functions are managed with the Appwrite CLI against `appwrite.config.json` (`appwrite push`).

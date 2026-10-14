@@ -1,6 +1,48 @@
-# Architecture (Proposed)
+# Architecture
 
-Status: **proposal**. Nothing here is final until it is recorded in `DECISIONS.md`.
+Status: **decided 2026-10-14** (see `DECISIONS.md`; was OPEN_QUESTIONS #23). The stack, folder structure, UI kit, icons and fonts mirror the **pickLT** project at `../moverapp/pickLT`. When this document and pickLT disagree on *how* something is done, look at pickLT first, do it that way, and record the difference here. Still open: where the app is hosted and which Appwrite region (OPEN_QUESTIONS #24).
+
+## Reference project: pickLT
+
+pickLT is a Next.js 15 booking and rental app on Appwrite, grown from the Chisfis template. Everything below was read from it on 14 Oct 2026. Lift the shell (layout, theme, shared components, lib helpers, config files) and leave the moving-domain code behind.
+
+| Concern | What pickLT does, and what we do |
+|---|---|
+| Framework | Next.js 15.3 (App Router), React 19, TypeScript strict, `@/*` → `src/*`. |
+| Styling | Tailwind CSS 4 via `@tailwindcss/postcss`. Theme tokens live in `src/styles/tailwind.css` (`primary` indigo, `secondary` teal, `neutral` grey scales, `container` and `pl-container` utilities). Plugins: typography, forms, aspect-ratio. Dark mode is the `.dark` class on `<html>`, toggled by `ThemeProvider`. |
+| UI primitives | Headless UI 2 plus the shared components in `src/shared` (`Button`, `ButtonPrimary` / `ButtonSecondary` / `ButtonThird`, `Input`, `Select`, `Textarea`, `Checkbox`, `radio`, `switch`, `listbox`, `combobox`, `table`, `Pagination`, `NcModal`, `Badge`, `Tag`, `Avatar`, `Heading`, `Logo`, `SwitchDarkMode`, `navbar`). Copy these, don't re-invent them. |
+| Icons | Heroicons (`@heroicons/react`, the main set) and Hugeicons (`@hugeicons/react` with `@hugeicons/core-free-icons`). No other icon packs. |
+| Font | Poppins through `next/font/google`, weights 300–700, applied on `<html>` in `src/app/layout.tsx`. Flyer templates use their own uploaded fonts; this is the app font only. |
+| Motion and carousels | Framer Motion; Embla carousel (with autoplay) and the `use-carousel-*` hooks. |
+| i18n | pickLT ships eight locales with react-i18next and a cookie-resolved locale. We keep the same provider wiring but ship `en` only. |
+| Backend | **Appwrite**: Auth, Databases, Storage, Functions (Node 22 runtime), Realtime, Messaging. Project settings and function definitions live in `appwrite.config.json`. |
+| Appwrite access | Browser: `appwrite` client SDK in `src/lib/appwrite.ts`. Server: `node-appwrite` admin client in `src/lib/appwrite-server.ts` with the `withRetry` wrapper. Own signed session cookie (`SESSION_SECRET`) on top of Appwrite sessions, with `/api/auth/*` routes. |
+| Reads vs writes | Reads: Next.js API routes and server components. Sensitive or multi-document writes: Appwrite Functions in `functions/<name>/` or server-only API routes, never the browser SDK. See the decision matrix in pickLT's `BACKEND_ARCHITECTURE.md` §7. |
+| Images | Sharp. `next/image` with the Appwrite endpoint in `remotePatterns`. |
+| Monitoring | Sentry (`@sentry/nextjs`) with the `/monitoring` tunnel route. |
+| Tests | Vitest, node environment, `src/**/__tests__/**/*.test.ts`. |
+| Tooling | Prettier (no semicolons, single quotes, width 120, organize-imports and tailwind plugins), ESLint `next/core-web-vitals`, `.npmrc` with `legacy-peer-deps=true`. |
+| Hosting | pickLT runs the Next.js app on Vercel and Appwrite Cloud in Frankfurt. **Not yet decided for us** (#24). |
+
+Not carried over: Mapbox and Google Maps, LiveKit calls, Stripe, the moving and vehicle domain, the blog and listing demo pages.
+
+Added for this product (not in pickLT): Fabric.js for the flyer editor and renderer, a PDF generator for the cumulative round report, USSD and mobile-money webhooks, QR tickets.
+
+## Folder layout (same as pickLT)
+
+```
+src/app/(app)       public site: organizer pages, events, nominees, vote, tickets
+src/app/(auth)      login, signup, forgot-password
+src/app/(account)   organizer dashboard, settings, team, payouts
+src/app/(nominee)   nominee portal (new route group)
+src/app/(admin)     super admin console (new route group)
+src/app/api         route handlers: reads, auth, webhooks (ussd, payments)
+src/components      feature components, grouped by area
+src/shared          UI primitives lifted from pickLT
+src/lib             appwrite clients, domain logic, __tests__
+src/hooks  src/context  src/utils  src/styles  src/locales
+functions/<name>    Appwrite Functions (writes, scheduled jobs)
+```
 
 ## High-level components
 
@@ -11,57 +53,44 @@ Status: **proposal**. Nothing here is final until it is recorded in `DECISIONS.m
                 └──────────────┬───────────────┘
                                │
   Organizers ──► Organizer dashboard ──┐       │
+  Nominees ───► Nominee portal ────────┤       │
   Super admin ─► Admin console ────────┤       │
   Designers ──► Flyer template editor ─┤       │
                                        ▼       ▼
-                         ┌──────────────────────────┐
-                         │  API layer (Next.js      │
-                         │  route handlers/services)│
-                         └───┬────────┬────────┬────┘
-                             │        │        │
-                    PostgreSQL   Object storage  Job queue
-                    (Prisma)     (photos, fonts, (flyer renders,
-                                  templates,      payment
-                                  flyers)         reconciliation)
-                             ▲
-   USSD aggregator ──────────┤  USSD session webhook
-   MoMo / payment provider ──┘  payment callback webhook
+                   ┌────────────────────────────────────┐
+                   │  Next.js route handlers (reads,    │
+                   │  auth, webhooks) + Appwrite        │
+                   │  Functions (writes, scheduled jobs)│
+                   └───┬────────────┬───────────┬───────┘
+                       │            │           │
+              Appwrite Databases  Appwrite    Appwrite Functions
+              (collections,       Storage     (flyer renders,
+               transactions)      (photos,     reconciliation,
+                       ▲           fonts,      emails)
+                       │           templates,
+   USSD aggregator ────┤           flyers)
+   MoMo / payment ─────┘  webhooks → Next.js route handlers
 ```
-
-## Proposed stack
-
-| Concern | Proposal | Notes |
-|---|---|---|
-| Web app and API | Next.js (App Router) + TypeScript | One codebase for public site, dashboards and API. |
-| Database | PostgreSQL + Prisma | Relational data and transactions suit votes and payments. |
-| Auth | Auth.js or similar | Organizers, staff and admins only. Voters need no account. |
-| Storage | S3-compatible (e.g. Cloudflare R2) | Nominee photos, templates, fonts, generated flyers. |
-| Flyer editor | Fabric.js | Canvas with layers in the browser. |
-| Flyer rendering | Server-side (Fabric on Node with node-canvas, or a headless browser) | Server rendering keeps output consistent and allows bulk generation. |
-| Image processing | Sharp | Resizing, compression and format conversion. |
-| Background jobs | BullMQ + Redis, or a Postgres-based queue | Bulk flyer generation and payment reconciliation. |
-| USSD | Aggregator (Hubtel / Nsano / Arkesel / other: **TBD**) | Webhook-driven sessions. |
-| Payments | MoMo via the aggregator; Paystack possible for cards | **TBD**. |
-| Hosting | **TBD** | Needs reliable public HTTPS endpoints for webhooks. |
 
 ## Multi-tenancy
 
-- Shared database with an `organizationId` column on all tenant-owned tables.
-- A data-access layer that always requires a tenant context, so route handlers never write raw unscoped queries.
-- Public pages resolve tenants by slug (`/o/{slug}/...`). Subdomain support is optional and can come later.
+- One shared Appwrite database. Every tenant-owned collection has an `organizationId` attribute with an index.
+- A data-access layer in `src/lib` takes a tenant context and adds the `organizationId` filter, so route handlers never write raw unscoped queries.
+- Tenant isolation is enforced server-side with the admin client plus membership checks from the session. Appwrite document permissions are a second line of defence, not the boundary.
+- Public pages resolve tenants by slug (`/o/{slug}/...`). Subdomains are optional and can come later (#25).
 
 ## Key flows
 
-1. **Web vote:** voter picks nominee and quantity → server creates a `PaymentIntent` (pending) → provider sends MoMo prompt → provider callback (verified) → in one DB transaction: mark payment successful and create `Vote` rows → live tally updates.
-2. **USSD vote:** aggregator sends session requests → server returns menu text → on confirmation, server starts a MoMo debit → the payment callback follows the same path as step 1. See `USSD_AND_PAYMENTS.md`.
-3. **Flyer generation:** nominee created or updated → job queued → renderer loads template, fills slots, exports PNG/JPG → stored and linked to the nominee. See `FLYER_ENGINE.md`.
+1. **Web vote:** voter picks nominee and quantity → server creates a `Payment` document (`pending`) → provider sends MoMo prompt → provider callback (verified) → in one Appwrite database transaction: mark payment `success`, create the `Vote`, bump the `RoundEntry` tally, credit the ledger → live tally updates.
+2. **USSD vote:** aggregator posts each session step to a route handler → server returns menu text → on confirmation, server starts a MoMo debit → the payment callback follows the same path as step 1. See `USSD_AND_PAYMENTS.md`.
+3. **Flyer generation:** nominee photo uploaded → render function invoked → loads template, fills slots, exports PNG/JPG → stored in Appwrite Storage and linked to the nominee. See `FLYER_ENGINE.md`.
 
 ## Real-time results
 
-Start with short-interval polling or server-sent events from a cached tally. Move to websockets only if needed.
+Appwrite Realtime subscription on the tally documents for organizer dashboards; short-interval polling of a cached tally for public pages. Websockets of our own only if needed.
 
 ## Reliability notes
 
 - Webhook handlers must be fast and idempotent. Acknowledge quickly, process inside a transaction.
-- A reconciliation job checks pending payments against the provider's status API, so votes are never lost to missed callbacks.
+- A scheduled Appwrite Function reconciles stale `pending` payments against the provider's status API (same pattern as pickLT's `expirerentals`), so votes are never lost to missed callbacks.
 - Rate-limit public vote endpoints.

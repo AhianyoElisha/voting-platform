@@ -10,7 +10,7 @@ Build a complete picture of the project before any work starts.
 ## Steps
 
 1. Read, in this order: `CLAUDE.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/FLYER_ENGINE.md`, `docs/USSD_AND_PAYMENTS.md`, `docs/COMPETITIVE_ANALYSIS.md`, `docs/DECISIONS.md`, `docs/OPEN_QUESTIONS.md`, and anything in `docs/sources/`.
-2. Look at the codebase as it stands: `package.json` (if present), the top-level folder layout, `prisma/schema.prisma` (if present), and any `README`. Don't read every source file; sample enough to say what exists.
+2. Look at the codebase as it stands: `package.json` (if present), the top-level folder layout, `appwrite.config.json` and the `functions/` directory (if present), and any `README`. Don't read every source file; sample enough to say what exists.
 3. Compare docs to code. Note anything built that the docs don't describe, and anything the docs describe that isn't built.
 
 ## Output

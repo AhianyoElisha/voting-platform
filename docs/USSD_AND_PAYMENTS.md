@@ -61,8 +61,8 @@ Considerations:
 
 1. Create the `Payment` as `pending` before starting a debit.
 2. Count paid votes (and issue tickets) only from a **verified** provider callback, or from a status check against the provider's API.
-3. Callbacks are idempotent, keyed on `providerReference`.
-4. In one DB transaction: payment becomes `success`, the Vote (or Ticket) is created against the event's live round, the tally is updated, and the ledger is credited with the organizer's net share.
+3. Callbacks are idempotent, keyed on `providerReference` (unique index).
+4. In one Appwrite database transaction: payment becomes `success`, the Vote (or Ticket) is created against the event's live round, the tally is updated, and the ledger is credited with the organizer's net share.
 4a. Votes are attached to the round that is live when the payment is **initiated**. If a round closes while a payment is pending, the late callback is still credited to that round (confirm; see OPEN_QUESTIONS #13).
 5. A reconciliation job re-checks stale `pending` payments.
 6. Votes for an event that has closed are rejected before payment starts. Late callbacks for payments that started before close are honoured (confirm this policy).

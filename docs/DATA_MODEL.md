@@ -1,6 +1,6 @@
 # Data Model (Draft)
 
-Money is stored as integer **pesewas**. Timestamps are stored in UTC. All tenant-owned tables carry `organizationId`.
+Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITECTURE.md`). Money is stored as integer **pesewas**. Timestamps are stored in UTC. All tenant-owned collections carry an indexed `organizationId`. JSON-shaped fields (`brandColors`, `state`, `rawCallback`, `canvasJson`, `metadata`) are string attributes holding serialized JSON, since Appwrite has no JSON attribute type.
 
 ## Entities
 
@@ -56,10 +56,10 @@ Nominee 1–* GeneratedFlyer
 
 ## Integrity constraints
 
-- `Payment.providerReference` is unique, which makes callbacks idempotent.
-- Paid votes are created only inside the same transaction that moves a Payment to `success`.
+- `Payment.providerReference` has a unique index, which makes callbacks idempotent.
+- Paid votes are created only inside the same Appwrite database transaction (`createTransaction` → operations → commit) that moves a Payment to `success`.
 - Free votes require `grantedBy`, are only creatable by organizer admins or super admins, and always write an AuditLog entry in the same transaction.
 - A Vote's `roundId` must be the event's currently live round at the time of creation.
 - Once a Round is `closed`, its Votes and RoundEntry tallies are immutable.
 - `Ticket.qrToken` is unique; scanning is an atomic `valid → used` transition so a ticket can't be used twice.
-- Nominee code uniqueness is enforced at the database level within the chosen scope.
+- Nominee code uniqueness is enforced by a unique index within the chosen scope.

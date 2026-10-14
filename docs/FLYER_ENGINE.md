@@ -49,5 +49,7 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 
 - Use the same Fabric JSON for the browser editor and the server renderer, so what the designer sees is what gets rendered.
 - Fonts must be loaded on the server renderer before rendering, or text will fall back to a default font.
-- Rendering runs in background jobs. Never block the request.
+- Rendering runs in a background Appwrite Function (or a server-only route invoked asynchronously). Never block the request.
+- Templates, fonts, nominee photos and generated flyers live in Appwrite Storage buckets.
+- Fabric.js is an addition on top of the pickLT stack (see `ARCHITECTURE.md`, "Added for this product"). The editor UI itself uses pickLT's shared components and theme.
 - Store generated flyers with the template version used to make them.
