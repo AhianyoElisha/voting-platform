@@ -1,6 +1,6 @@
-import type { EmailProvider, NomineeInviteEmail, SendResult, TicketEmail } from './provider'
+import type { EmailProvider, NomineeInviteEmail, SendResult, TeamInviteEmail, TicketEmail } from './provider'
 
-export type { EmailProvider, NomineeInviteEmail, SendResult, TicketEmail } from './provider'
+export type { EmailProvider, NomineeInviteEmail, SendResult, TeamInviteEmail, TicketEmail } from './provider'
 
 /** PLACEHOLDER (#32): prints the email to the server log. Never counts as sent. */
 class LogEmailProvider implements EmailProvider {
@@ -17,6 +17,12 @@ class LogEmailProvider implements EmailProvider {
     )
     return { sent: false, provider: this.name, reason: 'not_configured' }
   }
+  async sendTeamInvite(email: TeamInviteEmail): Promise<SendResult> {
+    console.info(
+      `[email:log] team invite → ${email.to}\n  ${email.role} at ${email.organizationName}, from ${email.inviterName}\n  ${email.acceptUrl}`
+    )
+    return { sent: false, provider: this.name, reason: 'not_configured' }
+  }
 }
 
 /** No provider at all: same outcome, nothing printed. */
@@ -26,6 +32,9 @@ class NullEmailProvider implements EmailProvider {
     return { sent: false, provider: this.name, reason: 'not_configured' }
   }
   async sendTickets(): Promise<SendResult> {
+    return { sent: false, provider: this.name, reason: 'not_configured' }
+  }
+  async sendTeamInvite(): Promise<SendResult> {
     return { sent: false, provider: this.name, reason: 'not_configured' }
   }
 }

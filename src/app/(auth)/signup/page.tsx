@@ -6,8 +6,8 @@ import Logo from '@/shared/Logo'
 import { ArrowRight01Icon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { FormEvent, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { FormEvent, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -17,9 +17,13 @@ import { useTranslation } from 'react-i18next'
  * session user as owner. If that second step fails the account still exists,
  * so the user is sent to the dashboard where the create form is offered again.
  */
-export default function SignupPage() {
+function SignupContent() {
   const { t } = useTranslation()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
+  // An invitee arriving from a team invite only needs an account; the workspace already exists.
+  const joining = !!redirect && redirect.startsWith('/team/accept/')
   const { signupWithEmail } = useAuth()
 
   const [fullName, setFullName] = useState('')
@@ -46,6 +50,11 @@ export default function SignupPage() {
       else if (code === 429) setError(t('errors:auth.rateLimited'))
       else setError(t('errors:auth.unknown'))
       setIsSubmitting(false)
+      return
+    }
+
+    if (joining) {
+      router.push(redirect as string)
       return
     }
 
@@ -79,7 +88,9 @@ export default function SignupPage() {
       <div className="mx-auto max-w-md space-y-6">
         <div className="space-y-1 text-center">
           <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:signup.title')}</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:signup.subtitle')}</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            {joining ? t('web:signup.joinSubtitle') : t('web:signup.subtitle')}
+          </p>
         </div>
 
         {error && (
@@ -147,9 +158,12 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div className="border-t border-neutral-200 pt-4 dark:border-neutral-700" />
-
-          <OrganizationFields value={organization} onChange={setOrganization} idPrefix="signup-org" />
+          {!joining && (
+            <>
+              <div className="border-t border-neutral-200 pt-4 dark:border-neutral-700" />
+              <OrganizationFields value={organization} onChange={setOrganization} idPrefix="signup-org" />
+            </>
+          )}
 
           <button
             type="submit"
@@ -169,5 +183,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupContent />
+    </Suspense>
   )
 }

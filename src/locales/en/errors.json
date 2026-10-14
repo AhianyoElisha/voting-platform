@@ -158,5 +158,19 @@
     "badTransition": "This payout can no longer be changed that way.",
     "keyInvalid": "Please reload the page and try again.",
     "busy": "Another payout for this organizer is being processed. Try again in a moment."
+  },
+  "team": {
+    "emailInvalid": "Enter a valid email address.",
+    "roleInvalid": "Choose admin, staff, designer or scanner.",
+    "alreadyMember": "That person is already a member of this workspace.",
+    "alreadyInvited": "There is already a pending invite for that email. Re-send or revoke it below.",
+    "notPending": "That invite is no longer pending.",
+    "tokenInvalid": "This invite link is not valid. Ask the workspace owner for a new one.",
+    "tokenExpired": "This invite link has expired. Ask the workspace owner to re-send it.",
+    "tokenUsed": "This invite was already used.",
+    "emailMismatch": "This invite was sent to a different email address. Sign in with the invited account.",
+    "ownerImmutable": "The owner’s role cannot be changed here.",
+    "lastOwner": "A workspace must keep at least one owner.",
+    "selfChange": "You cannot change or remove your own membership."
   }
 }

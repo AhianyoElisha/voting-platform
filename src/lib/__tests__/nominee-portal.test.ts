@@ -56,6 +56,9 @@ const realEmail: EmailProvider = {
   async sendTickets() {
     return { sent: true, provider: 'test' }
   },
+  async sendTeamInvite() {
+    return { sent: true, provider: 'test' }
+  },
 }
 const noEmail: EmailProvider = {
   name: 'none',
@@ -63,6 +66,9 @@ const noEmail: EmailProvider = {
     return { sent: false, provider: 'none', reason: 'not_configured' }
   },
   async sendTickets() {
+    return { sent: false, provider: 'none', reason: 'not_configured' }
+  },
+  async sendTeamInvite() {
     return { sent: false, provider: 'none', reason: 'not_configured' }
   },
 }
@@ -163,6 +169,9 @@ describe('inviteNominee', () => {
         return { sent: true, provider: 'spy' }
       },
       async sendTickets() {
+        return { sent: false, provider: 'spy', reason: 'not_configured' }
+      },
+      async sendTeamInvite() {
         return { sent: false, provider: 'spy', reason: 'not_configured' }
       },
     }

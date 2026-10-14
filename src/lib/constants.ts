@@ -28,6 +28,7 @@ export const APPWRITE = {
     TICKET_SCANS: 'ticket_scans',
     PAYOUTS: 'payouts',
     PAYOUT_LOCKS: 'payout_locks',
+    TEAM_INVITES: 'team_invites',
   },
 
   BUCKETS: {

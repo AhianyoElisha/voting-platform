@@ -134,7 +134,8 @@
     },
     "workspaceCreated": {
       "helper": "Your account exists but the workspace could not be created. You can create it from the dashboard."
-    }
+    },
+    "joinSubtitle": "Create your account with the email you were invited at, then you will join the workspace."
   },
   "placeholder": {
     "dashboard": {
@@ -185,7 +186,8 @@
       "another": "Create another workspace"
     },
     "manageEvents": "Manage events",
-    "payouts": "Payouts"
+    "payouts": "Payouts",
+    "team": "Team"
   },
   "events": {
     "list": {
@@ -673,5 +675,35 @@
       "markPaid": "Mark paid",
       "paidConfirm": "Mark this payout as paid? Only do this after the money has been sent. This debits the organizer and cannot be undone."
     }
+  },
+  "team": {
+    "title": "Team",
+    "members": "Members",
+    "you": "you",
+    "col": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role"
+    },
+    "remove": "Remove",
+    "removeConfirm": "Remove {{name}} from this workspace?",
+    "invite": "Invite a team member",
+    "inviteHelper": "They get a link to join. If they have no account yet they create one with the invited email first.",
+    "roleHelp": "Admin manages everything. Designer edits flyer templates and fonts. Scanner scans tickets at the door. Staff can view everything and scan.",
+    "send": "Send invite",
+    "pending": "pending",
+    "resend": "Re-send",
+    "revoke": "Revoke",
+    "linkTitle": "Email is not set up yet. Share this link with them:",
+    "accept": {
+      "title": "Join a workspace",
+      "body": "You have been invited to {{org}} as {{role}}, at {{email}}.",
+      "signIn": "Sign in to accept",
+      "signUp": "No account yet? Create one with that email",
+      "wrongAccount": "You are signed in as {{current}}, but the invite was sent to {{invited}}. Sign out and use the invited account.",
+      "join": "Join workspace",
+      "joining": "Joining…"
+    },
+    "linkWarning": "This link is the credential: anyone who opens it and signs up with that email joins. Send it to the person directly, not to a group."
   }
 }

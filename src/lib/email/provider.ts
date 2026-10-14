@@ -31,8 +31,17 @@ export interface TicketEmail {
   ticketUrls: string[]
 }
 
+export interface TeamInviteEmail {
+  to: string
+  organizationName: string
+  role: string
+  inviterName: string
+  acceptUrl: string
+}
+
 export interface EmailProvider {
   readonly name: string
   sendNomineeInvite(email: NomineeInviteEmail): Promise<SendResult>
   sendTickets(email: TicketEmail): Promise<SendResult>
+  sendTeamInvite(email: TeamInviteEmail): Promise<SendResult>
 }

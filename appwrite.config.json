@@ -2366,6 +2366,127 @@
                 }
             ],
             "indexes": []
+        },
+        {
+            "$id": "team_invites",
+            "$permissions": [],
+            "databaseId": "voteapp",
+            "name": "team_invites",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "organizationId",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "email"
+                },
+                {
+                    "key": "role",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "admin",
+                        "staff",
+                        "designer",
+                        "scanner"
+                    ]
+                },
+                {
+                    "key": "tokenHash",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "expiresAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "invitedBy",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "pending",
+                        "accepted",
+                        "revoked"
+                    ]
+                },
+                {
+                    "key": "acceptedBy",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "acceptedAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "by_org",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "organizationId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "by_token",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "tokenHash"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
         }
     ],
     "buckets": [

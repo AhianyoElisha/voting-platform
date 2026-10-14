@@ -36,7 +36,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ### 5.1 Organizer workspace
 - Sign up and create an organization. Self-serve: the workspace is active immediately, with no super-admin approval step (decided 2026-10-14, see DECISIONS). The super admin can suspend an organization later.
 - Branded public page (logo, colours). Custom subdomain is an open question.
-- Invite team members. *Not built; roles exist in the data model and are enforced server-side, but there is no invitation flow yet.*
+- Invite team members. *Built 2026-10-14: owners and admins invite by email as admin, staff, designer or scanner; the invitee accepts a one-time link with an account whose email matches; roles can be changed and members removed, never the last owner. Email delivery waits on #32; the organizer gets the link to share. Until then the link is the credential for a brand-new account, since nothing verifies email ownership; once a provider exists, acceptance should require a verified email for accounts created after the invite.*
 
 ### 5.2 Events, categories and nominees
 - Create an event (voting campaign) with start and end times and a price per vote.

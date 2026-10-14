@@ -303,3 +303,19 @@ export interface PayoutDoc extends TenantDoc {
   decidedAt: string | null
   paidAt: string | null
 }
+
+// ─── Team invites (PRD 5.1) ───────────────────────────────────
+
+export type InvitableRole = Exclude<MembershipRole, 'owner'>
+
+export interface TeamInviteDoc extends TenantDoc {
+  email: string
+  role: InvitableRole
+  /** SHA-256 of the one-time token; null once accepted or revoked. */
+  tokenHash: string | null
+  expiresAt: string | null
+  invitedBy: string
+  status: 'pending' | 'accepted' | 'revoked'
+  acceptedBy: string | null
+  acceptedAt: string | null
+}
