@@ -335,7 +335,9 @@
     "view": "View",
     "votes_one": "{{count}} vote",
     "votes_other": "{{count}} votes",
-    "notLive": "Voting is not open right now. Check back when the organizer opens it."
+    "notLive": "Voting is not open right now. Check back when the organizer opens it.",
+    "morale": "Morale candidate",
+    "moraleHelper": "Added by the organizer to make the category competitive."
   },
   "vote": {
     "notLive": "Voting is not open for this event right now.",

@@ -163,7 +163,15 @@ describe('createNominee', () => {
   })
 })
 
-describe('morale candidates (PRD 5.4a, #29)', () => {
+describe('morale candidates (PRD 5.4a, decision #29)', () => {
+  const orgRow = (enabled: boolean) => ({
+    $id: 'org1',
+    name: 'Org 1',
+    slug: 'org-1',
+    status: 'active',
+    moraleCandidatesEnabled: enabled,
+  })
+
   test('gate requires all three switches and a manager role', () => {
     const on = { platformEnabled: true, organizationEnabled: true, eventEnabled: true, role: 'admin' as const }
     expect(canCreateMoraleCandidate(on)).toBe(true)
@@ -174,24 +182,8 @@ describe('morale candidates (PRD 5.4a, #29)', () => {
     expect(canCreateMoraleCandidate({ ...on, role: 'designer' })).toBe(false)
   })
 
-  test('is refused by default, even for the owner', async () => {
-    const { event, category } = await seedEvent(owner, { moraleCandidatesEnabled: true })
-    await expect(
-      createNominee(owner, { eventId: event.$id, categoryId: category.$id, name: 'Planted One', isMorale: true })
-    ).rejects.toThrow(/moraleDisabled/)
-    expect(fake.dump('nominees')).toHaveLength(0)
-    expect(fake.dump('audit_logs')).toHaveLength(0)
-  })
-
-  test('is allowed with every switch on, flagged and audited', async () => {
-    process.env.MORALE_CANDIDATES_ENABLED = 'true'
-    fake.seed('organizations', {
-      $id: 'org1',
-      name: 'Org 1',
-      slug: 'org-1',
-      status: 'active',
-      moraleCandidatesEnabled: true,
-    })
+  test("with the defaults, the organizer's per-event opt-in is enough", async () => {
+    fake.seed('organizations', orgRow(true))
     const { event, category } = await seedEvent(admin, { moraleCandidatesEnabled: true })
     const { nominee } = await createNominee(admin, {
       eventId: event.$id,
@@ -204,11 +196,28 @@ describe('morale candidates (PRD 5.4a, #29)', () => {
     expect(log).toMatchObject({ actorId: 'u4', organizationId: 'org1', target: `nominees/${nominee.$id}` })
   })
 
-  test('the event switch alone is not enough', async () => {
-    process.env.MORALE_CANDIDATES_ENABLED = 'true'
-    const { event, category } = await seedEvent(owner, { moraleCandidatesEnabled: true })
+  test('an event that has not opted in refuses, even for the owner', async () => {
+    fake.seed('organizations', orgRow(true))
+    const { event, category } = await seedEvent(owner, { moraleCandidatesEnabled: false })
     await expect(
       createNominee(owner, { eventId: event.$id, categoryId: category.$id, name: 'Planted One', isMorale: true })
     ).rejects.toThrow(/moraleDisabled/)
+    expect(fake.dump('nominees')).toHaveLength(0)
+    expect(fake.dump('audit_logs')).toHaveLength(0)
+  })
+
+  test('the super admin can switch it off per organization or platform-wide', async () => {
+    fake.seed('organizations', orgRow(false))
+    const a = await seedEvent(owner, { moraleCandidatesEnabled: true })
+    await expect(
+      createNominee(owner, { eventId: a.event.$id, categoryId: a.category.$id, name: 'Planted One', isMorale: true })
+    ).rejects.toThrow(/moraleDisabled/)
+
+    fake.seed('organizations', orgRow(true))
+    process.env.MORALE_CANDIDATES_ENABLED = 'false'
+    await expect(
+      createNominee(owner, { eventId: a.event.$id, categoryId: a.category.$id, name: 'Planted Two', isMorale: true })
+    ).rejects.toThrow(/moraleDisabled/)
+    expect(fake.dump('nominees')).toHaveLength(0)
   })
 })

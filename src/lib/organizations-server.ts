@@ -68,7 +68,7 @@ export async function createOrganizationWithOwner(
         logoUrl: null,
         brandColors: null,
         commissionRate: null,
-        moraleCandidatesEnabled: false,
+        moraleCandidatesEnabled: true,
       })
     )
   } catch (err) {

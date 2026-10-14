@@ -37,12 +37,12 @@ export const APPWRITE = {
 } as const
 
 /**
- * Platform-wide kill switch for morale candidates (PRD 5.4a, OPEN_QUESTIONS
- * #29). Off unless the env var is exactly "true". The organization and event
- * switches sit under this one.
+ * Platform-wide switch for morale candidates (PRD 5.4a, decision #29). On
+ * unless the env var is exactly "false": the super admin's kill switch. The
+ * organization switch and the organizer's per-event opt-in sit under it.
  */
 export function moraleCandidatesEnabledOnPlatform(): boolean {
-  return process.env.MORALE_CANDIDATES_ENABLED === 'true'
+  return process.env.MORALE_CANDIDATES_ENABLED !== 'false'
 }
 
 /**

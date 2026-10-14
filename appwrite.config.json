@@ -162,7 +162,7 @@
                     "type": "boolean",
                     "required": false,
                     "array": false,
-                    "default": false
+                    "default": true
                 }
             ],
             "indexes": [
