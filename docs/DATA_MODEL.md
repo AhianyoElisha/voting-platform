@@ -6,16 +6,16 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 
 ### Platform level
 - **User**: id (= the Appwrite Auth user id), fullName, email, phone, isSuperAdmin, createdAt. Passwords live in Appwrite Auth, not here. Built 2026-10-14 (`users` table).
-- **Organization** (tenant): id, name, slug (platform-wide unique index), logoUrl, brandColors, status (`active` | `suspended`; new organizations start `active`, decided 2026-10-14 (#9); only the super admin suspends), commissionRate (overrides the platform default; unit and default wait on #2, so it is null for now), createdAt. Built 2026-10-14 (`organizations` table).
+- **Organization** (tenant): id, name, slug (platform-wide unique index), logoUrl, brandColors, status (`active` | `suspended`; new organizations start `active`, decided 2026-10-14 (#9); only the super admin suspends), commissionRate (overrides the platform default; unit and default wait on #2, so it is null for now), moraleCandidatesEnabled (per-organization switch, super admin only, default false), createdAt. Built 2026-10-14 (`organizations` table).
 - **Membership**: userId, organizationId, role (`owner` | `admin` | `staff` | `designer` | `scanner`). Unique on (userId, organizationId). The user who creates an organization is its `owner`. Built 2026-10-14 (`memberships` table).
   - Nominees also have a User row (for the nominee portal) but no Membership; their access is through `Nominee.userId` and is limited to their own record.
 
 ### Campaigns
-- **Event**: id, organizationId, title, slug, description, coverImageUrl, eventCode (short, for the USSD ticket branch only; voting uses the nominee code alone), votePrice (pesewas), startsAt, endsAt, status (`draft` | `scheduled` | `live` | `paused` | `closed`), resultsVisibility (`hidden` | `ranking` | `percentage` | `count`), resultsPublishedAt
-- **Round**: id, eventId, organizationId, number, name, startsAt, endsAt, status (`pending` | `live` | `closed`). Every event has at least one round; events "without rounds" have exactly one.
-- **Category**: id, eventId, organizationId, name, order
-- **Nominee**: id, categoryId, eventId, organizationId, name, code (short, unique across the whole platform; decided 2026-10-14, see DECISIONS), photoUrl, bio, status, **isMorale** (bool, default false), userId (nullable; the nominee's portal login), profileCompletedAt
-- **RoundEntry**: roundId, nomineeId, voteCount (cached). Which nominees are in which round, and their frozen tally once the round closes.
+- **Event**: id, organizationId, title, slug (unique within the organization), description, coverImageUrl, eventCode (short, for the USSD ticket branch only; voting uses the nominee code alone; null until ticketing), votePrice (pesewas), startsAt, endsAt, status (`draft` | `scheduled` | `live` | `paused` | `closed`), resultsVisibility (`hidden` | `ranking` | `percentage` | `count`; the organizer chooses at creation, no default, #26), resultsPublishedAt, moraleCandidatesEnabled (per-event switch, PRD 5.4a). Built 2026-10-14 (`events` table).
+- **Round**: id, eventId, organizationId, number, name, startsAt, endsAt, status (`pending` | `live` | `closed`), closedAt. Every event has at least one round; events "without rounds" have exactly one. Round 1 is created with the event. At most one live round per event; `closed` is terminal. Built 2026-10-14 (`rounds` table).
+- **Category**: id, eventId, organizationId, name, order. Built 2026-10-14 (`categories` table).
+- **Nominee**: id, categoryId, eventId, organizationId, name, code (short, unique across the whole platform; decided 2026-10-14, see DECISIONS), photoUrl, bio, status (`active` | `withdrawn`), **isMorale** (bool, default false), userId (nullable; the nominee's portal login), profileCompletedAt. Built 2026-10-14 (`nominees` table). Code scheme: numeric, 4 digits to start, no leading zero, generated server-side with a collision retry against the unique index, never organizer-chosen, never reused (`src/lib/nominee-code.ts`).
+- **RoundEntry**: roundId, nomineeId, eventId, organizationId, voteCount (cached). Which nominees are in which round, and their frozen tally once the round closes. A nominee gets a round 1 entry when created, unless round 1 is already closed; entries for later rounds wait on #30. Built 2026-10-14 (`round_entries` table).
 
 ### Payments and votes
 - **Payment**: id, organizationId, eventId, roundId, nomineeId, channel (`web` | `ussd`), purpose (`vote` | `ticket`), payerPhone, payerEmail (tickets), network, quantity, amount, platformFee, organizerNet, provider, providerReference (unique), status (`pending` | `success` | `failed` | `refunded`), createdAt, confirmedAt, rawCallback (JSON)
@@ -42,7 +42,7 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 - **GeneratedFlyer**: id, nomineeId, templateId, templateVersion, imageUrl, format/size variant, createdAt
 
 ### Operations
-- **AuditLog**: id, actorId, organizationId, action, target, metadata, createdAt
+- **AuditLog**: id, actorId, organizationId, action, target, metadata, createdAt. Written for event status changes, round open and close, and morale candidate creation; later for free votes and payouts. Built 2026-10-14 (`audit_logs` table).
 
 ## Relationships
 

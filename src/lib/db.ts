@@ -66,6 +66,46 @@ export async function getTenantDocument<T extends TenantDoc>(
   return doc
 }
 
+/** Create a tenant-owned document. `organizationId` comes from the context, never the data. */
+export async function createTenantDocument<T extends TenantDoc>(
+  ctx: TenantContext,
+  collectionId: string,
+  data: Omit<T, keyof TenantDoc>,
+  documentId: string = ID.unique()
+): Promise<T & Models.Document> {
+  const { databases } = createAdminClient()
+  // The SDK types `data` with a conditional on the generic, which cannot
+  // resolve for an open `T`; write untyped and assert the row type on the way out.
+  const payload: Record<string, unknown> = { ...data, organizationId: ctx.organizationId }
+  const doc = await withRetry(() => databases.createDocument(databaseId(), collectionId, documentId, payload))
+  return doc as unknown as T & Models.Document
+}
+
+/** Update a tenant-owned document after confirming it belongs to the caller's organization. */
+export async function updateTenantDocument<T extends TenantDoc>(
+  ctx: TenantContext,
+  collectionId: string,
+  documentId: string,
+  data: Partial<Omit<T, keyof TenantDoc>>
+): Promise<T & Models.Document> {
+  await getTenantDocument<T>(ctx, collectionId, documentId)
+  const { databases } = createAdminClient()
+  const payload = data as Record<string, unknown>
+  const doc = await withRetry(() => databases.updateDocument(databaseId(), collectionId, documentId, payload))
+  return doc as unknown as T & Models.Document
+}
+
+/** Delete a tenant-owned document after confirming it belongs to the caller's organization. */
+export async function deleteTenantDocument<T extends TenantDoc>(
+  ctx: TenantContext,
+  collectionId: string,
+  documentId: string
+): Promise<void> {
+  await getTenantDocument<T>(ctx, collectionId, documentId)
+  const { databases } = createAdminClient()
+  await withRetry(() => databases.deleteDocument(databaseId(), collectionId, documentId))
+}
+
 // ─── Platform-level helpers ────────────────────────────────────
 
 type Doc<T> = T & Models.Document

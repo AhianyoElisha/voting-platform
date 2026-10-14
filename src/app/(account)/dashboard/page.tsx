@@ -5,6 +5,7 @@ import { getTranslations } from '@/lib/i18n-server'
 import { Badge } from '@/shared/Badge'
 import { Heading } from '@/shared/Heading'
 import { Metadata } from 'next'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -83,6 +84,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
                 <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">
                   {t(`web:dashboard.role.${membership.role}`)}
                 </p>
+                <Link
+                  href={`/dashboard/${organization.slug}/events`}
+                  className="mt-4 inline-block text-sm font-medium text-primary-600 underline dark:text-primary-400"
+                >
+                  {t('web:dashboard.manageEvents')}
+                </Link>
               </li>
             ))}
           </ul>

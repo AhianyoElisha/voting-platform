@@ -37,6 +37,8 @@ export interface OrganizationDoc extends AppwriteDoc {
   status: OrganizationStatus
   /** Per-organization commission override. Unit and default are OPEN_QUESTIONS #2. */
   commissionRate: number | null
+  /** Per-organization switch for morale candidates (PRD 5.4a, #29). Super admin only. */
+  moraleCandidatesEnabled: boolean
 }
 
 export const MEMBERSHIP_ROLES = ['owner', 'admin', 'staff', 'designer', 'scanner'] as const
@@ -46,4 +48,84 @@ export type MembershipRole = (typeof MEMBERSHIP_ROLES)[number]
 export interface MembershipDoc extends TenantDoc {
   userId: string
   role: MembershipRole
+}
+
+// ─── Campaigns (DATA_MODEL.md) ────────────────────────────────
+
+export const EVENT_STATUSES = ['draft', 'scheduled', 'live', 'paused', 'closed'] as const
+export type EventStatus = (typeof EVENT_STATUSES)[number]
+
+export const RESULTS_VISIBILITIES = ['hidden', 'ranking', 'percentage', 'count'] as const
+export type ResultsVisibility = (typeof RESULTS_VISIBILITIES)[number]
+
+export interface EventDoc extends TenantDoc {
+  title: string
+  slug: string
+  description: string | null
+  coverImageUrl: string | null
+  /** USSD ticket branch only; null until ticketing lands. */
+  eventCode: string | null
+  /** Integer pesewas (CLAUDE.md rule 6). */
+  votePrice: number
+  startsAt: string
+  endsAt: string
+  status: EventStatus
+  resultsVisibility: ResultsVisibility
+  resultsPublishedAt: string | null
+  /** Per-event switch for morale candidates (PRD 5.4a, #29). */
+  moraleCandidatesEnabled: boolean
+}
+
+export const ROUND_STATUSES = ['pending', 'live', 'closed'] as const
+export type RoundStatus = (typeof ROUND_STATUSES)[number]
+
+export interface RoundDoc extends TenantDoc {
+  eventId: string
+  number: number
+  name: string
+  startsAt: string | null
+  endsAt: string | null
+  status: RoundStatus
+  closedAt: string | null
+}
+
+export interface CategoryDoc extends TenantDoc {
+  eventId: string
+  name: string
+  order: number
+}
+
+export type NomineeStatus = 'active' | 'withdrawn'
+
+export interface NomineeDoc extends TenantDoc {
+  eventId: string
+  categoryId: string
+  name: string
+  /** Platform-wide unique (decision #12). */
+  code: string
+  photoUrl: string | null
+  bio: string | null
+  status: NomineeStatus
+  isMorale: boolean
+  userId: string | null
+  profileCompletedAt: string | null
+}
+
+export interface RoundEntryDoc extends TenantDoc {
+  eventId: string
+  roundId: string
+  nomineeId: string
+  /** Cached tally. Only the vote pipeline changes it. */
+  voteCount: number
+}
+
+// ─── Operations ───────────────────────────────────────────────
+
+export interface AuditLogDoc extends AppwriteDoc {
+  organizationId: string | null
+  actorId: string
+  action: string
+  target: string
+  /** Serialized JSON. */
+  metadata: string | null
 }

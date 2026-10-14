@@ -20,5 +20,39 @@
       "invalid": "Web address can only use lowercase letters, numbers and single hyphens.",
       "reserved": "That web address is reserved. Choose another."
     }
+  },
+  "tenant": {
+    "notAMember": "You are not a member of this organization.",
+    "forbidden": "Your role cannot make this change.",
+    "notFound": "Not found."
+  },
+  "event": {
+    "titleTooShort": "Event title is too short.",
+    "titleTooLong": "Event title is too long.",
+    "slugInvalid": "Web address can only use lowercase letters, numbers and single hyphens, and must not be reserved.",
+    "slugTaken": "This workspace already has an event at that web address.",
+    "priceInvalid": "Enter the price per vote in cedis, e.g. 1.00.",
+    "priceZero": "Price per vote must be more than zero.",
+    "datesInvalid": "The end must come after the start.",
+    "visibilityInvalid": "Choose what the public will see.",
+    "badTransition": "The event cannot move to that status from where it is.",
+    "eventClosed": "This event is closed.",
+    "noRoundToOpen": "Add a round before going live. Every round of this event is closed."
+  },
+  "round": {
+    "badTransition": "The round cannot move to that status from where it is.",
+    "anotherRoundLive": "Close the live round before opening another.",
+    "eventClosed": "This event is closed.",
+    "nameTooLong": "Round name is too long.",
+    "roundClosed": "This round is closed and cannot change."
+  },
+  "nominee": {
+    "nameTooShort": "Nominee name is too short.",
+    "nameTooLong": "Nominee name is too long.",
+    "bioTooLong": "Bio is too long.",
+    "eventClosed": "This event is closed.",
+    "categoryNotInEvent": "That category belongs to a different event.",
+    "moraleDisabled": "Morale candidates are not enabled for this workspace.",
+    "codeExhausted": "Could not allocate a nominee code. Try again."
   }
 }

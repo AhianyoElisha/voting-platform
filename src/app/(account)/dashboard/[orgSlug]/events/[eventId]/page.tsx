@@ -1,0 +1,147 @@
+import { AddCategoryForm, AddNomineeForm, EventStatusControls, RoundControls } from '@/components/events/EventControls'
+import { TenantMismatchError } from '@/lib/db'
+import { getEvent } from '@/lib/events-server'
+import { getTranslations } from '@/lib/i18n-server'
+import { formatPesewas } from '@/lib/money'
+import { listCategories, listNominees } from '@/lib/nominees-server'
+import { resolveWorkspace } from '@/lib/page-tenant'
+import { listRounds } from '@/lib/rounds-server'
+import { canManage } from '@/lib/tenant'
+import { Badge } from '@/shared/Badge'
+import { Heading } from '@/shared/Heading'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+
+type Props = { params: Promise<{ orgSlug: string; eventId: string }> }
+
+const STATUS_COLOR = { draft: 'zinc', scheduled: 'blue', live: 'green', paused: 'amber', closed: 'red' } as const
+
+export default async function EventDetailPage({ params }: Props) {
+  const { orgSlug, eventId } = await params
+  const { ctx, organization } = await resolveWorkspace(orgSlug, `/dashboard/${orgSlug}/events/${eventId}`)
+  const { t } = await getTranslations()
+
+  let event
+  try {
+    event = await getEvent(ctx, eventId)
+  } catch (err) {
+    if (err instanceof TenantMismatchError || (err as { code?: number })?.code === 404) notFound()
+    throw err
+  }
+  const [categories, nominees, rounds] = await Promise.all([
+    listCategories(ctx, eventId),
+    listNominees(ctx, eventId),
+    listRounds(ctx, eventId),
+  ])
+  const manager = canManage(ctx.role)
+  const open = event.status !== 'closed'
+
+  return (
+    <main className="container space-y-12 py-16 lg:py-24">
+      <div>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <Link href="/dashboard" className="underline">
+            {t('web:dashboard.title')}
+          </Link>{' '}
+          /{' '}
+          <Link href={`/dashboard/${orgSlug}/events`} className="underline">
+            {organization.name}
+          </Link>
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <Heading>{event.title}</Heading>
+          <Badge color={STATUS_COLOR[event.status]}>{t(`web:events.status.${event.status}`)}</Badge>
+          {event.moraleCandidatesEnabled && <Badge color="amber">{t('web:events.moraleEnabled')}</Badge>}
+        </div>
+        <dl className="mt-4 grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <dt className="text-neutral-500 dark:text-neutral-400">{t('web:events.detail.price')}</dt>
+            <dd className="font-medium text-neutral-900 dark:text-white">{formatPesewas(event.votePrice)}</dd>
+          </div>
+          <div>
+            <dt className="text-neutral-500 dark:text-neutral-400">{t('web:events.detail.window')}</dt>
+            <dd className="font-medium text-neutral-900 dark:text-white">
+              {new Date(event.startsAt).toLocaleString('en-GB', { timeZone: 'Africa/Accra' })} –{' '}
+              {new Date(event.endsAt).toLocaleString('en-GB', { timeZone: 'Africa/Accra' })}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-neutral-500 dark:text-neutral-400">{t('web:events.detail.visibility')}</dt>
+            <dd className="font-medium text-neutral-900 dark:text-white">
+              {t(`web:events.visibility.${event.resultsVisibility}`)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-neutral-500 dark:text-neutral-400">{t('web:events.detail.publicPage')}</dt>
+            <dd className="font-mono text-xs break-all">
+              <Link href={`/o/${orgSlug}/${event.slug}`} className="underline">
+                /o/{orgSlug}/{event.slug}
+              </Link>
+            </dd>
+          </div>
+        </dl>
+        <div className="mt-4">
+          <EventStatusControls orgId={organization.$id} event={event} canManage={manager} />
+        </div>
+      </div>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.rounds.title')}</h2>
+        <RoundControls orgId={organization.$id} eventId={event.$id} rounds={rounds} canManage={manager && open} />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.categories.title')}</h2>
+        {categories.length === 0 && (
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:events.categories.empty')}</p>
+        )}
+        {categories.map((category) => {
+          const members = nominees.filter((n) => n.categoryId === category.$id)
+          return (
+            <div key={category.$id} className="rounded-2xl border border-neutral-200 dark:border-neutral-700">
+              <div className="border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
+                <h3 className="font-medium text-neutral-900 dark:text-white">{category.name}</h3>
+              </div>
+              {members.length === 0 ? (
+                <p className="px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400">
+                  {t('web:events.nominees.empty')}
+                </p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="text-left text-xs text-neutral-500 uppercase dark:text-neutral-400">
+                    <tr>
+                      <th className="px-4 py-2">{t('web:events.nominees.name')}</th>
+                      <th className="px-4 py-2">{t('web:events.nominees.code')}</th>
+                      <th className="px-4 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
+                    {members.map((n) => (
+                      <tr key={n.$id}>
+                        <td className="px-4 py-2 text-neutral-900 dark:text-white">{n.name}</td>
+                        <td className="px-4 py-2 font-mono">{n.code}</td>
+                        <td className="px-4 py-2">
+                          {n.isMorale && <Badge color="amber">{t('web:events.nominees.moraleBadge')}</Badge>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )
+        })}
+        {manager && open && <AddCategoryForm orgId={organization.$id} eventId={event.$id} />}
+      </section>
+
+      {manager && open && (
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+            {t('web:events.nominees.addTitle')}
+          </h2>
+          <AddNomineeForm orgId={organization.$id} event={event} categories={categories} />
+        </section>
+      )}
+    </main>
+  )
+}

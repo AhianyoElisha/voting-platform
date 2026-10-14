@@ -180,6 +180,122 @@
       "cta": "Create workspace",
       "submitting": "Creating…",
       "another": "Create another workspace"
+    },
+    "manageEvents": "Manage events"
+  },
+  "events": {
+    "list": {
+      "title": "Events",
+      "create": "New event",
+      "empty": "No events yet. Create your first voting campaign.",
+      "pricePerVote": "{{price}} per vote"
+    },
+    "new": {
+      "title": "New event",
+      "helper": "A voting campaign. Round 1 is created with it; add more rounds later if you need them."
+    },
+    "form": {
+      "title": {
+        "label": "Event title",
+        "placeholder": "e.g. Faculty Awards 2026"
+      },
+      "slug": {
+        "label": "Web address",
+        "helper": "Voters will find it at {{path}}"
+      },
+      "description": {
+        "label": "Description (optional)"
+      },
+      "price": {
+        "label": "Price per vote (GHS)",
+        "helper": "In cedis. Stored to the pesewa."
+      },
+      "startsAt": {
+        "label": "Voting starts"
+      },
+      "endsAt": {
+        "label": "Voting ends"
+      },
+      "visibility": {
+        "label": "What the public sees",
+        "placeholder": "Choose…",
+        "helper": "You can change this later."
+      },
+      "morale": {
+        "label": "Allow morale candidates in this event",
+        "helper": "Also needs the platform and workspace switches. Morale candidates are always flagged and audited."
+      },
+      "submit": "Create event",
+      "submitting": "Creating…"
+    },
+    "visibility": {
+      "hidden": "Nothing",
+      "ranking": "Rankings only",
+      "percentage": "Percentages",
+      "count": "Exact counts"
+    },
+    "status": {
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "live": "Live",
+      "paused": "Paused",
+      "closed": "Closed",
+      "action": {
+        "draft": "Back to draft",
+        "scheduled": "Schedule",
+        "live": "Go live",
+        "paused": "Pause",
+        "closed": "Close event"
+      },
+      "closeConfirm": "Close this event? The live round is frozen and nothing can be changed afterwards."
+    },
+    "moraleEnabled": "Morale candidates on",
+    "detail": {
+      "price": "Price per vote",
+      "window": "Voting window",
+      "visibility": "Public sees",
+      "publicPage": "Public page"
+    },
+    "rounds": {
+      "title": "Rounds",
+      "status": {
+        "pending": "Not started",
+        "live": "Live",
+        "closed": "Closed"
+      },
+      "open": "Open round",
+      "close": "Close round",
+      "closeConfirm": "Close this round? Its tally is frozen and cannot change.",
+      "add": "Add round",
+      "namePlaceholder": "Round name (optional)",
+      "advanceNote": "Nominees are placed in round 1 automatically. Who goes through to later rounds is still being decided."
+    },
+    "categories": {
+      "title": "Categories and nominees",
+      "empty": "No categories yet.",
+      "add": "Add category",
+      "placeholder": "e.g. Most Influential"
+    },
+    "nominees": {
+      "empty": "No nominees in this category yet.",
+      "name": "Nominee",
+      "code": "Voting code",
+      "moraleBadge": "Morale",
+      "addTitle": "Add a nominee",
+      "namePlaceholder": "Nominee name",
+      "category": "Category",
+      "bioPlaceholder": "Short bio (optional)",
+      "add": "Add nominee",
+      "needCategory": "Add a category first.",
+      "morale": {
+        "label": "Morale candidate",
+        "helper": "Planted by the organizer. Flagged in every admin view and report."
+      }
     }
+  },
+  "publicEvent": {
+    "pricePerVote": "{{price}} per vote",
+    "code": "Voting code",
+    "votingSoon": "Voting opens here and by USSD soon."
   }
 }

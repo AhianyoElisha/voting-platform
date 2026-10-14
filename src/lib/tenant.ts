@@ -1,5 +1,6 @@
 import { getSessionUserId } from './auth-session'
 import { findMembership, type TenantContext } from './db'
+import type { MembershipRole } from './types'
 
 /**
  * Builds the `TenantContext` every tenant-scoped query needs (CLAUDE.md
@@ -30,4 +31,24 @@ export async function requireTenantContext(organizationId: string): Promise<Tena
   const userId = await getSessionUserId()
   if (!userId) return null
   return getTenantContext(userId, organizationId)
+}
+
+// ─── Roles ─────────────────────────────────────────────────────
+
+export class ForbiddenError extends Error {
+  constructor(message = 'Forbidden') {
+    super(message)
+    this.name = 'ForbiddenError'
+  }
+}
+
+/** Roles that may create and change events, categories, nominees and rounds. */
+export const MANAGER_ROLES: readonly MembershipRole[] = ['owner', 'admin']
+
+export function canManage(role: MembershipRole): boolean {
+  return MANAGER_ROLES.includes(role)
+}
+
+export function assertCanManage(ctx: TenantContext): void {
+  if (!canManage(ctx.role)) throw new ForbiddenError(`Role ${ctx.role} cannot manage this organization`)
 }
