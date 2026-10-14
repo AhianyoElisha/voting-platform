@@ -57,7 +57,7 @@ Slash commands in `.claude/skills/` (see `.claude/skills/README.md`): `/onboard`
 
 ## Commands
 
-Same scripts as pickLT (the project is not scaffolded yet; these are the targets):
+Same scripts as pickLT:
 
 ```
 npm run dev          # next dev
