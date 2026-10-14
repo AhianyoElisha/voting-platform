@@ -83,7 +83,7 @@ Menu as built: `Vote / 1. Vote 2. Buy ticket 3. Help` → `Enter nominee code:` 
 7. Store raw callback payloads for audits and disputes.
 
 ## Free votes
-Free votes (see PRD 5.4a) never pass through this pipeline. They have no Payment, are created only by an organizer admin or super admin, carry `source = free` and `grantedBy`, and are audited. They must never be counted in revenue or payouts.
+Free votes (see PRD 5.4a; decision #29: always shown separately from paid votes in public results) never pass through this pipeline. They have no Payment, are created only by an organizer admin or super admin, carry `source = free` and `grantedBy`, and are audited. They must never be counted in revenue or payouts.
 
 ## Fees
 - The platform takes 10% of the gross paid amount per vote and per ticket; the organizer's 90% goes to their wallet. Commission only, no subscription (decided 2026-10-14, #2). For reference, the main competitor charges 7–10% plus optional subscriptions.

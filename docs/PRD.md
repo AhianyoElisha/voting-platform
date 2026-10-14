@@ -73,18 +73,18 @@ A multi-tenant voting platform that matches the standard feature set (web and US
   - combined total
   - gross revenue, the platform's percentage share, and the organizer's (faculty or department's) percentage share, with the split configurable per organization
 
-### 5.4a Morale candidates and free votes  ⚠ pending legitimacy review
-*Requested by the sales partner. The founder is reviewing how to make this legitimate before launch; see OPEN_QUESTIONS #29. Build it behind a per-event switch so it can be disabled or constrained without code changes.*
+### 5.4a Morale candidates and free votes
+*Requested by the sales partner. Decided 2026-10-14 (see DECISIONS, was #29): the features ship with public disclosure. The organizer opts in per event; the platform and organization switches default to on and the super admin can turn either feature off per organization or platform-wide.*
 
 - The organizer admin can add **morale candidates** to any category: nominees created by the admin to make a category look competitive and encourage real nominees' supporters to buy votes.
 - The admin can cast **free votes** in bulk for any nominee (e.g. 1,000 at once). These are recorded as free votes, never as paid.
 - Free votes count toward the "free votes" figure on the dashboard and toward the displayed tally.
-- Required safeguards regardless of the final policy decision:
-  - Morale candidates are flagged as such in the database (`isMorale`) and in all admin views and reports.
+- Required safeguards:
+  - Morale candidates are flagged as such in the database (`isMorale`), in all admin views and reports, and **labelled on the public results and vote pages**.
   - Every free-vote grant is written to the audit log with the actor, nominee, quantity and reason.
   - Free votes never appear in revenue figures.
   - A platform-level setting lets the super admin disable morale candidates or free votes for an organization or the whole platform.
-  - An event-level setting controls whether free votes are shown separately from paid votes on the public results page (default to be decided in the review).
+  - Public results always show free votes as a figure separate from paid votes; there is no setting to merge them.
 
 ### 5.4b Ticketing
 - Organizers can sell **event tickets** alongside voting, with one or more ticket tiers.
