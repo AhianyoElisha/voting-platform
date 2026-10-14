@@ -1,0 +1,11 @@
+{
+  "auth": {
+    "noActiveSession": "No active session. Please sign in again.",
+    "initSessionFailed": "Could not start your session. Please try again.",
+    "invalidCredentials": "Email or password is incorrect.",
+    "emailTaken": "An account with this email already exists.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "rateLimited": "Too many attempts. Please wait a moment and try again.",
+    "unknown": "Something went wrong. Please try again."
+  }
+}

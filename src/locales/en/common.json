@@ -1,0 +1,41 @@
+{
+  "action": {
+    "back": { "a11y": "Go back", "cta": "Back" },
+    "cancel": { "cta": "Cancel" },
+    "confirm": { "cta": "Confirm" },
+    "continue": { "cta": "Continue" },
+    "logout": { "cta": "Log out" },
+    "save": { "cta": "Save" },
+    "saving": { "cta": "Saving…" },
+    "tryAgain": { "cta": "Try again" }
+  },
+  "error": {
+    "checkConnection": "Check your connection and try again."
+  },
+  "field": {
+    "email": { "label": "Email", "placeholder": "you@example.com" },
+    "fullName": { "label": "Full name", "placeholder": "Your full name" },
+    "phone": { "label": "Phone number", "placeholder": "024 000 0000" }
+  },
+  "nav": {
+    "darkTheme": { "label": "Dark theme" },
+    "help": { "label": "Help" },
+    "menu": { "label": "Menu" },
+    "openMenu": { "a11y": "Open menu" },
+    "settings": { "label": "Settings" }
+  },
+  "person": {
+    "fallbackUser": "User"
+  },
+  "separator": {
+    "or": { "label": "or" }
+  },
+  "state": {
+    "loading": { "label": "Loading…" },
+    "redirecting": { "label": "Redirecting..." },
+    "submitting": { "label": "Submitting…" }
+  },
+  "status": {
+    "comingSoon": { "label": "Coming soon" }
+  }
+}

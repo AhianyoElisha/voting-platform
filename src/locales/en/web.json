@@ -1,0 +1,74 @@
+{
+  "seo": {
+    "titleTemplate": "%s | voteapp",
+    "default": {
+      "title": "voteapp – paid voting for campus awards and pageants",
+      "description": "Vote on the web or by USSD for your favourite nominees. Organizers get instant, auto-generated flyers for every nominee.",
+      "keywords": "voting, pageant, awards, KNUST, USSD, flyers"
+    },
+    "login": { "title": "Sign in", "description": "Sign in to your organizer workspace." },
+    "signup": { "title": "Create an organizer account", "description": "Create your workspace and run your first voting campaign." },
+    "forgotPassword": { "title": "Forgot password", "description": "Reset your voteapp password." },
+    "dashboard": { "title": "Dashboard" },
+    "account": { "title": "My account" },
+    "portal": { "title": "Nominee portal" },
+    "admin": { "title": "Admin console" }
+  },
+  "notFound": {
+    "title": "The page you were looking for doesn't exist.",
+    "cta": "Return home",
+    "image": { "a11y": "Page not found" }
+  },
+  "nav": {
+    "home": { "label": "Home" },
+    "events": { "label": "Events" },
+    "forOrganizers": { "label": "For organizers" },
+    "nomineePortal": { "label": "Nominee portal", "helper": "Upload your photo and download your flyer" },
+    "signInAsOrganizer": { "label": "Organizer sign in", "helper": "Manage events, nominees, results and payouts" },
+    "dashboard": { "label": "Dashboard" },
+    "myAccount": { "label": "My account" }
+  },
+  "sidebar": {
+    "blurb": "Paid voting for campus awards and pageants, on the web and by USSD, with flyers for every nominee.",
+    "getStarted": { "cta": "Get started" }
+  },
+  "footer": {
+    "tagline": "The voting platform for KNUST awards and pageants. Web and USSD voting, tickets, and a flyer for every nominee.",
+    "solutions": {
+      "title": "Product",
+      "webVoting": "Web voting",
+      "ussdVoting": "USSD voting",
+      "flyers": "Nominee flyers",
+      "tickets": "Event tickets"
+    },
+    "support": { "title": "Support", "help": "Help centre", "contact": "Contact us", "faq": "FAQ" },
+    "company": { "title": "Company", "about": "About", "organizers": "For organizers", "nominees": "For nominees" },
+    "legal": { "title": "Legal", "terms": "Terms of service", "privacy": "Privacy policy" },
+    "copyright": "© {{year}} voteapp. All rights reserved."
+  },
+  "home": {
+    "hero": {
+      "title": "Paid voting for campus awards, with a flyer for every nominee.",
+      "subtitle": "Voters pay by mobile money on the web or by dialling a USSD code. Organizers get finished, campaign-ready flyers the moment a nominee uploads a photo.",
+      "primaryCta": "Create your event",
+      "secondaryCta": "Browse events"
+    }
+  },
+  "login": {
+    "title": "Sign in to your workspace",
+    "noAccount": { "label": "New here?" },
+    "resume": { "helper": "Sign in to continue to the page you were on." }
+  },
+  "signup": {
+    "title": "Create your organizer account",
+    "subtitle": "Set up a workspace for your faculty, department, hall or group.",
+    "haveAccount": { "label": "Already have an account?" }
+  },
+  "placeholder": {
+    "dashboard": { "title": "Organizer dashboard", "body": "Events, nominees, results and payouts will live here." },
+    "account": { "title": "My account", "body": "Profile and workspace settings will live here." },
+    "portal": { "title": "Nominee portal", "body": "Your profile, voting code and flyer will live here." },
+    "admin": { "title": "Admin console", "body": "Organizations, fees, templates and payouts will live here." },
+    "events": { "title": "Events", "body": "Live and upcoming voting campaigns will be listed here." }
+  }
+}
