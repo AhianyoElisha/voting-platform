@@ -1,5 +1,6 @@
 'use client'
 
+import OrganizationFields, { emptyOrganizationFields, inputClass } from '@/components/organization/OrganizationFields'
 import { useAuth } from '@/context/auth'
 import Logo from '@/shared/Logo'
 import { ArrowRight01Icon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons'
@@ -9,13 +10,12 @@ import { useRouter } from 'next/navigation'
 import { FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-const inputClass =
-  'w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500'
-
 /**
- * Organizer sign-up: name, email, password. Creating the Organization
- * workspace itself is a later feature and depends on #9 (self-serve vs
- * approval), so this only creates the Appwrite Auth account.
+ * Organizer sign-up (PRD 5.1, decision #9): name, email, password and the
+ * organization. The Appwrite Auth account is created in the browser, then the
+ * workspace is created server-side through `POST /api/organizations` with the
+ * session user as owner. If that second step fails the account still exists,
+ * so the user is sent to the dashboard where the create form is offered again.
  */
 export default function SignupPage() {
   const { t } = useTranslation()
@@ -25,6 +25,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [organization, setOrganization] = useState(emptyOrganizationFields)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -39,12 +40,31 @@ export default function SignupPage() {
     setIsSubmitting(true)
     try {
       await signupWithEmail(email, password, fullName.trim())
-      router.push('/dashboard')
     } catch (err: unknown) {
       const code = typeof err === 'object' && err && 'code' in err ? (err as { code?: number }).code : undefined
       if (code === 409) setError(t('errors:auth.emailTaken'))
       else if (code === 429) setError(t('errors:auth.rateLimited'))
       else setError(t('errors:auth.unknown'))
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      const res = await fetch('/api/organizations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: organization.name, slug: organization.slug }),
+      })
+      if (!res.ok) {
+        // The account exists; the dashboard offers the form again.
+        const body = await res.json().catch(() => null)
+        const code = typeof body?.code === 'string' ? body.code : 'createFailed'
+        router.push(`/dashboard?notice=${encodeURIComponent(code)}`)
+        return
+      }
+      router.push('/dashboard')
+    } catch {
+      router.push('/dashboard')
     } finally {
       setIsSubmitting(false)
     }
@@ -126,6 +146,10 @@ export default function SignupPage() {
               </button>
             </div>
           </div>
+
+          <div className="border-t border-neutral-200 pt-4 dark:border-neutral-700" />
+
+          <OrganizationFields value={organization} onChange={setOrganization} idPrefix="signup-org" />
 
           <button
             type="submit"

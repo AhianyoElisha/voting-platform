@@ -78,6 +78,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.warn('[auth] failed to initialize the server session cookie', e)
       }
 
+      // Mirror the Auth account into the `users` row (keyed by auth id), as
+      // pickLT's sync-user does. Best-effort: a failure here must not sign the
+      // user out, the next load retries it.
+      try {
+        const syncRes = await fetch('/api/auth/sync-user', { method: 'POST' })
+        if (!syncRes.ok) console.warn('[auth] sync-user failed', syncRes.status)
+      } catch (e) {
+        console.warn('[auth] sync-user failed', e)
+      }
+
       setUser({
         authId: appwriteUser.$id,
         fullName: appwriteUser.name || '',

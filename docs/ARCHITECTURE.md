@@ -15,7 +15,7 @@ pickLT is a Next.js 15 booking and rental app on Appwrite, grown from the Chisfi
 | Font | Poppins through `next/font/google`, weights 300–700, applied on `<html>` in `src/app/layout.tsx`. Flyer templates use their own uploaded fonts; this is the app font only. |
 | Motion and carousels | Framer Motion; Embla carousel (with autoplay) and the `use-carousel-*` hooks. |
 | i18n | pickLT ships eight locales with react-i18next and a cookie-resolved locale. We keep the same provider wiring but ship `en` only. |
-| Backend | **Appwrite**: Auth, Databases, Storage, Functions (Node 22 runtime), Realtime, Messaging. Project settings and function definitions live in `appwrite.config.json`. |
+| Backend | **Appwrite**: Auth, Databases, Storage, Functions (Node 22 runtime), Realtime, Messaging. Project settings, the schema and function definitions live in `appwrite.config.json`, in the current CLI shape (`tablesDB` and `tables` with `columns`, as pickLT's), pushed with `appwrite push tables` and `appwrite push functions`. Table ids are fixed slugs (`users`, `organizations`, ...), so code needs no env var per table; see `src/lib/constants.ts`. |
 | Appwrite access | Browser: `appwrite` client SDK in `src/lib/appwrite.ts`. Server: `node-appwrite` admin client in `src/lib/appwrite-server.ts` with the `withRetry` wrapper. Own signed session cookie (`SESSION_SECRET`) on top of Appwrite sessions, with `/api/auth/*` routes. |
 | Reads vs writes | Reads: Next.js API routes and server components. Sensitive or multi-document writes: Appwrite Functions in `functions/<name>/` or server-only API routes, never the browser SDK. See the decision matrix in pickLT's `BACKEND_ARCHITECTURE.md` §7. |
 | Images | Sharp. `next/image` with the Appwrite endpoint in `remotePatterns`. |
@@ -76,7 +76,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 
 - One shared Appwrite database. Every tenant-owned collection has an `organizationId` attribute with an index.
 - A data-access layer in `src/lib` takes a tenant context and adds the `organizationId` filter, so route handlers never write raw unscoped queries.
-- Tenant isolation is enforced server-side with the admin client plus membership checks from the session. Appwrite document permissions are a second line of defence, not the boundary.
+- Tenant isolation is enforced server-side with the admin client plus membership checks from the session (`src/lib/tenant.ts` builds the `TenantContext` from the caller's Membership). Tables have row security off and no table-level grants: the browser SDK is used for Auth only, and all reads and writes go through route handlers or Functions with the admin key. Document permissions can be added later as a second line of defence, not the boundary.
 - Public pages resolve tenants by slug (`/o/{slug}/...`). Subdomains are optional and can come later (#25).
 
 ## Key flows

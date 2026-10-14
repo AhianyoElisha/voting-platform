@@ -1,7 +1,7 @@
 import { getTranslations } from '@/lib/i18n-server'
+import { COOKIE_NAME, MAX_AGE, signSessionCookie } from '@/lib/session'
 import { NextResponse } from 'next/server'
 import { Account, Client } from 'node-appwrite'
-import { signSessionCookie, COOKIE_NAME, MAX_AGE } from '@/lib/session'
 
 /**
  * POST /api/auth/init-session
@@ -33,7 +33,15 @@ export async function POST(req: Request) {
       .setJWT(jwt)
     let userId: string
     try {
-      userId = (await new Account(userClient).get()).$id
+      const authUser = await new Account(userClient).get()
+      // Only real accounts get a cookie. An anonymous Appwrite session has no
+      // email, and a cookie for it would let a nameless caller reach every
+      // session-gated route (e.g. create organizations and squat slugs). The
+      // project settings also disable anonymous auth; this holds if they drift.
+      if (!authUser.email) {
+        return NextResponse.json({ error: t('errors:auth.noActiveSession') }, { status: 401 })
+      }
+      userId = authUser.$id
     } catch {
       return NextResponse.json({ error: t('errors:auth.noActiveSession') }, { status: 401 })
     }

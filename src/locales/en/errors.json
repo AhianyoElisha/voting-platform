@@ -6,6 +6,19 @@
     "emailTaken": "An account with this email already exists.",
     "passwordTooShort": "Password must be at least 8 characters.",
     "rateLimited": "Too many attempts. Please wait a moment and try again.",
-    "unknown": "Something went wrong. Please try again."
+    "unknown": "Something went wrong. Please try again.",
+    "unauthorized": "Please sign in to continue."
+  },
+  "organization": {
+    "nameTooShort": "Organization name is too short.",
+    "nameTooLong": "Organization name is too long.",
+    "slugTaken": "That web address is already taken. Choose another.",
+    "createFailed": "Could not create your workspace. Please try again.",
+    "slug": {
+      "tooShort": "Web address must be at least 3 characters.",
+      "tooLong": "Web address must be 48 characters or fewer.",
+      "invalid": "Web address can only use lowercase letters, numbers and single hyphens.",
+      "reserved": "That web address is reserved. Choose another."
+    }
   }
 }

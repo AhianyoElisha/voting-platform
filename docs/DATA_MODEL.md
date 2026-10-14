@@ -1,13 +1,13 @@
 # Data Model (Draft)
 
-Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITECTURE.md`). Money is stored as integer **pesewas**. Timestamps are stored in UTC. All tenant-owned collections carry an indexed `organizationId`. JSON-shaped fields (`brandColors`, `state`, `rawCallback`, `canvasJson`, `metadata`) are string attributes holding serialized JSON, since Appwrite has no JSON attribute type.
+Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITECTURE.md`; the Appwrite CLI now calls them *tables* and *columns*, which is how `appwrite.config.json` spells them). Money is stored as integer **pesewas**. Timestamps are stored in UTC. All tenant-owned collections carry an indexed `organizationId`. JSON-shaped fields (`brandColors`, `state`, `rawCallback`, `canvasJson`, `metadata`) are string attributes holding serialized JSON, since Appwrite has no JSON attribute type.
 
 ## Entities
 
 ### Platform level
-- **User**: id, name, email, phone, passwordHash, isSuperAdmin, createdAt
-- **Organization** (tenant): id, name, slug, logoUrl, brandColors, status (`active` | `suspended`; new organizations start `active`, decided 2026-10-14 (#9); only the super admin suspends), commissionRate (overrides default), createdAt
-- **Membership**: userId, organizationId, role (`owner` | `admin` | `staff` | `designer` | `scanner`)
+- **User**: id (= the Appwrite Auth user id), fullName, email, phone, isSuperAdmin, createdAt. Passwords live in Appwrite Auth, not here. Built 2026-10-14 (`users` table).
+- **Organization** (tenant): id, name, slug (platform-wide unique index), logoUrl, brandColors, status (`active` | `suspended`; new organizations start `active`, decided 2026-10-14 (#9); only the super admin suspends), commissionRate (overrides the platform default; unit and default wait on #2, so it is null for now), createdAt. Built 2026-10-14 (`organizations` table).
+- **Membership**: userId, organizationId, role (`owner` | `admin` | `staff` | `designer` | `scanner`). Unique on (userId, organizationId). The user who creates an organization is its `owner`. Built 2026-10-14 (`memberships` table).
   - Nominees also have a User row (for the nominee portal) but no Membership; their access is through `Nominee.userId` and is limited to their own record.
 
 ### Campaigns

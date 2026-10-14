@@ -1,6 +1,6 @@
 # Appwrite Functions
 
-One folder per function, Node 22 runtime, registered in `appwrite.config.json` and deployed with `appwrite push functions` (same layout as pickLT's `functions/`).
+One folder per function, Node 22 runtime, registered in `appwrite.config.json` and deployed with `appwrite push functions` (same layout as pickLT's `functions/`). The database schema lives in the same file under `tablesDB` and `tables` and is pushed with `appwrite push tables`.
 
 Functions own the **writes that must be atomic or must never run in the browser**: confirming a payment and creating its vote or ticket in one transaction, granting free votes with their audit entry, rendering flyers, reconciling stale payments on a schedule. Reads and auth stay in Next.js route handlers. See `docs/ARCHITECTURE.md`, "Reads vs writes".
 
