@@ -34,7 +34,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ## 5. Core features (MVP candidates)
 
 ### 5.1 Organizer workspace
-- Sign up and create an organization.
+- Sign up and create an organization. Self-serve: the workspace is active immediately, with no super-admin approval step (decided 2026-10-14, see DECISIONS). The super admin can suspend an organization later.
 - Branded public page (logo, colours). Custom subdomain is an open question.
 - Invite team members.
 

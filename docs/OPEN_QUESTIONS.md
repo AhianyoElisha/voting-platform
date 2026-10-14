@@ -11,7 +11,7 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 6. **WhatsApp or Telegram voting:** later?
 7. **Free voting** (no payment) for some events?
 8. **Card payments** in addition to MoMo?
-9. **Organizer onboarding:** self-serve sign-up, or approval by the super admin first?
+9. ~~**Organizer onboarding:** self-serve sign-up, or approval by the super admin first?~~ Settled 2026-10-14: self-serve, organizations start `active`. See DECISIONS.
 10. **Partner arrangement** with the sales partner (revenue share, access level in the system).
 
 ## USSD and payments

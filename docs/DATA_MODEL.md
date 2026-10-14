@@ -6,7 +6,7 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 
 ### Platform level
 - **User**: id, name, email, phone, passwordHash, isSuperAdmin, createdAt
-- **Organization** (tenant): id, name, slug, logoUrl, brandColors, status (pending/active/suspended), commissionRate (overrides default), createdAt
+- **Organization** (tenant): id, name, slug, logoUrl, brandColors, status (`active` | `suspended`; new organizations start `active`, decided 2026-10-14 (#9); only the super admin suspends), commissionRate (overrides default), createdAt
 - **Membership**: userId, organizationId, role (`owner` | `admin` | `staff` | `designer` | `scanner`)
   - Nominees also have a User row (for the nominee portal) but no Membership; their access is through `Nominee.userId` and is limited to their own record.
 
