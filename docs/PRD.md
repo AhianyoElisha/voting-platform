@@ -56,7 +56,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - An organizer can run an event in **rounds** (e.g. round 1, round 2, final).
 - When a round closes, its votes are **frozen and saved to that round**. The next round starts every nominee at **zero**.
 - The organizer controls which nominees advance to the next round.
-- After the final round, the organizer can generate a **cumulative report**: total votes per nominee across all rounds, per category, exportable as **PDF**.
+- After the final round, the organizer can generate a **cumulative report**: total votes per nominee across all rounds, per category, exportable as **PDF**. *Built 2026-10-14 as the superset of the formats in #35: per category and per nominee, one column per round, paid and free split, morale flag, organizer name and logo, and a "provisional" note while any round is open. Available at any time from the event page.*
 - Events without rounds behave as a single round.
 
 ### 5.3 Voting: two independent paths, one tally

@@ -576,5 +576,14 @@
       "wrongEvent": "Ticket for a different event"
     },
     "usedAt": "at {{time}}"
+  },
+  "report": {
+    "download": "Download cumulative report (PDF)",
+    "provisional": "Provisional: a round is still open.",
+    "final": "Final: every round is closed.",
+    "cumulativeTitle": "Cumulative across rounds",
+    "paid": "Paid",
+    "free": "Free",
+    "total": "Total"
   }
 }

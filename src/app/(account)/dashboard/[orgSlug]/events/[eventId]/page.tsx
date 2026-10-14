@@ -10,6 +10,7 @@ import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
 import { listCategories, listNominees } from '@/lib/nominees-server'
 import { resolveWorkspace } from '@/lib/page-tenant'
+import { loadCumulativeReport } from '@/lib/report/data'
 import { listRounds } from '@/lib/rounds-server'
 import { canDesign, canManage } from '@/lib/tenant'
 import { canScan } from '@/lib/tickets/scan-server'
@@ -51,6 +52,7 @@ export default async function EventDetailPage({ params }: Props) {
     ticketFigures(ctx, eventId),
   ])
   const tierName = new Map(tiers.map((tier) => [tier.$id, tier.name]))
+  const { report } = await loadCumulativeReport(ctx, eventId)
   const flyerByNominee = new Map(flyers.map(({ flyer, nominee }) => [nominee.$id, flyer]))
   const categoryName = new Map(categories.map((c) => [c.$id, c.name]))
   const manager = canManage(ctx.role)
@@ -126,6 +128,71 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           ))}
         </dl>
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href={`/api/orgs/${organization.$id}/events/${event.$id}/report.pdf`}
+            className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-700"
+          >
+            {t('web:report.download')}
+          </a>
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            {report.provisional ? t('web:report.provisional') : t('web:report.final')}
+          </span>
+        </div>
+        {rounds.length > 1 && (
+          <div className="space-y-4">
+            <h3 className="font-medium text-neutral-900 dark:text-white">{t('web:report.cumulativeTitle')}</h3>
+            {report.categories.map((category) => (
+              <div
+                key={category.categoryId}
+                className="overflow-x-auto rounded-2xl border border-neutral-200 dark:border-neutral-700"
+              >
+                <div className="border-b border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-900 dark:border-neutral-700 dark:text-white">
+                  {category.name}
+                </div>
+                <table className="w-full text-sm">
+                  <thead className="text-left text-xs text-neutral-500 uppercase dark:text-neutral-400">
+                    <tr>
+                      <th className="px-3 py-2">#</th>
+                      <th className="px-3 py-2">{t('web:events.nominees.name')}</th>
+                      {report.rounds.map((r) => (
+                        <th key={r.id} className="px-3 py-2 text-right">
+                          {r.name}
+                        </th>
+                      ))}
+                      <th className="px-3 py-2 text-right">{t('web:report.paid')}</th>
+                      <th className="px-3 py-2 text-right">{t('web:report.free')}</th>
+                      <th className="px-3 py-2 text-right">{t('web:report.total')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
+                    {category.nominees.map((row) => (
+                      <tr key={row.nomineeId}>
+                        <td className="px-3 py-2 text-neutral-500">{row.rank}</td>
+                        <td className="px-3 py-2 text-neutral-900 dark:text-white">
+                          {row.name}
+                          {row.isMorale && (
+                            <span className="ml-2 text-xs text-amber-600">{t('web:events.nominees.moraleBadge')}</span>
+                          )}
+                        </td>
+                        {row.perRound.map((v, i) => (
+                          <td key={report.rounds[i].id} className="px-3 py-2 text-right">
+                            {v === null ? '—' : v}
+                          </td>
+                        ))}
+                        <td className="px-3 py-2 text-right">{row.paid}</td>
+                        <td className="px-3 py-2 text-right">{row.free}</td>
+                        <td className="px-3 py-2 text-right font-semibold text-neutral-900 dark:text-white">
+                          {row.total}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+        )}
         {tallies.map(({ round, rows }) => (
           <div key={round.$id} className="rounded-2xl border border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">

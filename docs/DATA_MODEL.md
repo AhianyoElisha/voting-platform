@@ -61,5 +61,6 @@ Nominee 1–* GeneratedFlyer
 - Free votes require `grantedBy`, are only creatable by organizer admins or super admins, and always write an AuditLog entry in the same transaction.
 - A Vote's `roundId` must be the event's currently live round at the time of creation.
 - Once a Round is `closed`, its Votes and RoundEntry tallies are immutable.
+- The cumulative report (`src/lib/report/`) sums Vote rows per nominee per round and then across rounds; each vote belongs to one round, so nothing is counted twice, and the cached RoundEntry tallies are not used for it.
 - `Ticket.qrToken` is unique and signed (`<id>.<HMAC-SHA256(TICKET_SECRET, id)>`); scanning is an atomic `valid → used` transition (the `ticket_scans` row with the ticket's id) so a ticket can't be used twice. Payment `roundId` is null for ticket payments; `tierId` and `payerName` were added for them.
 - `Nominee.code` has a platform-wide unique index (not per event or per organization), so a code entered over USSD resolves to exactly one nominee without an event code.
