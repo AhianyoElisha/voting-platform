@@ -11,10 +11,10 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
   - Nominees also have a User row (for the nominee portal) but no Membership; their access is through `Nominee.userId` and is limited to their own record.
 
 ### Campaigns
-- **Event**: id, organizationId, title, slug, description, coverImageUrl, eventCode (short, for USSD), votePrice (pesewas), startsAt, endsAt, status (`draft` | `scheduled` | `live` | `paused` | `closed`), resultsVisibility (`hidden` | `ranking` | `percentage` | `count`), resultsPublishedAt
+- **Event**: id, organizationId, title, slug, description, coverImageUrl, eventCode (short, for the USSD ticket branch only; voting uses the nominee code alone), votePrice (pesewas), startsAt, endsAt, status (`draft` | `scheduled` | `live` | `paused` | `closed`), resultsVisibility (`hidden` | `ranking` | `percentage` | `count`), resultsPublishedAt
 - **Round**: id, eventId, organizationId, number, name, startsAt, endsAt, status (`pending` | `live` | `closed`). Every event has at least one round; events "without rounds" have exactly one.
 - **Category**: id, eventId, organizationId, name, order
-- **Nominee**: id, categoryId, eventId, organizationId, name, code (short, unique within its scope; see OPEN_QUESTIONS), photoUrl, bio, status, **isMorale** (bool, default false), userId (nullable; the nominee's portal login), profileCompletedAt
+- **Nominee**: id, categoryId, eventId, organizationId, name, code (short, unique across the whole platform; decided 2026-10-14, see DECISIONS), photoUrl, bio, status, **isMorale** (bool, default false), userId (nullable; the nominee's portal login), profileCompletedAt
 - **RoundEntry**: roundId, nomineeId, voteCount (cached). Which nominees are in which round, and their frozen tally once the round closes.
 
 ### Payments and votes
@@ -62,4 +62,4 @@ Nominee 1–* GeneratedFlyer
 - A Vote's `roundId` must be the event's currently live round at the time of creation.
 - Once a Round is `closed`, its Votes and RoundEntry tallies are immutable.
 - `Ticket.qrToken` is unique; scanning is an atomic `valid → used` transition so a ticket can't be used twice.
-- Nominee code uniqueness is enforced by a unique index within the chosen scope.
+- `Nominee.code` has a platform-wide unique index (not per event or per organization), so a code entered over USSD resolves to exactly one nominee without an event code.

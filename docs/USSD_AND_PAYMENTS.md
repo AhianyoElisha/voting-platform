@@ -4,7 +4,7 @@
 - Voting is **paid**.
 - Voters can use **web** or **USSD only**. Both paths are independent and feed the same tally.
 - USSD works without a smartphone or data, which is essential for reaching everyone.
-- Each nominee has a short code used on both paths.
+- Each nominee has a short code, unique across the platform, used on both paths.
 
 ## How USSD works (background)
 We don't run a USSD gateway ourselves. An aggregator provides a shortcode (or an extension of a shared code) and forwards each step of a session to our webhook. We reply with the next menu text. Candidates in Ghana include Hubtel, Nsano and Arkesel; **the provider is TBD**.
@@ -55,7 +55,7 @@ Considerations:
 - USSD sessions time out after roughly 60–180 seconds, so keep menus short.
 - The MoMo approval prompt arrives outside the USSD session. The vote is counted only when the payment callback confirms it.
 - Send an SMS receipt after a successful vote (cost and provider TBD).
-- Code scheme: either one shared shortcode with platform-wide unique nominee codes, or an event code followed by a nominee code (see OPEN_QUESTIONS).
+- Code scheme (decided 2026-10-14, #12): one shared shortcode with **platform-wide unique nominee codes**. Voting never asks for an event code. The ticket branch still uses the event code (`Event.eventCode`), because tickets belong to an event rather than a nominee.
 
 ## Payment rules (non-negotiable)
 

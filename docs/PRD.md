@@ -42,7 +42,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - Create an event (voting campaign) with start and end times and a price per vote.
 - Add categories (e.g. "Miss Social Science", "Most Influential").
 - Add nominees with a photo, name, category and optional bio.
-- Each nominee gets a **short unique code** used on both the web and USSD (scheme: see OPEN_QUESTIONS).
+- Each nominee gets a **short code that is unique across the whole platform**, used on both the web and USSD. A USSD voter enters only this code (decided 2026-10-14, see DECISIONS).
 - Open, close, pause and publish events.
 - The organizer admin can nominate contestants directly (no public nomination needed).
 
