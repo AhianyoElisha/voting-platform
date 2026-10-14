@@ -282,3 +282,24 @@ export interface TicketScanDoc extends TenantDoc {
   ticketId: string
   scannedBy: string
 }
+
+// ─── Payouts (PRD 5.6) ────────────────────────────────────────
+
+export type PayoutStatus = 'requested' | 'approved' | 'paid' | 'rejected'
+export type PayoutDestination =
+  | { kind: 'momo'; phone: string; name: string }
+  | { kind: 'bank'; bankName: string; accountNumber: string; accountName: string }
+
+export interface PayoutDoc extends TenantDoc {
+  /** Pesewas. */
+  amount: number
+  destinationKind: 'momo' | 'bank'
+  /** Serialized `PayoutDestination`. */
+  destination: string
+  status: PayoutStatus
+  requestedBy: string
+  decidedBy: string | null
+  note: string | null
+  decidedAt: string | null
+  paidAt: string | null
+}

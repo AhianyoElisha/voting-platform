@@ -90,6 +90,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
                 >
                   {t('web:dashboard.manageEvents')}
                 </Link>
+                <Link
+                  href={`/dashboard/${organization.slug}/payouts`}
+
+                  className="mt-4 ml-4 inline-block text-sm font-medium text-primary-600 underline dark:text-primary-400"
+                >
+                  {t('web:dashboard.payouts')}
+                </Link>
               </li>
             ))}
           </ul>

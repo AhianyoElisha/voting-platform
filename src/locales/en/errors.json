@@ -149,5 +149,14 @@
     "keyInvalid": "Please reload the page and try again.",
     "wrongEvent": "Not found.",
     "roundClosed": "The round closed while granting; nothing was granted."
+  },
+  "payout": {
+    "amountInvalid": "Enter an amount in cedis, e.g. 100.00.",
+    "belowMinimum": "That is below the minimum payout.",
+    "insufficient": "Not enough available balance for that amount.",
+    "destinationInvalid": "Check the payout destination details.",
+    "badTransition": "This payout can no longer be changed that way.",
+    "keyInvalid": "Please reload the page and try again.",
+    "busy": "Another payout for this organizer is being processed. Try again in a moment."
   }
 }

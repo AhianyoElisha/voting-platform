@@ -105,10 +105,10 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ### 5.6 Payments and payouts
 - Votes are paid with mobile money via Hubtel (decided 2026-10-14, see DECISIONS). Hubtel also provides the USSD shortcode.
 - The platform takes a 10% commission on the gross paid amount; 90% goes to the organizer's balance. Commission only, no subscription or per-event fee (decided 2026-10-14, see DECISIONS). The super admin can set a different rate for an organization.
-- Organizers request payouts; the super admin approves them (flow TBD, #3). *Not built; the ledger accumulates each organizer's net share.*
+- Organizers request payouts; the super admin approves them (flow TBD, #3). *Built 2026-10-14 as the conservative reading of #3: manual approval, the money is transferred outside the platform, and marking it paid is what debits the ledger. A request reserves its amount; money out can never exceed settled credits. Minimum from `PAYOUT_MIN_PESEWAS`, none until set. Destination: MoMo or bank.*
 
 ### 5.7 Super admin console
-*Not built. The `(admin)` route group is a placeholder; the per-organization switches it would control (commission override, morale candidates) exist as columns.*
+*Partly built 2026-10-14: `/admin` handles payouts for a user whose `users.isSuperAdmin` is set (in the Appwrite console). Organization management, fee overrides and the per-organization switches are still columns without a UI.*
 - Manage organizations, events, fees, templates and payouts.
 - View transactions and audit logs, and handle disputes and refunds.
 

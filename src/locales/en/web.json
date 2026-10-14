@@ -184,7 +184,8 @@
       "submitting": "Creating…",
       "another": "Create another workspace"
     },
-    "manageEvents": "Manage events"
+    "manageEvents": "Manage events",
+    "payouts": "Payouts"
   },
   "events": {
     "list": {
@@ -608,5 +609,69 @@
     "done_other": "{{count}} free votes granted to {{name}}.",
     "recent_one": "{{count}} free-vote grant",
     "recent_other": "{{count}} free-vote grants"
+  },
+  "payouts": {
+    "title": "Payouts",
+    "balance": {
+      "credits": "Earned",
+      "paidOut": "Paid out",
+      "reserved": "Requested",
+      "available": "Available"
+    },
+    "request": "Request a payout",
+    "howItWorks": "Your share of every confirmed vote and ticket is credited here. Request a payout to your mobile money number or bank account; the platform reviews it and sends the money.",
+    "available": "Available now: {{amount}}",
+    "form": {
+      "amount": "Amount (GHS)",
+      "momo": "Mobile money",
+      "bank": "Bank account",
+      "phone": "MoMo number",
+      "name": "Account name",
+      "bankName": "Bank",
+      "accountNumber": "Account number",
+      "accountName": "Account name",
+      "submit": "Request payout",
+      "submitting": "Requesting…"
+    },
+    "requested": "Payout requested. You will see it change to approved and then paid.",
+    "history": "Payout history",
+    "empty": "No payouts yet.",
+    "cancel": "Cancel request",
+    "col": {
+      "requested": "Requested",
+      "amount": "Amount",
+      "destination": "Destination",
+      "status": "Status"
+    },
+    "status": {
+      "requested": "Requested",
+      "approved": "Approved, being paid",
+      "paid": "Paid",
+      "rejected": "Rejected"
+    },
+    "ledger": "Ledger",
+    "entry": {
+      "vote_credit": "Votes",
+      "ticket_credit": "Tickets",
+      "payout_debit": "Payout",
+      "adjustment": "Adjustment"
+    }
+  },
+  "admin": {
+    "title": "Admin console",
+    "payouts": {
+      "intro": "Payout requests from every organizer. Approve, transfer the money by MoMo or bank, then mark it paid. Marking paid is what debits the organizer.",
+      "pending": "Pending",
+      "settled": "Settled",
+      "none": "Nothing here.",
+      "col": {
+        "org": "Organizer"
+      },
+      "note": "Note or transfer reference",
+      "approve": "Approve",
+      "reject": "Reject",
+      "markPaid": "Mark paid",
+      "paidConfirm": "Mark this payout as paid? Only do this after the money has been sent. This debits the organizer and cannot be undone."
+    }
   }
 }

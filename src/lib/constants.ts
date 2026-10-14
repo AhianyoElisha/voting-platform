@@ -26,6 +26,8 @@ export const APPWRITE = {
     TICKET_TIERS: 'ticket_tiers',
     TICKETS: 'tickets',
     TICKET_SCANS: 'ticket_scans',
+    PAYOUTS: 'payouts',
+    PAYOUT_LOCKS: 'payout_locks',
   },
 
   BUCKETS: {
@@ -64,3 +66,13 @@ export const VOTE_QUANTITY_MAX_PLACEHOLDER = 10_000
 
 /** PLACEHOLDER like #16: a technical ceiling on tickets per purchase. */
 export const TICKET_QUANTITY_MAX_PLACEHOLDER = 20
+
+/**
+ * PLACEHOLDER for OPEN_QUESTIONS #3: minimum payout in pesewas, from env, no
+ * default (none until set).
+ */
+export function payoutMinimumPesewas(): number {
+  const raw = process.env.PAYOUT_MIN_PESEWAS
+  const n = raw ? Number(raw) : 0
+  return Number.isSafeInteger(n) && n > 0 ? n : 0
+}

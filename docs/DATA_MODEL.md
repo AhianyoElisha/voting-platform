@@ -34,8 +34,8 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
   - The QR code encodes a signed token (e.g. HMAC of ticket id), never the bare id, so tickets can't be forged by guessing ids.
 
 ### Money out
-- **LedgerEntry**: organizationId, type (`vote_credit` | `ticket_credit` | `payout_debit` | `adjustment`), amount (pesewas, debits negative), paymentId (unique where set, id `l_<paymentId>`), note. The wallet balance is the sum. Built 2026-10-14 (`ledger_entries` table).
-- **Payout**: id, organizationId, amount, destination (MoMo number or bank), status (`requested` | `approved` | `paid` | `rejected`), requestedBy, approvedBy, timestamps
+- **LedgerEntry**: organizationId, type (`vote_credit` | `ticket_credit` | `payout_debit` | `adjustment`), amount (pesewas, debits negative), paymentId (unique where set, id `l_<paymentId>`), note. The wallet balance is the sum; available = credits + debits − payouts still requested or approved (`src/lib/ledger-server.ts`). Built 2026-10-14 (`ledger_entries` table).
+- **Payout**: id (`po_<hash(organizationId, idempotencyKey)>`), organizationId, amount (pesewas), destinationKind (`momo` | `bank`), destination (JSON), status (`requested` | `approved` | `paid` | `rejected`), requestedBy, decidedBy, note, decidedAt, paidAt. Built 2026-10-14 (`payouts` table). A request reserves its amount against the available balance; `paid` writes the `payout_debit` ledger row (id `l_po_<id>`, `paymentId = payout:<id>`) in the same transaction and re-checks that settled credits cover it, so money out never exceeds money in.
 
 ### Flyer engine
 - **Font**: id, organizationId (null = platform-wide), family, fileId, weight, style. TTF/OTF only. Built 2026-10-14 (`fonts` table, `fonts` bucket).
