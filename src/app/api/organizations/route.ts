@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 
 /**
  * GET  /api/organizations  → the caller's workspaces (membership + organization)
- * POST /api/organizations  → self-serve workspace creation (PRD 5.1, #9)
+ * POST /api/organizations  → self-serve workspace creation (PRD 5.1, decision #9)
  *
  * Both require the signed session cookie. The owner of the new organization is
  * the session user; the body only carries `name` and an optional `slug`.

@@ -19,13 +19,14 @@ Product name: **TBD** (placeholder in code: `voteapp`, so it's easy to rename).
 | File | What it covers |
 |---|---|
 | `docs/PRD.md` | Product requirements, users, features, scope |
-| `docs/ARCHITECTURE.md` | Proposed system design and tech stack |
+| `docs/ARCHITECTURE.md` | System design and tech stack |
 | `docs/DATA_MODEL.md` | Entities and relationships |
 | `docs/FLYER_ENGINE.md` | Template editor and flyer generation (the differentiator) |
 | `docs/USSD_AND_PAYMENTS.md` | USSD flow, payment confirmation, vote integrity |
 | `docs/COMPETITIVE_ANALYSIS.md` | Competitors and how we beat them |
 | `docs/OPEN_QUESTIONS.md` | **Decisions not yet made. Check before building anything they touch.** |
 | `docs/DECISIONS.md` | Log of decisions already made |
+| `docs/HUBTEL_SMOKE_TEST.md` | Runbook for the first real payment and USSD session on Hubtel |
 
 ## Project skills
 

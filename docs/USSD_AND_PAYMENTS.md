@@ -9,7 +9,7 @@
 ## How USSD works (background)
 We don't run a USSD gateway ourselves. An aggregator provides a shortcode (or an extension of a shared code) and forwards each step of a session to our webhook. We reply with the next menu text. **The aggregator is Hubtel** for both USSD and mobile-money payments (decided 2026-10-14, #11). Whether the shortcode is dedicated or shared, and the fees, are confirmed during Hubtel onboarding.
 
-## Proposed USSD flow (draft)
+## USSD flow (built; the ticket branch below is still a draft, #31)
 
 ```
 *XXX*YY#
@@ -31,7 +31,7 @@ Pay GHS 10.00 for 10 votes for Ama Owusu?
 A MoMo prompt has been sent. Approve with your PIN.
 ```
 
-Ticket branch (draft):
+Ticket branch (draft, not built; the menu answers "coming soon" until #31 is settled):
 
 ```
 > 2

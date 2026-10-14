@@ -1,4 +1,6 @@
-# Data Model (Draft)
+# Data Model
+
+Status: **built** as of 2026-10-14; every entity below except Payout has a table in `appwrite.config.json`. Each entry says when it was built.
 
 Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITECTURE.md`; the Appwrite CLI now calls them *tables* and *columns*, which is how `appwrite.config.json` spells them). Money is stored as integer **pesewas**. Timestamps are stored in UTC. All tenant-owned collections carry an indexed `organizationId`. JSON-shaped fields (`brandColors`, `state`, `rawCallback`, `canvasJson`, `metadata`) are string attributes holding serialized JSON, since Appwrite has no JSON attribute type.
 

@@ -21,7 +21,7 @@ pickLT is a Next.js 15 booking and rental app on Appwrite, grown from the Chisfi
 | Images | Sharp. `next/image` with the Appwrite endpoint in `remotePatterns`. |
 | Monitoring | Sentry (`@sentry/nextjs`) with the `/monitoring` tunnel route. |
 | Tests | Vitest, node environment, `src/**/__tests__/**/*.test.ts`. |
-| Tooling | Prettier (no semicolons, single quotes, width 120, organize-imports and tailwind plugins), ESLint `next/core-web-vitals`, `.npmrc` with `legacy-peer-deps=true`. |
+| Tooling | Prettier (no semicolons, single quotes, width 120, organize-imports and tailwind plugins), ESLint `next/core-web-vitals`, `.npmrc` with `legacy-peer-deps=true`. Development-only aids: the `mock` payment provider with its confirm panel on the vote and ticket pages, and the USSD simulator at `/dev/ussd`; both refuse to run in production. |
 | Hosting | Same as pickLT (decided 2026-10-14, #24): the Next.js app on Vercel, Appwrite Cloud in Frankfurt (`fra.cloud.appwrite.io`, already the default in `appwrite.config.json` and `.env.example`). Scheduled jobs (payment reconciliation) run as Vercel cron jobs declared in `vercel.json`, authenticated with Vercel's `CRON_SECRET`. Vercel functions have no fixed egress IP by default; Hubtel's status API allowlist needs one (a Vercel static-IP add-on or a small relay), see `docs/HUBTEL_SMOKE_TEST.md`. |
 
 Not carried over: Mapbox and Google Maps, LiveKit calls, Stripe, the moving and vehicle domain, the blog and listing demo pages.
@@ -33,7 +33,7 @@ Added for this product (not in pickLT): Fabric.js for the flyer editor and rende
 ```
 src/app/(app)       public site: organizer pages, events, nominees, vote, tickets
 src/app/(auth)      login, signup, forgot-password
-src/app/(account)   organizer dashboard, settings, team, payouts
+src/app/(account)   organizer dashboard (events, nominees, flyers, tickets, report); settings, team and payouts not built
 src/app/(nominee)   nominee portal (new route group)
 src/app/(admin)     super admin console (new route group)
 src/app/api         route handlers: reads, auth, webhooks (ussd, payments)
@@ -87,7 +87,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 
 ## Real-time results
 
-Appwrite Realtime subscription on the tally documents for organizer dashboards; short-interval polling of a cached tally for public pages. Websockets of our own only if needed.
+Not built. Every page renders on request; the organizer refreshes to see new votes and the public page shows the tally as of the request. Appwrite Realtime for organizer dashboards and short-interval polling for public pages remain the plan once #26 is settled.
 
 ## Reliability notes
 

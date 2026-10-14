@@ -36,7 +36,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ### 5.1 Organizer workspace
 - Sign up and create an organization. Self-serve: the workspace is active immediately, with no super-admin approval step (decided 2026-10-14, see DECISIONS). The super admin can suspend an organization later.
 - Branded public page (logo, colours). Custom subdomain is an open question.
-- Invite team members.
+- Invite team members. *Not built; roles exist in the data model and are enforced server-side, but there is no invitation flow yet.*
 
 ### 5.2 Events, categories and nominees
 - Create an event (voting campaign) with start and end times and a price per vote.
@@ -105,9 +105,10 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ### 5.6 Payments and payouts
 - Votes are paid with mobile money via Hubtel (decided 2026-10-14, see DECISIONS). Hubtel also provides the USSD shortcode.
 - The platform takes a 10% commission on the gross paid amount; 90% goes to the organizer's balance. Commission only, no subscription or per-event fee (decided 2026-10-14, see DECISIONS). The super admin can set a different rate for an organization.
-- Organizers request payouts; the super admin approves them (flow TBD).
+- Organizers request payouts; the super admin approves them (flow TBD, #3). *Not built; the ledger accumulates each organizer's net share.*
 
 ### 5.7 Super admin console
+*Not built. The `(admin)` route group is a placeholder; the per-organization switches it would control (commission override, morale candidates) exist as columns.*
 - Manage organizations, events, fees, templates and payouts.
 - View transactions and audit logs, and handle disputes and refunds.
 
