@@ -45,6 +45,15 @@ export function moraleCandidatesEnabledOnPlatform(): boolean {
   return process.env.MORALE_CANDIDATES_ENABLED !== 'false'
 }
 
+/** Same for free votes: on unless `FREE_VOTES_ENABLED` is exactly "false". */
+export function freeVotesEnabledOnPlatform(): boolean {
+  return process.env.FREE_VOTES_ENABLED !== 'false'
+}
+
+/** Reason text on a free-vote grant (PRD 5.4a). */
+export const FREE_VOTE_REASON_MIN = 3
+export const FREE_VOTE_REASON_MAX = 500
+
 /**
  * PLACEHOLDER for OPEN_QUESTIONS #16 (minimum and maximum votes per
  * transaction). The minimum is 1 by nature; the ceiling here is a technical

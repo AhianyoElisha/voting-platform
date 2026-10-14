@@ -32,6 +32,7 @@ export async function POST(req: Request, { params }: Params) {
       endsAt: str(body.endsAt),
       resultsVisibility: str(body.resultsVisibility),
       moraleCandidatesEnabled: body.moraleCandidatesEnabled === true,
+      freeVotesEnabled: body.freeVotesEnabled === true,
     })
     return NextResponse.json(result, { status: 201 })
   } catch (err) {

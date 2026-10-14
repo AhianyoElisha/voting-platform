@@ -59,6 +59,7 @@ export interface CreateEventInput {
   /** No default on purpose: OPEN_QUESTIONS #26. The organizer must choose. */
   resultsVisibility: string
   moraleCandidatesEnabled?: boolean
+  freeVotesEnabled?: boolean
 }
 
 export function normalizeEventInput(input: CreateEventInput) {
@@ -101,6 +102,7 @@ export function normalizeEventInput(input: CreateEventInput) {
     endsAt: endsAt.toISOString(),
     resultsVisibility: input.resultsVisibility as ResultsVisibility,
     moraleCandidatesEnabled: input.moraleCandidatesEnabled === true,
+    freeVotesEnabled: input.freeVotesEnabled === true,
   }
 }
 

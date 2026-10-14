@@ -1,11 +1,14 @@
 import { AddCategoryForm, AddNomineeForm, EventStatusControls, RoundControls } from '@/components/events/EventControls'
+import FreeVotesControl from '@/components/events/FreeVotesControl'
 import InviteButton from '@/components/events/InviteButton'
 import FlyerPanel from '@/components/flyer/FlyerPanel'
 import TiersPanel from '@/components/tickets/TiersPanel'
+import { freeVotesEnabledOnPlatform } from '@/lib/constants'
 import { TenantMismatchError } from '@/lib/db'
 import { getEvent } from '@/lib/events-server'
 import { flyerUrl, flyersForEvent } from '@/lib/flyer/generate-server'
 import { listTemplates } from '@/lib/flyer/templates-server'
+import { canGrantFreeVotes, listFreeVoteGrants } from '@/lib/free-votes-server'
 import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
 import { listCategories, listNominees } from '@/lib/nominees-server'
@@ -53,6 +56,14 @@ export default async function EventDetailPage({ params }: Props) {
   ])
   const tierName = new Map(tiers.map((tier) => [tier.$id, tier.name]))
   const { report } = await loadCumulativeReport(ctx, eventId)
+  const grants = await listFreeVoteGrants(ctx, eventId)
+  const nomineeName = new Map(nominees.map((n) => [n.$id, n.name]))
+  const freeVotesOn = canGrantFreeVotes({
+    platformEnabled: freeVotesEnabledOnPlatform(),
+    organizationEnabled: organization.freeVotesEnabled === true,
+    eventEnabled: event.freeVotesEnabled === true,
+    role: ctx.role,
+  })
   const flyerByNominee = new Map(flyers.map(({ flyer, nominee }) => [nominee.$id, flyer]))
   const categoryName = new Map(categories.map((c) => [c.$id, c.name]))
   const manager = canManage(ctx.role)
@@ -193,6 +204,21 @@ export default async function EventDetailPage({ params }: Props) {
             ))}
           </div>
         )}
+        {grants.length > 0 && (
+          <details>
+            <summary className="cursor-pointer text-sm font-medium text-amber-700 dark:text-amber-300">
+              {t('web:freeVotes.recent', { count: grants.length })}
+            </summary>
+            <ul className="mt-2 space-y-1 text-xs text-neutral-600 dark:text-neutral-300">
+              {grants.map((g) => (
+                <li key={g.$id}>
+                  {new Date(g.$createdAt).toLocaleString('en-GB', { timeZone: 'Africa/Accra' })} · {g.quantity} →{' '}
+                  {nomineeName.get(g.nomineeId) ?? g.nomineeId} · {g.reason}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         {tallies.map(({ round, rows }) => (
           <div key={round.$id} className="rounded-2xl border border-neutral-200 dark:border-neutral-700">
             <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
@@ -208,7 +234,7 @@ export default async function EventDetailPage({ params }: Props) {
             ) : (
               <table className="w-full text-sm">
                 <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
-                  {rows.map(({ nominee, entry }, i) => (
+                  {rows.map(({ nominee, entry, free }, i) => (
                     <tr key={entry.$id}>
                       <td className="w-10 px-4 py-2 text-neutral-500">{i + 1}</td>
                       <td className="px-4 py-2 text-neutral-900 dark:text-white">
@@ -218,6 +244,9 @@ export default async function EventDetailPage({ params }: Props) {
                         )}
                       </td>
                       <td className="px-4 py-2 font-mono text-neutral-500">{nominee.code}</td>
+                      <td className="px-4 py-2 text-right text-xs text-amber-700 dark:text-amber-300">
+                        {free > 0 ? t('web:publicEvent.free', { count: free }) : ''}
+                      </td>
                       <td className="px-4 py-2 text-right font-semibold text-neutral-900 dark:text-white">
                         {entry.voteCount}
                       </td>
@@ -390,6 +419,16 @@ export default async function EventDetailPage({ params }: Props) {
                         </td>
                         <td className="px-4 py-2">
                           {n.isMorale && <Badge color="amber">{t('web:events.nominees.moraleBadge')}</Badge>}
+                          {freeVotesOn && open && (
+                            <div className="mt-1">
+                              <FreeVotesControl
+                                orgId={organization.$id}
+                                eventId={event.$id}
+                                nomineeId={n.$id}
+                                nomineeName={n.name}
+                              />
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

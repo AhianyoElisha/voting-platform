@@ -30,6 +30,7 @@ export default function CreateEventForm({ orgId, orgSlug }: { orgId: string; org
   const [endsAt, setEndsAt] = useState('')
   const [visibility, setVisibility] = useState('')
   const [morale, setMorale] = useState(false)
+  const [freeVotes, setFreeVotes] = useState(false)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -47,6 +48,7 @@ export default function CreateEventForm({ orgId, orgSlug }: { orgId: string; org
         endsAt: toIso(endsAt),
         resultsVisibility: visibility,
         moraleCandidatesEnabled: morale,
+        freeVotesEnabled: freeVotes,
       })
       router.push(`/dashboard/${orgSlug}/events/${event.$id}`)
     } catch (err) {
@@ -196,6 +198,19 @@ export default function CreateEventForm({ orgId, orgSlug }: { orgId: string; org
         <span>
           {t('web:events.form.morale.label')}
           <span className={`${helpClass} block`}>{t('web:events.form.morale.helper')}</span>
+        </span>
+      </label>
+
+      <label className="flex items-start gap-3 text-sm text-neutral-700 dark:text-neutral-300">
+        <input
+          type="checkbox"
+          checked={freeVotes}
+          onChange={(e) => setFreeVotes(e.target.checked)}
+          className="mt-1 rounded border-neutral-300"
+        />
+        <span>
+          {t('web:events.form.freeVotes.label')}
+          <span className={`${helpClass} block`}>{t('web:events.form.freeVotes.helper')}</span>
         </span>
       </label>
 

@@ -7,14 +7,17 @@ import type { ResultsVisibility } from './types'
  * `count` shows the numbers. Percentages are integers that sum to 100 by
  * largest remainder, so the page never shows 99% or 101% in total.
  *
- * No paid/free distinction yet: free votes do not exist until the grant flow
- * lands, and how they are shown publicly is OPEN_QUESTIONS #29.
+ * Free votes are never merged into paid ones (decision #29): when a nominee
+ * has any, the shaped row carries them separately for the page to label.
  */
 export interface TallyInput {
   nomineeId: string
   name: string
   categoryId: string
+  /** Total votes, paid plus free. */
   votes: number
+  /** Free votes within `votes` (decision #29: always shown separately). */
+  free?: number
 }
 
 export interface PublicResultRow {
@@ -26,6 +29,8 @@ export interface PublicResultRow {
   votes?: number
   /** Present for `percentage`. */
   percent?: number
+  /** Free votes within the total, present whenever any were granted (shown for `count` and `percentage`). */
+  free?: number
 }
 
 export function shapeResults(rows: TallyInput[], visibility: ResultsVisibility): PublicResultRow[] | null {
@@ -44,6 +49,7 @@ export function shapeResults(rows: TallyInput[], visibility: ResultsVisibility):
       const rank = i > 0 && sorted[i - 1].votes === row.votes ? out[out.length - 1].rank : i + 1
       const shaped: PublicResultRow = { nomineeId: row.nomineeId, name: row.name, categoryId: row.categoryId, rank }
       if (visibility === 'count') shaped.votes = row.votes
+      if (visibility !== 'ranking' && (row.free ?? 0) > 0) shaped.free = row.free
       if (percents) shaped.percent = percents[i]
       out.push(shaped)
     })

@@ -77,7 +77,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 *Requested by the sales partner. Decided 2026-10-14 (see DECISIONS, was #29): the features ship with public disclosure. The organizer opts in per event; the platform and organization switches default to on and the super admin can turn either feature off per organization or platform-wide.*
 
 - The organizer admin can add **morale candidates** to any category: nominees created by the admin to make a category look competitive and encourage real nominees' supporters to buy votes.
-- The admin can cast **free votes** in bulk for any nominee (e.g. 1,000 at once). These are recorded as free votes, never as paid.
+- The admin can cast **free votes** in bulk for any nominee (e.g. 1,000 at once). These are recorded as free votes, never as paid. *Built 2026-10-14: owner or admin, live round required, one transaction with the audit row, idempotent per form submission; public page labels the free share.*
 - Free votes count toward the "free votes" figure on the dashboard and toward the displayed tally.
 - Required safeguards:
   - Morale candidates are flagged as such in the database (`isMorale`), in all admin views and reports, and **labelled on the public results and vote pages**.

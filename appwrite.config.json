@@ -163,6 +163,13 @@
                     "required": false,
                     "array": false,
                     "default": true
+                },
+                {
+                    "key": "freeVotesEnabled",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": true
                 }
             ],
             "indexes": [
@@ -385,6 +392,13 @@
                 },
                 {
                     "key": "moraleCandidatesEnabled",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": false
+                },
+                {
+                    "key": "freeVotesEnabled",
                     "type": "boolean",
                     "required": false,
                     "array": false,

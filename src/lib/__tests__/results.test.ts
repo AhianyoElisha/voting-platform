@@ -37,6 +37,17 @@ describe('shapeResults', () => {
     const out = shapeResults(rows, 'count')!
     expect(out.find((r) => r.name === 'Ama')).toMatchObject({ votes: 50, rank: 1 })
   })
+
+  test('free votes are carried separately for count and percentage, never for ranking (decision #29)', () => {
+    const withFree = rows.map((r) => (r.name === 'Kofi' ? { ...r, free: 12 } : r))
+    expect(shapeResults(withFree, 'count')!.find((r) => r.name === 'Kofi')).toMatchObject({ votes: 30, free: 12 })
+    expect(shapeResults(withFree, 'percentage')!.find((r) => r.name === 'Kofi')).toMatchObject({
+      percent: 27,
+      free: 12,
+    })
+    expect(shapeResults(withFree, 'ranking')!.find((r) => r.name === 'Kofi')!.free).toBeUndefined()
+    expect(shapeResults(withFree, 'count')!.find((r) => r.name === 'Ama')!.free).toBeUndefined()
+  })
 })
 
 describe('largestRemainderPercents', () => {

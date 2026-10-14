@@ -229,7 +229,11 @@
         "helper": "Also needs the platform and workspace switches. Morale candidates are always flagged and audited."
       },
       "submit": "Create event",
-      "submitting": "Creating…"
+      "submitting": "Creating…",
+      "freeVotes": {
+        "label": "Allow free votes in this event",
+        "helper": "Lets owners and admins grant votes without payment. Every grant is audited and shown separately from paid votes on the public page."
+      }
     },
     "visibility": {
       "hidden": "Nothing",
@@ -337,7 +341,10 @@
     "votes_other": "{{count}} votes",
     "notLive": "Voting is not open right now. Check back when the organizer opens it.",
     "morale": "Morale candidate",
-    "moraleHelper": "Added by the organizer to make the category competitive."
+    "moraleHelper": "Added by the organizer to make the category competitive.",
+    "free_one": "{{count}} free",
+    "free_other": "{{count}} free",
+    "freeHelper": "Free votes are granted by the organizer and are shown separately from paid votes."
   },
   "vote": {
     "notLive": "Voting is not open for this event right now.",
@@ -587,5 +594,19 @@
     "paid": "Paid",
     "free": "Free",
     "total": "Total"
+  },
+  "freeVotes": {
+    "grant": "Grant free votes",
+    "title": "Free votes for {{name}}",
+    "quantity": "Number of votes",
+    "reason": "Reason (audited)",
+    "notice": "Shown publicly as free votes, separate from paid votes. Cannot be undone.",
+    "confirm": "Grant",
+    "granting": "Granting…",
+    "cancel": "Cancel",
+    "done_one": "{{count}} free vote granted to {{name}}.",
+    "done_other": "{{count}} free votes granted to {{name}}.",
+    "recent_one": "{{count}} free-vote grant",
+    "recent_other": "{{count}} free-vote grants"
   }
 }

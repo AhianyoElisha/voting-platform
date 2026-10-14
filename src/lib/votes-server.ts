@@ -719,21 +719,36 @@ export async function reconcilePendingPayments(
 export interface RoundTallyRow {
   nominee: Doc<NomineeDoc>
   entry: Doc<RoundEntryDoc>
+  /** Free votes within `entry.voteCount`, from the Vote rows. */
+  free: number
+}
+
+/** Free votes per nominee in a round, from the Vote rows (never the cached tally). */
+export async function freeVotesByNominee(ctx: TenantContext, roundId: string): Promise<Map<string, number>> {
+  const res = await listTenantDocuments<VoteDoc>(ctx, APPWRITE.TABLES.VOTES, [
+    Query.equal('roundId', [roundId]),
+    Query.equal('source', ['free']),
+    Query.limit(5000),
+  ])
+  const out = new Map<string, number>()
+  for (const v of res.documents) out.set(v.nomineeId, (out.get(v.nomineeId) ?? 0) + v.quantity)
+  return out
 }
 
 export async function tallyForRound(ctx: TenantContext, roundId: string): Promise<RoundTallyRow[]> {
-  const [entries, nominees] = await Promise.all([
+  const [entries, nominees, free] = await Promise.all([
     listTenantDocuments<RoundEntryDoc>(ctx, APPWRITE.TABLES.ROUND_ENTRIES, [
       Query.equal('roundId', [roundId]),
       Query.limit(500),
     ]),
     listTenantDocuments<NomineeDoc>(ctx, APPWRITE.TABLES.NOMINEES, [Query.limit(500)]),
+    freeVotesByNominee(ctx, roundId),
   ])
   const byId = new Map(nominees.documents.map((n) => [n.$id, n]))
   return entries.documents
     .flatMap((entry) => {
       const nominee = byId.get(entry.nomineeId)
-      return nominee ? [{ nominee, entry }] : []
+      return nominee ? [{ nominee, entry, free: free.get(entry.nomineeId) ?? 0 }] : []
     })
     .sort((a, b) => b.entry.voteCount - a.entry.voteCount || a.nominee.name.localeCompare(b.nominee.name))
 }

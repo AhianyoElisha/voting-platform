@@ -8,6 +8,7 @@ import { shapeResults } from '@/lib/results'
 import { availableNow } from '@/lib/tickets/purchase-server'
 import { listPublicTiers } from '@/lib/tickets/tiers-server'
 import type { CategoryDoc, EventDoc, NomineeDoc, RoundDoc, RoundEntryDoc } from '@/lib/types'
+import { freeVotesByNominee } from '@/lib/votes-server'
 import { Heading } from '@/shared/Heading'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -65,9 +66,11 @@ export default async function PublicEventPage({ params }: Props) {
       Query.limit(500),
     ])
     const byNominee = new Map(entries.documents.map((e) => [e.nomineeId, e.voteCount]))
+    const freeByNominee = await freeVotesByNominee(ctx, round.$id)
     results = shapeResults(
       nominees.documents.map((n) => ({
         nomineeId: n.$id,
+        free: freeByNominee.get(n.$id) ?? 0,
         name: n.name,
         categoryId: n.categoryId,
         votes: byNominee.get(n.$id) ?? 0,
@@ -136,6 +139,14 @@ export default async function PublicEventPage({ params }: Props) {
                               : r.percent !== undefined
                                 ? `${r.percent}%`
                                 : `#${r.rank}`}
+                            {r.free !== undefined && (
+                              <span
+                                className="ml-1 text-xs font-normal text-amber-700 dark:text-amber-300"
+                                title={t('web:publicEvent.freeHelper')}
+                              >
+                                · {t('web:publicEvent.free', { count: r.free })}
+                              </span>
+                            )}
                           </span>
                         )}
                       </div>
@@ -165,6 +176,10 @@ export default async function PublicEventPage({ params }: Props) {
             mockProvider={process.env.NODE_ENV !== 'production' && isMockProviderActive()}
           />
         </section>
+      )}
+
+      {results?.some((r) => r.free !== undefined) && (
+        <p className="mt-8 text-xs text-neutral-500 dark:text-neutral-400">{t('web:publicEvent.freeHelper')}</p>
       )}
 
       {!live && <p className="mt-10 text-sm text-neutral-500 dark:text-neutral-400">{t('web:publicEvent.notLive')}</p>}

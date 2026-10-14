@@ -39,6 +39,8 @@ export interface OrganizationDoc extends AppwriteDoc {
   commissionRate: number | null
   /** Per-organization switch for morale candidates (PRD 5.4a, #29). Super admin only. */
   moraleCandidatesEnabled: boolean
+  /** Per-organization switch for free votes (PRD 5.4a, #29). Super admin only. */
+  freeVotesEnabled: boolean
 }
 
 export const MEMBERSHIP_ROLES = ['owner', 'admin', 'staff', 'designer', 'scanner'] as const
@@ -74,6 +76,8 @@ export interface EventDoc extends TenantDoc {
   resultsPublishedAt: string | null
   /** Per-event switch for morale candidates (PRD 5.4a, #29). */
   moraleCandidatesEnabled: boolean
+  /** The organizer's per-event opt-in for free votes (PRD 5.4a, #29). */
+  freeVotesEnabled: boolean
 }
 
 export const ROUND_STATUSES = ['pending', 'live', 'closed'] as const
