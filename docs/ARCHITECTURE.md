@@ -22,7 +22,7 @@ pickLT is a Next.js 15 booking and rental app on Appwrite, grown from the Chisfi
 | Monitoring | Sentry (`@sentry/nextjs`) with the `/monitoring` tunnel route. |
 | Tests | Vitest, node environment, `src/**/__tests__/**/*.test.ts`. |
 | Tooling | Prettier (no semicolons, single quotes, width 120, organize-imports and tailwind plugins), ESLint `next/core-web-vitals`, `.npmrc` with `legacy-peer-deps=true`. |
-| Hosting | Same as pickLT (decided 2026-10-14, #24): the Next.js app on Vercel, Appwrite Cloud in Frankfurt (`fra.cloud.appwrite.io`, already the default in `appwrite.config.json` and `.env.example`). Scheduled jobs (payment reconciliation) run as Vercel cron jobs declared in `vercel.json`, not yet added. Vercel functions have no fixed egress IP by default; Hubtel's status API allowlist needs one (a Vercel static-IP add-on or a small relay), see `docs/HUBTEL_SMOKE_TEST.md`. |
+| Hosting | Same as pickLT (decided 2026-10-14, #24): the Next.js app on Vercel, Appwrite Cloud in Frankfurt (`fra.cloud.appwrite.io`, already the default in `appwrite.config.json` and `.env.example`). Scheduled jobs (payment reconciliation) run as Vercel cron jobs declared in `vercel.json`, authenticated with Vercel's `CRON_SECRET`. Vercel functions have no fixed egress IP by default; Hubtel's status API allowlist needs one (a Vercel static-IP add-on or a small relay), see `docs/HUBTEL_SMOKE_TEST.md`. |
 
 Not carried over: Mapbox and Google Maps, LiveKit calls, Stripe, the moving and vehicle domain, the blog and listing demo pages.
 

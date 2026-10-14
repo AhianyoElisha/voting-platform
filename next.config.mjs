@@ -22,7 +22,7 @@ const nextConfig = {
 // Sentry wiring copied from pickLT. Inert until NEXT_PUBLIC_SENTRY_DSN is set;
 // source maps upload only when SENTRY_AUTH_TOKEN is set on the host (never in
 // the repo). Browser reports tunnel through /monitoring on our own domain.
-// Org, project and region follow the hosting decision (OPEN_QUESTIONS #24).
+// Org and project come from the host's env; the app runs on Vercel (decision #24).
 export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT || 'voteapp-web',

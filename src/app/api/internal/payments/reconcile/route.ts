@@ -1,26 +1,18 @@
+import { isAuthorizedJobRequest } from '@/lib/internal-auth'
 import { reconcilePendingPayments } from '@/lib/votes-server'
-import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 
 /**
- * POST /api/internal/payments/reconcile
+ * Payment reconciliation (USSD_AND_PAYMENTS.md rule 5): re-check stale
+ * `pending` payments against the provider so a missed callback never loses
+ * a paid vote or ticket. Safe to run often: settled payments are no-ops.
  *
- * Rule 5: re-check stale `pending` payments against the provider so a missed
- * callback never loses a paid vote. Called by a scheduler with the
- * `x-internal-secret` header (the cron itself is wired once hosting, #24, is
- * decided). Safe to run often: settled payments are idempotent no-ops.
+ * Called by the Vercel cron declared in `vercel.json` (GET with the
+ * `CRON_SECRET` bearer token, decision #24) or by hand with the
+ * `x-internal-secret` header (POST or GET).
  */
-export async function POST(req: Request) {
-  const expected = process.env.INTERNAL_JOB_SECRET
-  const given = req.headers.get('x-internal-secret') ?? ''
-  const enc = new TextEncoder()
-  if (
-    !expected ||
-    given.length !== expected.length ||
-    !crypto.timingSafeEqual(enc.encode(given), enc.encode(expected))
-  ) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  }
+async function run(req: Request) {
+  if (!isAuthorizedJobRequest(req.headers)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   try {
     const totals = await reconcilePendingPayments()
     return NextResponse.json(totals)
@@ -29,3 +21,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Reconciliation failed' }, { status: 500 })
   }
 }
+
+export const GET = run
+export const POST = run
