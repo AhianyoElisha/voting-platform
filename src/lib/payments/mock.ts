@@ -2,8 +2,8 @@ import crypto from 'crypto'
 import type { CallbackResult, InitiateInput, InitiateResult, PaymentProvider, ProviderStatus } from './provider'
 
 /**
- * PLACEHOLDER provider for OPEN_QUESTIONS #11. Development only: `index.ts`
- * refuses to load it in production.
+ * Development-only provider; `index.ts` refuses to load it in production.
+ * The real adapter is `./hubtel` (decision #11).
  *
  * It behaves like a real aggregator from the pipeline's point of view:
  * `initiate` returns a reference, and confirmation arrives as a callback that
@@ -61,6 +61,7 @@ export class MockPaymentProvider implements PaymentProvider {
     if (typeof providerReference !== 'string' || !providerReference.startsWith('mock_')) return null
     if (status !== 'success' && status !== 'failed') return null
     return {
+      provider: this.name,
       providerReference,
       clientReference: providerReference.slice('mock_'.length),
       status,

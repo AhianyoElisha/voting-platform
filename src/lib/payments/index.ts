@@ -1,3 +1,5 @@
+import { HUBTEL_PROVIDER_NAME, HubtelPaymentProvider } from './hubtel'
+import { HubtelConfigError } from './hubtel/config'
 import { MOCK_PROVIDER_NAME, MockPaymentProvider } from './mock'
 import type { PaymentProvider } from './provider'
 
@@ -11,10 +13,18 @@ export class PaymentProviderNotConfiguredError extends Error {
 }
 
 /**
- * Selects the aggregator from `PAYMENT_PROVIDER`. Only `mock` exists until
- * OPEN_QUESTIONS #11 is settled, and it never runs in production.
+ * Selects the aggregator from `PAYMENT_PROVIDER`: `hubtel` (decision #11) or
+ * `mock` for development, which never runs in production.
  */
 export function getPaymentProvider(name = process.env.PAYMENT_PROVIDER): PaymentProvider {
+  if (name === HUBTEL_PROVIDER_NAME) {
+    try {
+      return new HubtelPaymentProvider()
+    } catch (err) {
+      if (err instanceof HubtelConfigError) throw new PaymentProviderNotConfiguredError(`Hubtel: ${err.message}`)
+      throw err
+    }
+  }
   if (name === MOCK_PROVIDER_NAME) {
     if (process.env.NODE_ENV === 'production' && process.env.ALLOW_MOCK_PAYMENTS_IN_PRODUCTION !== 'true') {
       throw new PaymentProviderNotConfiguredError('The mock payment provider is not allowed in production')
@@ -22,7 +32,7 @@ export function getPaymentProvider(name = process.env.PAYMENT_PROVIDER): Payment
     return new MockPaymentProvider()
   }
   throw new PaymentProviderNotConfiguredError(
-    `PAYMENT_PROVIDER is ${name ? `"${name}"` : 'unset'}; no such provider (OPEN_QUESTIONS #11)`
+    `PAYMENT_PROVIDER is ${name ? `"${name}"` : 'unset'}; expected "hubtel" or "mock"`
   )
 }
 

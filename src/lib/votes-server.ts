@@ -1,5 +1,6 @@
 import { ID, Query, type Models } from 'node-appwrite'
 import { createAdminClient, withRetry } from './appwrite-server'
+import { writeAuditLog } from './audit'
 import { APPWRITE, VOTE_QUANTITY_MAX_PLACEHOLDER, VOTE_QUANTITY_MIN } from './constants'
 import { databaseId, getOrganization, listTenantDocuments, runInTransaction, type TenantContext } from './db'
 import { FeesNotConfiguredError, effectiveCommissionBps, splitAmount } from './fees'
@@ -203,7 +204,7 @@ export async function initiateVotePayment(
 
 // ─── Confirmation ──────────────────────────────────────────────
 
-export type ConfirmOutcome = 'confirmed' | 'duplicate' | 'failed' | 'unknown' | 'ignored'
+export type ConfirmOutcome = 'confirmed' | 'duplicate' | 'failed' | 'unknown' | 'ignored' | 'mismatch'
 
 export async function findPaymentByReference(providerReference: string): Promise<Doc<PaymentDoc> | null> {
   const { databases } = createAdminClient()
@@ -250,11 +251,19 @@ export async function confirmPayment(
 ): Promise<{ outcome: ConfirmOutcome; payment: Doc<PaymentDoc> | null }> {
   let payment = await findPaymentByReference(result.providerReference)
   if (!payment && result.clientReference) {
-    // The provider's reference was never stored (initiate succeeded, the
-    // update did not). Match by our id, but only a payment that still carries
-    // the placeholder reference, so a stray id cannot hijack another payment.
+    // Match by our id when the provider's reference is unknown: either it was
+    // never stored (initiate succeeded, the update did not) or the provider
+    // reports a different id than it gave at initiation. Safe because every
+    // result here was verified by the named adapter for that client
+    // reference; the provider name must agree so a stray id cannot hijack a
+    // payment that belongs to another adapter.
     const byId = await getPayment(result.clientReference)
-    if (byId && byId.providerReference === `local_${byId.$id}`) payment = byId
+    if (
+      byId &&
+      (byId.providerReference === `local_${byId.$id}` || (result.provider && byId.provider === result.provider))
+    ) {
+      payment = byId
+    }
   }
   if (!payment) return { outcome: 'unknown', payment: null }
   if (payment.status === 'success') return { outcome: 'duplicate', payment }
@@ -276,6 +285,39 @@ export async function confirmPayment(
   }
 
   if (payment.purpose !== 'vote' || !payment.nomineeId) return { outcome: 'ignored', payment }
+
+  // Rule 6 and the fee split both assume the provider took exactly what we
+  // asked for. A different amount is never credited; it is logged for a human.
+  if (result.amountPesewas !== undefined && result.amountPesewas !== payment.amount) {
+    const marker = 'amount_mismatch'
+    const alreadyFlagged = typeof payment.rawCallback === 'string' && payment.rawCallback.includes(`"${marker}"`)
+    if (!alreadyFlagged) {
+      console.error(
+        `[payments] ${payment.$id}: provider reports ${result.amountPesewas} pesewas, payment is ${payment.amount}`
+      )
+      // Keep the evidence on the row and audit once; later reconciliation runs see the marker.
+      await withRetry(() =>
+        databases.updateDocument(db(), APPWRITE.TABLES.PAYMENTS, payment.$id, {
+          rawCallback: JSON.stringify({
+            [marker]: { reported: result.amountPesewas, expected: payment.amount, at: new Date().toISOString() },
+            raw: result.raw ?? null,
+          }).slice(0, 16000),
+        })
+      )
+      await writeAuditLog({
+        actorId: 'system',
+        organizationId: payment.organizationId,
+        action: 'payment.amount_mismatch',
+        target: `payments/${payment.$id}`,
+        metadata: {
+          reported: result.amountPesewas,
+          expected: payment.amount,
+          providerReference: result.providerReference,
+        },
+      })
+    }
+    return { outcome: 'mismatch', payment }
+  }
 
   const entries = await withRetry(() =>
     databases.listDocuments<Doc<RoundEntryDoc>>(db(), APPWRITE.TABLES.ROUND_ENTRIES, [
@@ -399,7 +441,7 @@ export function applyLatePaymentPolicy(_round: Pick<RoundDoc, 'status'>): void {
 
 export async function reconcilePendingPayments(
   opts: { provider?: PaymentProvider; olderThanMs?: number; now?: Date; limit?: number } = {}
-): Promise<{ checked: number; confirmed: number; failed: number; skipped: number }> {
+): Promise<{ checked: number; confirmed: number; failed: number; skipped: number; errors: number }> {
   const provider = opts.provider ?? getPaymentProvider()
   const cutoff = new Date((opts.now ?? new Date()).getTime() - (opts.olderThanMs ?? 10 * 60 * 1000)).toISOString()
   const { databases } = createAdminClient()
@@ -410,24 +452,42 @@ export async function reconcilePendingPayments(
       Query.limit(opts.limit ?? 100),
     ])
   )
-  const totals = { checked: 0, confirmed: 0, failed: 0, skipped: 0 }
+  const totals = { checked: 0, confirmed: 0, failed: 0, skipped: 0, errors: 0 }
   for (const payment of stale.documents) {
     totals.checked += 1
-    const status = await provider.checkStatus({
-      providerReference: payment.providerReference,
-      clientReference: payment.$id,
-    })
-    if (status === 'success' || status === 'failed') {
-      const { outcome } = await confirmPayment({
-        providerReference: payment.providerReference,
-        status,
-        raw: { source: 'reconcile', status, checkedAt: new Date().toISOString() },
-      })
+    try {
+      // One status call per payment: adapters that can return the verified
+      // record do so directly; the rest answer with a bare verdict.
+      let result: CallbackResult | null = null
+      if (provider.verifiedResult) {
+        result = await provider.verifiedResult(payment.$id)
+      } else {
+        const status = await provider.checkStatus({
+          providerReference: payment.providerReference,
+          clientReference: payment.$id,
+        })
+        if (status === 'success' || status === 'failed') {
+          result = {
+            provider: provider.name,
+            providerReference: payment.providerReference,
+            clientReference: payment.$id,
+            status,
+            raw: { source: 'reconcile', status, checkedAt: new Date().toISOString() },
+          }
+        }
+      }
+      if (!result) {
+        totals.skipped += 1
+        continue
+      }
+      const { outcome } = await confirmPayment(result)
       if (outcome === 'confirmed') totals.confirmed += 1
       else if (outcome === 'failed') totals.failed += 1
       else totals.skipped += 1
-    } else {
-      totals.skipped += 1
+    } catch (err) {
+      // A provider fault on one payment must not stop the rest; it stays pending for the next run.
+      console.error(`[payments.reconcile] ${payment.$id}:`, err)
+      totals.errors += 1
     }
   }
   return totals

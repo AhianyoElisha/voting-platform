@@ -476,6 +476,135 @@ describe('commit failures (integrity review finding 3)', () => {
   })
 })
 
+describe('client-reference fallback by provider (integrity review, Hubtel)', () => {
+  test('a verified result from the same provider matches by payment id even when the provider id changed', async () => {
+    const { entry, nominee } = await seedLiveEvent()
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 2, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    expect(payment.providerReference).toBe(`mock_${payment.$id}`)
+    const { outcome } = await confirmPayment({
+      provider: 'mock',
+      providerReference: 'different_id_from_status_api',
+      clientReference: payment.$id,
+      status: 'success',
+      raw: {},
+    })
+    expect(outcome).toBe('confirmed')
+    expect((await fake.getDocument('voteapp', 'round_entries', entry.$id)).voteCount).toBe(2)
+    // The stored reference is kept, since it was real.
+    expect((await fake.getDocument('voteapp', 'payments', payment.$id)).providerReference).toBe(`mock_${payment.$id}`)
+  })
+
+  test('a result from a different provider, or with no provider, cannot claim it', async () => {
+    const { nominee } = await seedLiveEvent()
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 2, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    const other = await confirmPayment({
+      provider: 'hubtel',
+      providerReference: 'x',
+      clientReference: payment.$id,
+      status: 'success',
+      raw: {},
+    })
+    expect(other.outcome).toBe('unknown')
+    const anon = await confirmPayment({
+      providerReference: 'x',
+      clientReference: payment.$id,
+      status: 'success',
+      raw: {},
+    })
+    expect(anon.outcome).toBe('unknown')
+    expect(fake.dump('votes')).toHaveLength(0)
+  })
+})
+
+describe('reconciliation resilience', () => {
+  test('a provider fault on one payment does not stop the others', async () => {
+    const { nominee } = await seedLiveEvent()
+    const { payment: a } = await initiateVotePayment(
+      { code: nominee.code, quantity: 1, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    const { payment: b } = await initiateVotePayment(
+      { code: nominee.code, quantity: 1, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    const flaky: PaymentProvider = {
+      name: 'mock',
+      initiate: provider.initiate.bind(provider),
+      verifyCallback: provider.verifyCallback.bind(provider),
+      async checkStatus({ clientReference }) {
+        if (clientReference === a.$id) throw new Error('429 slow down')
+        return 'success'
+      },
+    }
+    const totals = await reconcilePendingPayments({ provider: flaky, now: new Date(Date.now() + 3_600_000) })
+    expect(totals).toEqual({ checked: 2, confirmed: 1, failed: 0, skipped: 0, errors: 1 })
+    expect((await fake.getDocument('voteapp', 'payments', a.$id)).status).toBe('pending')
+    expect((await fake.getDocument('voteapp', 'payments', b.$id)).status).toBe('success')
+  })
+
+  test('uses verifiedResult alone when the provider offers it', async () => {
+    const { nominee } = await seedLiveEvent()
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 3, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    const checkStatus = vi.fn()
+    const rich: PaymentProvider = {
+      name: 'mock',
+      initiate: provider.initiate.bind(provider),
+      verifyCallback: provider.verifyCallback.bind(provider),
+      checkStatus,
+      async verifiedResult(clientReference) {
+        return {
+          provider: 'mock',
+          providerReference: `mock_${clientReference}`,
+          clientReference,
+          status: 'success',
+          amountPesewas: 450,
+          raw: { via: 'status' },
+        }
+      },
+    }
+    const totals = await reconcilePendingPayments({ provider: rich, now: new Date(Date.now() + 3_600_000) })
+    expect(totals.confirmed).toBe(1)
+    expect(checkStatus).not.toHaveBeenCalled()
+    expect((await fake.getDocument('voteapp', 'payments', payment.$id)).rawCallback).toContain('"via":"status"')
+  })
+})
+
+describe('amount guard', () => {
+  test('a verified result whose amount differs from the payment is never credited', async () => {
+    const { entry, nominee } = await seedLiveEvent()
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 10, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    expect(payment.amount).toBe(1500)
+    const { outcome } = await confirmPayment({ ...callbackFor(payment.providerReference), amountPesewas: 1000 })
+    expect(outcome).toBe('mismatch')
+    expect((await fake.getDocument('voteapp', 'payments', payment.$id)).status).toBe('pending')
+    expect(fake.dump('votes')).toHaveLength(0)
+    expect((await fake.getDocument('voteapp', 'round_entries', entry.$id)).voteCount).toBe(0)
+    expect(fake.dump('audit_logs').filter((l) => l.action === 'payment.amount_mismatch')).toHaveLength(1)
+    expect((await fake.getDocument('voteapp', 'payments', payment.$id)).rawCallback).toContain('"amount_mismatch"')
+
+    // A repeat (e.g. the next reconciliation run) is quiet.
+    const again = await confirmPayment({ ...callbackFor(payment.providerReference), amountPesewas: 1000 })
+    expect(again.outcome).toBe('mismatch')
+    expect(fake.dump('audit_logs').filter((l) => l.action === 'payment.amount_mismatch')).toHaveLength(1)
+
+    // The matching amount still confirms.
+    const ok = await confirmPayment({ ...callbackFor(payment.providerReference), amountPesewas: 1500 })
+    expect(ok.outcome).toBe('confirmed')
+  })
+})
+
 describe('tallies and figures (PRD 5.4)', () => {
   test('per-round tally, dashboard figures and recount agree, and other tenants see nothing', async () => {
     const { event, round, nominee, category, entry } = await seedLiveEvent()
@@ -552,7 +681,7 @@ describe('reconcilePendingPayments (rule 5)', () => {
     }
     const future = new Date(Date.now() + 60 * 60 * 1000)
     const totals = await reconcilePendingPayments({ provider: checking, now: future })
-    expect(totals).toEqual({ checked: 3, confirmed: 1, failed: 1, skipped: 1 })
+    expect(totals).toEqual({ checked: 3, confirmed: 1, failed: 1, skipped: 1, errors: 0 })
     expect((await fake.getDocument('voteapp', 'payments', a.$id)).status).toBe('success')
     expect((await fake.getDocument('voteapp', 'payments', b.$id)).status).toBe('failed')
     expect((await fake.getDocument('voteapp', 'payments', c.$id)).status).toBe('pending')
@@ -560,7 +689,7 @@ describe('reconcilePendingPayments (rule 5)', () => {
 
     // Running again is a no-op for the settled ones.
     const again = await reconcilePendingPayments({ provider: checking, now: future })
-    expect(again).toEqual({ checked: 1, confirmed: 0, failed: 0, skipped: 1 })
+    expect(again).toEqual({ checked: 1, confirmed: 0, failed: 0, skipped: 1, errors: 0 })
   })
 
   test('leaves fresh pending payments alone', async () => {

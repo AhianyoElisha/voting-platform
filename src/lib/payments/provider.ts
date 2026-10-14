@@ -1,6 +1,6 @@
 /**
- * The payment aggregator boundary (USSD_AND_PAYMENTS.md). The real provider
- * is OPEN_QUESTIONS #11; everything above this interface is provider-agnostic.
+ * The payment aggregator boundary (USSD_AND_PAYMENTS.md). Hubtel is the
+ * provider (decision #11); everything above this interface is provider-agnostic.
  *
  * Rules the pipeline enforces around it:
  * - A Payment exists as `pending` before `initiate` is called (rule 1).
@@ -26,10 +26,14 @@ export interface InitiateResult {
 export type CallbackStatus = 'success' | 'failed'
 
 export interface CallbackResult {
+  /** Name of the adapter that verified this result; lets the pipeline trust a client-reference match. */
+  provider?: string
   providerReference: string
   /** Our payment id when the provider echoes it; lets a callback match a payment whose provider reference was never stored. */
   clientReference?: string
   status: CallbackStatus
+  /** The amount the provider says was paid, in pesewas. When present it must equal the Payment's amount. */
+  amountPesewas?: number
   /** The raw payload, stored on the Payment for audits (rule 7). */
   raw: unknown
   /** Mobile network when the provider reports it. */
@@ -49,4 +53,6 @@ export interface PaymentProvider {
    * reference failed; `clientReference` is always our payment id.
    */
   checkStatus(ref: { providerReference: string; clientReference: string }): Promise<ProviderStatus>
+  /** Optional: the full verified result for a settled payment, so reconciliation can apply amounts and raw payloads. */
+  verifiedResult?(clientReference: string): Promise<CallbackResult | null>
 }

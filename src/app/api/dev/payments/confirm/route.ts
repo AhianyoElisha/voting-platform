@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server'
 /**
  * POST /api/dev/payments/confirm  { paymentId, status: 'success' | 'failed' }
  *
- * Development only (PLACEHOLDER for #11): plays the aggregator's part by
+ * Development only (mock provider): plays the aggregator's part by
  * signing a mock callback and pushing it through the same verification and
  * confirmation path as the real webhook. Disabled unless the mock provider is
  * the active one, which `getPaymentProvider` already refuses in production.
