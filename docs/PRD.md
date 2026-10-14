@@ -25,7 +25,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 |---|---|
 | **Super admin** | The platform owner. Manages organizers, fees, payouts, templates and disputes. Sees everything. |
 | **Organizer admin** | Owns an organization workspace. Creates events, categories and nominees, and manages team members, flyers, results and payouts. |
-| **Organizer staff** | Optional team members with limited permissions (exact permissions TBD). |
+| **Organizer staff** | Optional team members. Roles (decided 2026-10-14, see DECISIONS): `admin` manages everything like the owner; `designer` edits flyer templates and fonts and generates flyers; `scanner` scans tickets; `staff` reads everything and can scan. |
 | **Designer** | Creates and maintains flyer templates. Could be in-house or belong to an organizer (open question). |
 | **Nominee** | A contestant. Receives an email with login details once nominated, logs into a nominee portal, uploads their photo and details, and downloads their generated flyer. |
 | **Voter** | Member of the public. No account needed. Votes on the web or over USSD and pays with mobile money (and possibly card). |
