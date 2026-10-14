@@ -167,7 +167,7 @@ describe('initiateVotePayment (rules 1, 4a, 6)', () => {
       /outsideWindow/
     )
 
-    delete process.env.PLATFORM_COMMISSION_BPS
+    process.env.PLATFORM_COMMISSION_BPS = 'free'
     await expect(initiateVotePayment(base, { provider, now: NOW })).rejects.toThrow(/feesNotConfigured/)
     process.env.PLATFORM_COMMISSION_BPS = '1000'
 

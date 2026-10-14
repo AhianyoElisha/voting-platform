@@ -35,7 +35,7 @@ export interface OrganizationDoc extends AppwriteDoc {
   /** Serialized JSON; Appwrite has no JSON column type. */
   brandColors: string | null
   status: OrganizationStatus
-  /** Per-organization commission override. Unit and default are OPEN_QUESTIONS #2. */
+  /** Per-organization commission override in basis points; null means the platform default (10%, decision #2). */
   commissionRate: number | null
   /** Per-organization switch for morale candidates (PRD 5.4a, #29). Super admin only. */
   moraleCandidatesEnabled: boolean

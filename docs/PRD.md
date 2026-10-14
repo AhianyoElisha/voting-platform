@@ -103,7 +103,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 
 ### 5.6 Payments and payouts
 - Votes are paid with mobile money via Hubtel (decided 2026-10-14, see DECISIONS). Hubtel also provides the USSD shortcode.
-- The platform takes a commission; the rest goes to the organizer's balance.
+- The platform takes a 10% commission on the gross paid amount; 90% goes to the organizer's balance. Commission only, no subscription or per-event fee (decided 2026-10-14, see DECISIONS). The super admin can set a different rate for an organization.
 - Organizers request payouts; the super admin approves them (flow TBD).
 
 ### 5.7 Super admin console
@@ -115,7 +115,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 These came up in discussion and still need a yes or no (see OPEN_QUESTIONS):
 - WhatsApp Status-sized flyers with the voting code and USSD string included.
 - Auto-generated "leaderboard flyers" (e.g. "Top 3 in Miss Social Science") to keep campaigns going.
-- Commission-only pricing with no monthly subscription, to suit student groups.
+- ~~Commission-only pricing with no monthly subscription, to suit student groups.~~ Agreed 2026-10-14 (#2): commission only, 10%.
 - Campus-native setup: KNUST faculties, departments and halls preloaded.
 - Public nominations, and WhatsApp or Telegram voting (competitors offer these). Ticketing moved to core features in v0.2.
 

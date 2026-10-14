@@ -29,7 +29,7 @@ Pricing (Ghana, Oct 2026):
 1. **Auto-generated flyers.** Nobody offers this; it removes a real cost and delay.
 2. **Campus focus.** Competitors pitch themselves as global or national. We are "the KNUST platform", with faculties, departments and halls in mind.
 3. **In-person distribution** through the partner's existing relationships.
-4. **Pricing that suits student groups** (e.g. commission only). To be decided.
+4. **Pricing that suits student groups:** commission only, 10% of gross, no subscription (decided 2026-10-14). Equal to VotyHive's free tier with none of its paid tiers.
 5. **Shareable assets** sized for WhatsApp Status, where campus campaigns actually spread.
 
 ## Must-match features (baseline)

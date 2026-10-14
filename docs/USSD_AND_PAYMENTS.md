@@ -59,7 +59,7 @@ Considerations:
 
 ## Built (2026-10-14): web votes behind a provider interface
 
-`src/lib/votes-server.ts` implements the rules below for the web path. `src/lib/payments/provider.ts` is the aggregator boundary; the Hubtel adapter (#11, decided) is not built yet, so only the `mock` adapter exists, it refuses to run in production, and its callbacks are HMAC-signed so the verification path is real. The commission rate comes from `PLATFORM_COMMISSION_BPS` with no default (#2). Late callbacks are honoured against the round recorded at initiation and audited as `vote.late` (#13, placeholder in `applyLatePaymentPolicy`). Quantity has a placeholder ceiling (#16). Rate limiting is per instance (#27). Reconciliation runs through `POST /api/internal/payments/reconcile` behind `INTERNAL_JOB_SECRET`; scheduling waits on hosting (#24). If the provider's reference cannot be stored after `initiate`, the payment stays `pending` under its `local_<id>` placeholder: a callback that echoes our payment id (`clientReference`) still matches it, and reconciliation re-checks it by payment id, so a started debit is never orphaned.
+`src/lib/votes-server.ts` implements the rules below for the web path. `src/lib/payments/provider.ts` is the aggregator boundary; the Hubtel adapter (#11, decided) is not built yet, so only the `mock` adapter exists, it refuses to run in production, and its callbacks are HMAC-signed so the verification path is real. The commission rate defaults to 10% (`DEFAULT_COMMISSION_BPS` in `src/lib/fees.ts`), overridable platform-wide with `PLATFORM_COMMISSION_BPS` and per organization with `commissionRate`. Late callbacks are honoured against the round recorded at initiation and audited as `vote.late` (#13, placeholder in `applyLatePaymentPolicy`). Quantity has a placeholder ceiling (#16). Rate limiting is per instance (#27). Reconciliation runs through `POST /api/internal/payments/reconcile` behind `INTERNAL_JOB_SECRET`; scheduling waits on hosting (#24). If the provider's reference cannot be stored after `initiate`, the payment stays `pending` under its `local_<id>` placeholder: a callback that echoes our payment id (`clientReference`) still matches it, and reconciliation re-checks it by payment id, so a started debit is never orphaned.
 
 ## Payment rules (non-negotiable)
 
@@ -76,6 +76,6 @@ Considerations:
 Free votes (see PRD 5.4a) never pass through this pipeline. They have no Payment, are created only by an organizer admin or super admin, carry `source = free` and `grantedBy`, and are audited. They must never be counted in revenue or payouts.
 
 ## Fees
-- The platform takes a commission per paid vote and per ticket; the organizer's net share goes to their wallet.
-- Rates and the model (commission only, or subscription plus commission) are TBD. For reference, the main competitor charges 7–10% plus optional subscriptions.
-- Hubtel's charges and the MoMo network fees need to be known before rates are set (#2).
+- The platform takes 10% of the gross paid amount per vote and per ticket; the organizer's 90% goes to their wallet. Commission only, no subscription (decided 2026-10-14, #2). For reference, the main competitor charges 7–10% plus optional subscriptions.
+- Rates are stored in basis points (`1000` = 10%): the platform default in `PLATFORM_COMMISSION_BPS`, a per-organization override in `Organization.commissionRate`.
+- Whether Hubtel's and the MoMo networks' charges come out of the platform's 10% or off the gross is OPEN_QUESTIONS #36. The split is applied to the gross today, so the platform absorbs them until decided.

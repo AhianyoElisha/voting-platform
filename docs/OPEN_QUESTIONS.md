@@ -4,7 +4,7 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 
 ## Product and business
 1. **Product name** and domain.
-2. **Pricing model:** commission only, subscription plus commission, or per-event fee? Commission rate?
+2. ~~**Pricing model:** commission only, subscription plus commission, or per-event fee? Commission rate?~~ Settled 2026-10-14: commission only, 10% of gross. See DECISIONS.
 3. **Payout flow:** manual approval or automatic? How often? Minimum amount? To MoMo, bank or both?
 4. ~~Ticketing: in the MVP or later?~~ Settled 14 Oct: in scope. See DECISIONS.
 5. **Public nominations** (the public nominates candidates before voting): MVP or later?
@@ -46,3 +46,4 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 33. **Nominee portal scope:** can nominees edit their profile after the flyer is generated (triggering a regeneration)? Can they see their live vote count?
 34. **Ticket scanning:** a web page for scanner staff on their phones, or a small PWA with camera access? Offline tolerance?
 35. **Cumulative report format:** per nominee, per category, both? Include paid/free split? Branded with organizer logo?
+36. **Who absorbs Hubtel's and the MoMo networks' charges:** out of the platform's 10%, or deducted from the gross before the 90/10 split? (Raised when #2 was settled; the code currently splits the gross, so the platform absorbs them.)

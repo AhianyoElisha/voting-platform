@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import { FeesNotConfiguredError, effectiveCommissionBps, platformCommissionBps, splitAmount } from '../fees'
+import {
+  DEFAULT_COMMISSION_BPS,
+  FeesNotConfiguredError,
+  effectiveCommissionBps,
+  platformCommissionBps,
+  splitAmount,
+} from '../fees'
 
 afterEach(() => {
   delete process.env.PLATFORM_COMMISSION_BPS
@@ -26,12 +32,17 @@ describe('splitAmount', () => {
   })
 })
 
-describe('commission rate (#2 placeholder)', () => {
-  test('refuses when the env var is unset or invalid', () => {
-    expect(() => platformCommissionBps()).toThrow(FeesNotConfiguredError)
+describe('commission rate (decision #2)', () => {
+  test('defaults to 10% when the env var is unset, refuses invalid values', () => {
+    expect(platformCommissionBps()).toBe(DEFAULT_COMMISSION_BPS)
+    expect(DEFAULT_COMMISSION_BPS).toBe(1000)
+    process.env.PLATFORM_COMMISSION_BPS = ''
+    expect(platformCommissionBps()).toBe(1000)
     process.env.PLATFORM_COMMISSION_BPS = 'ten'
     expect(() => platformCommissionBps()).toThrow(FeesNotConfiguredError)
     process.env.PLATFORM_COMMISSION_BPS = '12.5'
+    expect(() => platformCommissionBps()).toThrow(FeesNotConfiguredError)
+    process.env.PLATFORM_COMMISSION_BPS = '10001'
     expect(() => platformCommissionBps()).toThrow(FeesNotConfiguredError)
   })
 

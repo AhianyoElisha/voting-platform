@@ -6,15 +6,17 @@ import { assertPesewas } from './money'
  * down to the pesewa and the organizer receives the remainder, so the two
  * parts always sum to the amount.
  *
- * PLACEHOLDER for OPEN_QUESTIONS #2: the platform rate comes from
- * `PLATFORM_COMMISSION_BPS` with no default. Unset means payments cannot be
- * initiated, which is deliberate: nothing here settles the pricing model.
+ * Decision #2 (2026-10-14): commission only, 10% of gross. That is the
+ * default; `PLATFORM_COMMISSION_BPS` overrides it platform-wide and
+ * `Organization.commissionRate` per organization. An invalid value refuses
+ * payments rather than silently charging the wrong rate.
  */
 export const BPS_DENOMINATOR = 10_000
+export const DEFAULT_COMMISSION_BPS = 1000
 
 export class FeesNotConfiguredError extends Error {
-  constructor() {
-    super('PLATFORM_COMMISSION_BPS is not set (OPEN_QUESTIONS #2)')
+  constructor(detail = 'PLATFORM_COMMISSION_BPS is invalid') {
+    super(detail)
     this.name = 'FeesNotConfiguredError'
   }
 }
@@ -25,16 +27,17 @@ export function isValidBps(value: unknown): value is number {
 
 export function platformCommissionBps(): number {
   const raw = process.env.PLATFORM_COMMISSION_BPS
-  if (raw === undefined || raw === '') throw new FeesNotConfiguredError()
+  if (raw === undefined || raw === '') return DEFAULT_COMMISSION_BPS
   const bps = Number(raw)
-  if (!isValidBps(bps)) throw new FeesNotConfiguredError()
+  if (!isValidBps(bps))
+    throw new FeesNotConfiguredError(`PLATFORM_COMMISSION_BPS must be an integer 0..10000, got "${raw}"`)
   return bps
 }
 
 /** The organization's override when set, else the platform rate. */
 export function effectiveCommissionBps(organizationOverride: number | null | undefined): number {
   if (organizationOverride !== null && organizationOverride !== undefined) {
-    if (!isValidBps(organizationOverride)) throw new FeesNotConfiguredError()
+    if (!isValidBps(organizationOverride)) throw new FeesNotConfiguredError('Organization commissionRate is invalid')
     return organizationOverride
   }
   return platformCommissionBps()
