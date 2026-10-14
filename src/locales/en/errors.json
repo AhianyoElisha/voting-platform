@@ -93,5 +93,19 @@
     "tooLarge": "The photo is too large. Keep it under 10 MB.",
     "unsupportedType": "Use a JPEG, PNG or WebP image.",
     "failed": "The photo could not be saved. Please try again."
+  },
+  "template": {
+    "nameTooShort": "Template name is too short.",
+    "nameTooLong": "Template name is too long.",
+    "invalidModel": "The template layout is not valid.",
+    "categoryNotInEvent": "That category belongs to a different event.",
+    "noBackground": "Upload a background image before publishing.",
+    "badImage": "Use a PNG or JPEG image up to 30 MB.",
+    "wrongEvent": "Not found."
+  },
+  "font": {
+    "familyInvalid": "Enter a font family name without quotes.",
+    "badFontFile": "Use a TTF or OTF font file.",
+    "weightInvalid": "Weight must be between 100 and 900."
   }
 }

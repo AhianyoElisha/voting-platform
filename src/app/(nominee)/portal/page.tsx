@@ -33,7 +33,7 @@ export default async function PortalPage() {
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:portal.empty.body')}</p>
         </div>
       ) : (
-        entries.map(({ nominee, event, category, organizationSlug }) => (
+        entries.map(({ nominee, flyerUrl, event, category, organizationSlug }) => (
           <NomineeCard
             key={nominee.$id}
             entry={{
@@ -43,6 +43,7 @@ export default async function PortalPage() {
               bio: nominee.bio,
               photoUrl: nominee.photoUrl,
               profileCompletedAt: nominee.profileCompletedAt,
+              flyerUrl,
               event: event ? { title: event.title, slug: event.slug, status: event.status } : null,
               category: category ? { name: category.name } : null,
               organizationSlug,

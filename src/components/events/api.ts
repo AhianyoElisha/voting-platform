@@ -1,7 +1,7 @@
 'use client'
 
 /** Small fetch wrapper for the organizer forms: JSON in, `{ code }`-aware errors out. */
-export async function postJson<T>(url: string, body: unknown, method: 'POST' | 'PATCH' = 'POST'): Promise<T> {
+export async function postJson<T>(url: string, body: unknown, method: 'POST' | 'PATCH' | 'PUT' = 'POST'): Promise<T> {
   const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw new ApiError(res.status, data?.code ?? null, data?.error ?? null)

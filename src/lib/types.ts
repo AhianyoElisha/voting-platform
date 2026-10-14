@@ -205,3 +205,34 @@ export interface UssdSessionDoc extends AppwriteDoc {
   status: 'active' | 'released'
   expiresAt: string
 }
+
+// ─── Flyer engine (FLYER_ENGINE.md) ───────────────────────────
+
+export interface FlyerTemplateDoc extends TenantDoc {
+  eventId: string
+  categoryId: string | null
+  name: string
+  width: number
+  height: number
+  backgroundFileId: string | null
+  /** Serialized slot model (`src/lib/flyer/model.ts`). */
+  canvasJson: string
+  status: 'draft' | 'published'
+  version: number
+}
+
+export interface FontDoc extends AppwriteDoc {
+  organizationId: string | null
+  family: string
+  fileId: string
+  weight: number
+  style: 'normal' | 'italic'
+}
+
+export interface GeneratedFlyerDoc extends TenantDoc {
+  nomineeId: string
+  templateId: string
+  templateVersion: number
+  fileId: string
+  sourceHash: string
+}

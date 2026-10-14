@@ -15,6 +15,7 @@ export interface PortalEntryView {
   bio: string | null
   photoUrl: string | null
   profileCompletedAt: string | null
+  flyerUrl: string | null
   event: { title: string; slug: string; status: string } | null
   category: { name: string } | null
   organizationSlug: string | null
@@ -182,9 +183,28 @@ export default function NomineeCard({ entry }: { entry: PortalEntryView }) {
 
           <div className="rounded-xl border border-dashed border-neutral-300 p-4 dark:border-neutral-600">
             <h3 className="font-medium text-neutral-900 dark:text-white">{t('web:portal.flyer.title')}</h3>
-            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              {entry.photoUrl ? t('web:portal.flyer.soon') : t('web:portal.flyer.needPhoto')}
-            </p>
+
+            {entry.flyerUrl ? (
+              <div className="mt-3 space-y-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+
+                <img src={entry.flyerUrl} alt={t('web:portal.flyer.title')} className="w-full max-w-xs rounded-xl" />
+
+                <a
+                  href={entry.flyerUrl}
+                  download
+                  className={`${btn} inline-block bg-primary-600 text-white hover:bg-primary-700`}
+                >
+                  {t('web:portal.flyer.download')}
+                </a>
+
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('web:portal.flyer.share')}</p>
+              </div>
+            ) : (
+              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                {entry.photoUrl ? t('web:portal.flyer.soon') : t('web:portal.flyer.needPhoto')}
+              </p>
+            )}
           </div>
 
           {publicHref && (

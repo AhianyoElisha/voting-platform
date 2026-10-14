@@ -26,7 +26,7 @@ pickLT is a Next.js 15 booking and rental app on Appwrite, grown from the Chisfi
 
 Not carried over: Mapbox and Google Maps, LiveKit calls, Stripe, the moving and vehicle domain, the blog and listing demo pages.
 
-Added for this product (not in pickLT): Fabric.js for the flyer editor and renderer, a PDF generator for the cumulative round report, USSD and mobile-money webhooks, QR tickets. Built so far: the `PaymentProvider` interface with the Hubtel adapter and a mock adapter (`src/lib/payments/`), Appwrite database transactions via `runInTransaction` in `src/lib/db.ts`, and an in-memory Appwrite fake for tests (`src/lib/__tests__/fake-appwrite.ts`).
+Added for this product (not in pickLT): Fabric.js for the flyer editor and renderer, a PDF generator for the cumulative round report, USSD and mobile-money webhooks, QR tickets. Built so far: the flyer engine with Fabric.js in the editor and `@napi-rs/canvas` as the server renderer plus `fflate` for ZIP downloads (`src/lib/flyer/`), the `PaymentProvider` interface with the Hubtel adapter and a mock adapter (`src/lib/payments/`), Appwrite database transactions via `runInTransaction` in `src/lib/db.ts`, and an in-memory Appwrite fake for tests (`src/lib/__tests__/fake-appwrite.ts`).
 
 ## Folder layout (same as pickLT)
 

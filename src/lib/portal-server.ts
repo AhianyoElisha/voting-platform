@@ -1,9 +1,9 @@
 import { ID, Permission, Query, Role } from 'node-appwrite'
 import { createAdminClient, withRetry } from './appwrite-server'
-import { APPWRITE } from './constants'
+import { APPWRITE, APPWRITE as TABLES } from './constants'
 import { databaseId } from './db'
 import { normalizePhoto } from './photo'
-import type { CategoryDoc, EventDoc, NomineeDoc, OrganizationDoc } from './types'
+import type { CategoryDoc, EventDoc, GeneratedFlyerDoc, NomineeDoc, OrganizationDoc } from './types'
 
 /**
  * Nominee portal access (PRD 5.2a). Nominees have no Membership; the only
@@ -61,6 +61,7 @@ export async function requireOwnNominee(userId: string, nomineeId: string): Prom
 
 export interface PortalEntry {
   nominee: NomineeDoc
+  flyerUrl: string | null
   event: Pick<EventDoc, '$id' | 'title' | 'slug' | 'status'> | null
   category: Pick<CategoryDoc, '$id' | 'name'> | null
   organizationSlug: string | null
@@ -91,14 +92,30 @@ export async function portalEntries(userId: string): Promise<PortalEntry[]> {
       ])
     ),
   ])
+  const flyers = await withRetry(() =>
+    databases.listDocuments<GeneratedFlyerDoc>(db(), TABLES.TABLES.GENERATED_FLYERS, [
+      Query.equal(
+        'nomineeId',
+        nominees.map((n) => n.$id)
+      ),
+      Query.limit(50),
+    ])
+  )
+  const flyerByNominee = new Map(flyers.documents.map((f) => [f.nomineeId, f]))
+  const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT ?? ''
+  const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? ''
   const eventById = new Map(events.documents.map((e) => [e.$id, e]))
   const categoryById = new Map(categories.documents.map((c) => [c.$id, c]))
   const orgById = new Map(organizations.documents.map((o) => [o.$id, o]))
   return nominees.map((nominee) => {
     const event = eventById.get(nominee.eventId)
     const category = categoryById.get(nominee.categoryId)
+    const flyer = flyerByNominee.get(nominee.$id)
     return {
       nominee,
+      flyerUrl: flyer
+        ? `${endpoint}/storage/buckets/${TABLES.BUCKETS.FLYERS}/files/${flyer.fileId}/view?project=${project}`
+        : null,
       event: event ? { $id: event.$id, title: event.title, slug: event.slug, status: event.status } : null,
       category: category ? { $id: category.$id, name: category.name } : null,
       organizationSlug: orgById.get(nominee.organizationId)?.slug ?? null,

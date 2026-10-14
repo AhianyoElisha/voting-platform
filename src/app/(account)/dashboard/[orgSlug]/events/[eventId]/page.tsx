@@ -1,13 +1,16 @@
 import { AddCategoryForm, AddNomineeForm, EventStatusControls, RoundControls } from '@/components/events/EventControls'
 import InviteButton from '@/components/events/InviteButton'
+import FlyerPanel from '@/components/flyer/FlyerPanel'
 import { TenantMismatchError } from '@/lib/db'
 import { getEvent } from '@/lib/events-server'
+import { flyerUrl, flyersForEvent } from '@/lib/flyer/generate-server'
+import { listTemplates } from '@/lib/flyer/templates-server'
 import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
 import { listCategories, listNominees } from '@/lib/nominees-server'
 import { resolveWorkspace } from '@/lib/page-tenant'
 import { listRounds } from '@/lib/rounds-server'
-import { canManage } from '@/lib/tenant'
+import { canDesign, canManage } from '@/lib/tenant'
 import { eventFigures, tallyForRound } from '@/lib/votes-server'
 import { Badge } from '@/shared/Badge'
 import { Heading } from '@/shared/Heading'
@@ -37,6 +40,9 @@ export default async function EventDetailPage({ params }: Props) {
     eventFigures(ctx, eventId),
   ])
   const tallies = await Promise.all(rounds.map(async (round) => ({ round, rows: await tallyForRound(ctx, round.$id) })))
+  const [templates, flyers] = await Promise.all([listTemplates(ctx, eventId), flyersForEvent(ctx, eventId)])
+  const flyerByNominee = new Map(flyers.map(({ flyer, nominee }) => [nominee.$id, flyer]))
+  const categoryName = new Map(categories.map((c) => [c.$id, c.name]))
   const manager = canManage(ctx.role)
   const open = event.status !== 'closed'
 
@@ -153,6 +159,27 @@ export default async function EventDetailPage({ params }: Props) {
       </section>
 
       <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:flyer.panel.title')}</h2>
+        <FlyerPanel
+          orgId={organization.$id}
+          orgSlug={orgSlug}
+          eventId={event.$id}
+          templates={templates.map((tpl) => ({
+            id: tpl.$id,
+            name: tpl.name,
+            status: tpl.status,
+            version: tpl.version,
+            categoryName: tpl.categoryId ? (categoryName.get(tpl.categoryId) ?? null) : null,
+            hasBackground: !!tpl.backgroundFileId,
+          }))}
+          categories={categories.map((c) => ({ id: c.$id, name: c.name }))}
+          generatedCount={flyers.length}
+          nomineeCount={nominees.length}
+          canDesign={canDesign(ctx.role) && open}
+        />
+      </section>
+
+      <section className="space-y-4">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.categories.title')}</h2>
         {categories.length === 0 && (
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:events.categories.empty')}</p>
@@ -202,6 +229,16 @@ export default async function EventDetailPage({ params }: Props) {
                           <span className="mt-1 block text-xs text-neutral-400">
                             {n.photoUrl ? t('web:events.nominees.photo.yes') : t('web:events.nominees.photo.no')}
                           </span>
+                          {flyerByNominee.get(n.$id) && (
+                            <a
+                              href={flyerUrl(flyerByNominee.get(n.$id)!.fileId)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 block text-xs text-primary-600 underline"
+                            >
+                              {t('web:events.nominees.flyer')}
+                            </a>
+                          )}
                         </td>
                         <td className="px-4 py-2">
                           {n.isMorale && <Badge color="amber">{t('web:events.nominees.moraleBadge')}</Badge>}

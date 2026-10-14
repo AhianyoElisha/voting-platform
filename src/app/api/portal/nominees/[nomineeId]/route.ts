@@ -1,7 +1,8 @@
 import { getSessionUserId } from '@/lib/auth-session'
+import { ensureFlyer } from '@/lib/flyer/generate-server'
 import { getTranslations } from '@/lib/i18n-server'
 import { NotOwnNomineeError, ProfileError, updateOwnProfile } from '@/lib/portal-server'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 
 type Params = { params: Promise<{ nomineeId: string }> }
 
@@ -17,6 +18,7 @@ export async function PATCH(req: Request, { params }: Params) {
       name: typeof body?.name === 'string' ? body.name : undefined,
       bio: typeof body?.bio === 'string' ? body.bio : undefined,
     })
+    after(() => ensureFlyer(nominee.$id).catch((err) => console.error('[flyer] after profile update', err)))
     return NextResponse.json({ nominee: { id: nominee.$id, name: nominee.name, bio: nominee.bio } })
   } catch (err) {
     if (err instanceof NotOwnNomineeError)

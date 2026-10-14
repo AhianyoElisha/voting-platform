@@ -1520,6 +1520,303 @@
                     ]
                 }
             ]
+        },
+        {
+            "$id": "flyer_templates",
+            "$permissions": [],
+            "databaseId": "voteapp",
+            "name": "flyer_templates",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "organizationId",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "eventId",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "categoryId",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "name",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 120,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "width",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "height",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "backgroundFileId",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "canvasJson",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 60000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "draft",
+                        "published"
+                    ]
+                },
+                {
+                    "key": "version",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "by_org",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "organizationId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "by_event",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "eventId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "fonts",
+            "$permissions": [],
+            "databaseId": "voteapp",
+            "name": "fonts",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "organizationId",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "family",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 80,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "fileId",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "weight",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "style",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "normal",
+                        "italic"
+                    ]
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "by_org",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "organizationId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "generated_flyers",
+            "$permissions": [],
+            "databaseId": "voteapp",
+            "name": "generated_flyers",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "organizationId",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "nomineeId",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "templateId",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 36,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "templateVersion",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "fileId",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "sourceHash",
+                    "type": "text",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "by_nominee",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "nomineeId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "by_org",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "organizationId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "by_template",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "templateId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
         }
     ],
     "buckets": [
@@ -1535,6 +1832,52 @@
                 "jpeg",
                 "png",
                 "webp"
+            ],
+            "compression": "none",
+            "encryption": false,
+            "antivirus": true
+        },
+        {
+            "$id": "flyer-templates",
+            "$permissions": [],
+            "fileSecurity": true,
+            "name": "flyer-templates",
+            "enabled": true,
+            "maximumFileSize": 30000000,
+            "allowedFileExtensions": [
+                "jpg",
+                "jpeg",
+                "png"
+            ],
+            "compression": "none",
+            "encryption": false,
+            "antivirus": true
+        },
+        {
+            "$id": "fonts",
+            "$permissions": [],
+            "fileSecurity": true,
+            "name": "fonts",
+            "enabled": true,
+            "maximumFileSize": 30000000,
+            "allowedFileExtensions": [
+                "ttf",
+                "otf"
+            ],
+            "compression": "none",
+            "encryption": false,
+            "antivirus": true
+        },
+        {
+            "$id": "flyers",
+            "$permissions": [],
+            "fileSecurity": true,
+            "name": "flyers",
+            "enabled": true,
+            "maximumFileSize": 30000000,
+            "allowedFileExtensions": [
+                "png",
+                "jpg"
             ],
             "compression": "none",
             "encryption": false,

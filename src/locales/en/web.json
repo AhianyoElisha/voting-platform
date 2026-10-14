@@ -314,7 +314,8 @@
         "yes": "Photo uploaded",
         "no": "No photo yet"
       },
-      "portal": "Portal"
+      "portal": "Portal",
+      "flyer": "View flyer"
     },
     "results": {
       "title": "Results and revenue",
@@ -404,7 +405,9 @@
     "flyer": {
       "title": "Your flyer",
       "soon": "Flyer coming soon. It is generated automatically once the organizer assigns a design and your photo is in.",
-      "needPhoto": "Upload your photo first."
+      "needPhoto": "Upload your photo first.",
+      "download": "Download flyer",
+      "share": "Sized for WhatsApp Status and social media."
     },
     "claim": {
       "title": "Set up your login",
@@ -419,6 +422,79 @@
         "body": "Sign in with {{email}} and your new password.",
         "cta": "Go to sign in"
       }
+    }
+  },
+  "flyer": {
+    "binding": {
+      "nominee.name": "Nominee name",
+      "nominee.code": "Voting code",
+      "category.name": "Category",
+      "event.title": "Event title",
+      "ussd.instruction": "USSD instruction",
+      "custom": "Custom text"
+    },
+    "panel": {
+      "title": "Flyers",
+      "empty": "No flyer template yet. Create one, upload the design, place the photo and text, and publish.",
+      "namePlaceholder": "Template name, e.g. Main flyer",
+      "scope": "Applies to",
+      "wholeEvent": "Whole event",
+      "forCategory": "Category: {{name}}",
+      "create": "New template",
+      "published": "Published (v{{version}})",
+      "draft": "Draft",
+      "noBackground": "no background yet",
+      "count": "{{generated}} of {{total}} nominees have a flyer",
+      "generate": "Generate missing",
+      "regenerate": "Regenerate all",
+      "zip": "Download all (ZIP)",
+      "progress": "Working… {{done}} of {{total}}",
+      "done": "Done: {{generated}} generated, {{noPhoto}} waiting for a photo."
+    },
+    "editor": {
+      "title": "Flyer template",
+      "intro": "Upload the design exported from Photoshop or Photopea, then place the photo frame and the text slots. Nominees get their flyer the moment their photo is in.",
+      "canvasHint": "Drag to move, corners to resize, top handle to rotate.",
+      "background": "Background image (PNG or JPEG; its size becomes the flyer size)",
+      "name": "Template name",
+      "addPhoto": "Add photo frame",
+      "addText": "Add text…",
+      "remove": "Remove selected",
+      "preview": "Preview",
+      "save": "Save",
+      "publish": "Publish",
+      "republish": "Publish changes",
+      "saved": "Saved.",
+      "published": "Published. Flyers are being generated.",
+      "backgroundSet": "Background set.",
+      "selectHint": "Select a slot on the canvas to edit it.",
+      "shape": "Shape",
+      "ellipse": "Circle / ellipse",
+      "rect": "Rectangle",
+      "radius": "Corner radius",
+      "binding": "Shows",
+      "text": "Text",
+      "font": "Font",
+      "weight": "Weight",
+      "size": "Size (px)",
+      "minSize": "Minimum size",
+      "color": "Colour",
+      "align": "Align",
+      "left": "Left",
+      "center": "Centre",
+      "right": "Right",
+      "maxLines": "Max lines",
+      "uppercase": "UPPERCASE"
+    },
+    "fonts": {
+      "title": "Fonts",
+      "helper": "Upload the TTF or OTF files your design uses so the text matches. Poppins is always available.",
+      "family": "Family name",
+      "weight": "Weight",
+      "style": "Style",
+      "file": "Font file",
+      "upload": "Upload font",
+      "uploading": "Uploading…"
     }
   }
 }

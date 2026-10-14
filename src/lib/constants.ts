@@ -20,10 +20,16 @@ export const APPWRITE = {
     VOTES: 'votes',
     LEDGER_ENTRIES: 'ledger_entries',
     USSD_SESSIONS: 'ussd_sessions',
+    FLYER_TEMPLATES: 'flyer_templates',
+    FONTS: 'fonts',
+    GENERATED_FLYERS: 'generated_flyers',
   },
 
   BUCKETS: {
     NOMINEE_PHOTOS: 'nominee-photos',
+    FLYER_TEMPLATES: 'flyer-templates',
+    FONTS: 'fonts',
+    FLYERS: 'flyers',
   },
 } as const
 

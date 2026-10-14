@@ -1,8 +1,9 @@
 import { getSessionUserId } from '@/lib/auth-session'
+import { ensureFlyer } from '@/lib/flyer/generate-server'
 import { getTranslations } from '@/lib/i18n-server'
 import { validatePhotoUpload } from '@/lib/photo'
 import { NotOwnNomineeError, attachPhoto } from '@/lib/portal-server'
-import { NextResponse } from 'next/server'
+import { NextResponse, after } from 'next/server'
 
 type Params = { params: Promise<{ nomineeId: string }> }
 
@@ -26,6 +27,8 @@ export async function POST(req: Request, { params }: Params) {
 
   try {
     const nominee = await attachPhoto(userId, nomineeId, new Uint8Array(await upload.arrayBuffer()))
+    // The flyer follows the photo (PRD 5.2a), after the response is sent.
+    after(() => ensureFlyer(nominee.$id).catch((err) => console.error('[flyer] after photo upload', err)))
     return NextResponse.json({
       nominee: { id: nominee.$id, photoUrl: nominee.photoUrl, profileCompletedAt: nominee.profileCompletedAt },
     })

@@ -4,6 +4,8 @@ import { withSentryConfig } from '@sentry/nextjs/config'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  // Native server-side packages: loaded at runtime, never bundled by webpack.
+  serverExternalPackages: ['@napi-rs/canvas', 'sharp'],
   images: {
     minimumCacheTTL: 2678400 * 6, // 3 months
     remotePatterns: [

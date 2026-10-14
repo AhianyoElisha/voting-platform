@@ -35,11 +35,10 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 - **Payout**: id, organizationId, amount, destination (MoMo number or bank), status (`requested` | `approved` | `paid` | `rejected`), requestedBy, approvedBy, timestamps
 
 ### Flyer engine
-- **Font**: id, organizationId (null = platform-wide), family, fileUrl, weight, style
-- **FlyerTemplate**: id, organizationId (null = platform library), eventId? / categoryId?, name, width, height, backgroundUrl, canvasJson (Fabric serialization), status
-- **TemplateSlot**: id, templateId, type (`photo` | `text`), binding (`nominee.name` | `nominee.code` | `category.name` | `event.title` | `ussd.instruction` | `custom`), plus geometry and style (x, y, w, h, rotation, fontId, size, color, align, mask/shape)
-  - Slots could instead live only inside `canvasJson` as custom properties. Decide during implementation.
-- **GeneratedFlyer**: id, nomineeId, templateId, templateVersion, imageUrl, format/size variant, createdAt
+- **Font**: id, organizationId (null = platform-wide), family, fileId, weight, style. TTF/OTF only. Built 2026-10-14 (`fonts` table, `fonts` bucket).
+- **FlyerTemplate**: id, organizationId, eventId, categoryId (optional override), name, width, height (from the background image), backgroundFileId, canvasJson (our slot model, see FLYER_ENGINE.md), status (`draft` | `published`), version (bumped on publish). Built 2026-10-14 (`flyer_templates` table, `flyer-templates` bucket). Platform library: later.
+- **TemplateSlot**: lives inside `FlyerTemplate.canvasJson` (decided during implementation, 2026-10-14): type (`photo` | `text`), binding (`nominee.name` | `nominee.code` | `category.name` | `event.title` | `ussd.instruction` | `custom`), geometry (x, y, w, h, rotation) and style (fontFamily, fontWeight, fontSize, minFontSize, color, align, uppercase, maxLines; shape and radius for the photo).
+- **GeneratedFlyer**: id, organizationId, nomineeId (unique), templateId, templateVersion, fileId, sourceHash (of every input; regenerate only when it changes), createdAt. Built 2026-10-14 (`generated_flyers` table, `flyers` bucket).
 
 ### Operations
 - **AuditLog**: id, actorId, organizationId, action, target, metadata, createdAt. Written for event status changes, round open and close, and morale candidate creation; later for free votes and payouts. Built 2026-10-14 (`audit_logs` table).

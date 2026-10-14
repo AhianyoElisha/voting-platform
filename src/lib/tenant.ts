@@ -52,3 +52,14 @@ export function canManage(role: MembershipRole): boolean {
 export function assertCanManage(ctx: TenantContext): void {
   if (!canManage(ctx.role)) throw new ForbiddenError(`Role ${ctx.role} cannot manage this organization`)
 }
+
+/** Roles that may create and edit flyer templates and fonts (FLYER_ENGINE.md; #17 placeholder: organization-owned templates). */
+export const DESIGNER_ROLES: readonly MembershipRole[] = ['owner', 'admin', 'designer']
+
+export function canDesign(role: MembershipRole): boolean {
+  return DESIGNER_ROLES.includes(role)
+}
+
+export function assertCanDesign(ctx: TenantContext): void {
+  if (!canDesign(ctx.role)) throw new ForbiddenError(`Role ${ctx.role} cannot edit templates`)
+}
