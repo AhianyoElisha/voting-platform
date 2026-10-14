@@ -16,6 +16,9 @@ export const APPWRITE = {
     NOMINEES: 'nominees',
     ROUND_ENTRIES: 'round_entries',
     AUDIT_LOGS: 'audit_logs',
+    PAYMENTS: 'payments',
+    VOTES: 'votes',
+    LEDGER_ENTRIES: 'ledger_entries',
   },
 } as const
 
@@ -27,3 +30,11 @@ export const APPWRITE = {
 export function moraleCandidatesEnabledOnPlatform(): boolean {
   return process.env.MORALE_CANDIDATES_ENABLED === 'true'
 }
+
+/**
+ * PLACEHOLDER for OPEN_QUESTIONS #16 (minimum and maximum votes per
+ * transaction). The minimum is 1 by nature; the ceiling here is a technical
+ * guard against absurd debits, not a product decision.
+ */
+export const VOTE_QUANTITY_MIN = 1
+export const VOTE_QUANTITY_MAX_PLACEHOLDER = 10_000

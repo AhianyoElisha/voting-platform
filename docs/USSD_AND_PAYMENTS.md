@@ -57,6 +57,10 @@ Considerations:
 - Send an SMS receipt after a successful vote (cost and provider TBD).
 - Code scheme (decided 2026-10-14, #12): one shared shortcode with **platform-wide unique nominee codes**. Voting never asks for an event code. The ticket branch still uses the event code (`Event.eventCode`), because tickets belong to an event rather than a nominee.
 
+## Built (2026-10-14): web votes behind a provider interface
+
+`src/lib/votes-server.ts` implements the rules below for the web path. `src/lib/payments/provider.ts` is the aggregator boundary (#11); only the `mock` adapter exists, it refuses to run in production, and its callbacks are HMAC-signed so the verification path is real. The commission rate comes from `PLATFORM_COMMISSION_BPS` with no default (#2). Late callbacks are honoured against the round recorded at initiation and audited as `vote.late` (#13, placeholder in `applyLatePaymentPolicy`). Quantity has a placeholder ceiling (#16). Rate limiting is per instance (#27). Reconciliation runs through `POST /api/internal/payments/reconcile` behind `INTERNAL_JOB_SECRET`; scheduling waits on hosting (#24). If the provider's reference cannot be stored after `initiate`, the payment stays `pending` under its `local_<id>` placeholder: a callback that echoes our payment id (`clientReference`) still matches it, and reconciliation re-checks it by payment id, so a started debit is never orphaned.
+
 ## Payment rules (non-negotiable)
 
 1. Create the `Payment` as `pending` before starting a debit.

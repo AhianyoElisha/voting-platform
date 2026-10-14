@@ -7,6 +7,7 @@ import { listCategories, listNominees } from '@/lib/nominees-server'
 import { resolveWorkspace } from '@/lib/page-tenant'
 import { listRounds } from '@/lib/rounds-server'
 import { canManage } from '@/lib/tenant'
+import { eventFigures, tallyForRound } from '@/lib/votes-server'
 import { Badge } from '@/shared/Badge'
 import { Heading } from '@/shared/Heading'
 import Link from 'next/link'
@@ -28,11 +29,13 @@ export default async function EventDetailPage({ params }: Props) {
     if (err instanceof TenantMismatchError || (err as { code?: number })?.code === 404) notFound()
     throw err
   }
-  const [categories, nominees, rounds] = await Promise.all([
+  const [categories, nominees, rounds, figures] = await Promise.all([
     listCategories(ctx, eventId),
     listNominees(ctx, eventId),
     listRounds(ctx, eventId),
+    eventFigures(ctx, eventId),
   ])
+  const tallies = await Promise.all(rounds.map(async (round) => ({ round, rows: await tallyForRound(ctx, round.$id) })))
   const manager = canManage(ctx.role)
   const open = event.status !== 'closed'
 
@@ -84,6 +87,64 @@ export default async function EventDetailPage({ params }: Props) {
           <EventStatusControls orgId={organization.$id} event={event} canManage={manager} />
         </div>
       </div>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.results.title')}</h2>
+        <dl className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {(
+            [
+              ['paidVotes', String(figures.paidVotes)],
+              ['freeVotes', String(figures.freeVotes)],
+              ['totalVotes', String(figures.totalVotes)],
+              ['gross', formatPesewas(figures.gross)],
+              ['platformShare', formatPesewas(figures.platformShare)],
+              ['organizerShare', formatPesewas(figures.organizerShare)],
+            ] as const
+          ).map(([key, value]) => (
+            <div key={key} className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
+              <dt className="text-xs text-neutral-500 uppercase dark:text-neutral-400">
+                {t(`web:events.results.${key}`)}
+              </dt>
+              <dd className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        {tallies.map(({ round, rows }) => (
+          <div key={round.$id} className="rounded-2xl border border-neutral-200 dark:border-neutral-700">
+            <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
+              <h3 className="font-medium text-neutral-900 dark:text-white">{round.name}</h3>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                {t(`web:events.rounds.status.${round.status}`)}
+              </span>
+            </div>
+            {rows.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400">
+                {t('web:events.results.noEntries')}
+              </p>
+            ) : (
+              <table className="w-full text-sm">
+                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-700">
+                  {rows.map(({ nominee, entry }, i) => (
+                    <tr key={entry.$id}>
+                      <td className="w-10 px-4 py-2 text-neutral-500">{i + 1}</td>
+                      <td className="px-4 py-2 text-neutral-900 dark:text-white">
+                        {nominee.name}
+                        {nominee.isMorale && (
+                          <span className="ml-2 text-xs text-amber-600">{t('web:events.nominees.moraleBadge')}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 font-mono text-neutral-500">{nominee.code}</td>
+                      <td className="px-4 py-2 text-right font-semibold text-neutral-900 dark:text-white">
+                        {entry.voteCount}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        ))}
+      </section>
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.rounds.title')}</h2>

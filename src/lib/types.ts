@@ -129,3 +129,57 @@ export interface AuditLogDoc extends AppwriteDoc {
   /** Serialized JSON. */
   metadata: string | null
 }
+
+// ─── Payments and votes (DATA_MODEL.md, USSD_AND_PAYMENTS.md) ──
+
+export type PaymentChannel = 'web' | 'ussd'
+export type PaymentPurpose = 'vote' | 'ticket'
+export type PaymentStatus = 'pending' | 'success' | 'failed' | 'refunded'
+
+export interface PaymentDoc extends TenantDoc {
+  eventId: string
+  /** The round that was live when the payment was initiated (rule 4a). */
+  roundId: string
+  nomineeId: string | null
+  channel: PaymentChannel
+  purpose: PaymentPurpose
+  payerPhone: string
+  payerEmail: string | null
+  network: string | null
+  quantity: number
+  /** Pesewas. */
+  amount: number
+  platformFee: number
+  organizerNet: number
+  provider: string
+  /** Unique; the idempotency key for callbacks (rule 5). */
+  providerReference: string
+  status: PaymentStatus
+  confirmedAt: string | null
+  /** Serialized raw callback payload (rule 7). */
+  rawCallback: string | null
+}
+
+export type VoteSource = 'paid' | 'free'
+
+export interface VoteDoc extends TenantDoc {
+  eventId: string
+  roundId: string
+  nomineeId: string
+  /** Required for paid votes; null for free votes. */
+  paymentId: string | null
+  quantity: number
+  source: VoteSource
+  grantedBy: string | null
+  reason: string | null
+}
+
+export type LedgerEntryType = 'vote_credit' | 'ticket_credit' | 'payout_debit' | 'adjustment'
+
+export interface LedgerEntryDoc extends TenantDoc {
+  type: LedgerEntryType
+  /** Pesewas; credits positive, debits negative. */
+  amount: number
+  paymentId: string | null
+  note: string | null
+}

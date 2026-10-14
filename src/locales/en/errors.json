@@ -54,5 +54,20 @@
     "categoryNotInEvent": "That category belongs to a different event.",
     "moraleDisabled": "Morale candidates are not enabled for this workspace.",
     "codeExhausted": "Could not allocate a nominee code. Try again."
+  },
+  "vote": {
+    "nomineeNotFound": "No nominee has that code.",
+    "nomineeInactive": "This nominee is no longer in the running.",
+    "organizationInactive": "This organizer is not accepting votes.",
+    "eventNotLive": "Voting is not open for this event right now.",
+    "outsideWindow": "Voting for this event is outside its voting window.",
+    "noLiveRound": "No round is open for voting right now.",
+    "notInRound": "This nominee is not in the current round.",
+    "quantityInvalid": "Enter a whole number of votes, at least 1.",
+    "phoneInvalid": "Enter a valid Ghanaian mobile money number.",
+    "feesNotConfigured": "Payments are not configured yet. Please try again later.",
+    "providerNotConfigured": "Payments are not configured yet. Please try again later.",
+    "providerFailed": "The payment could not be started. Please try again.",
+    "rateLimited": "Too many attempts. Please wait a minute and try again."
   }
 }

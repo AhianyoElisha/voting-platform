@@ -291,11 +291,57 @@
         "label": "Morale candidate",
         "helper": "Planted by the organizer. Flagged in every admin view and report."
       }
+    },
+    "results": {
+      "title": "Results and revenue",
+      "paidVotes": "Paid votes",
+      "freeVotes": "Free votes",
+      "totalVotes": "All votes",
+      "gross": "Gross",
+      "platformShare": "Platform share",
+      "organizerShare": "Your share",
+      "noEntries": "No nominees in this round."
     }
   },
   "publicEvent": {
     "pricePerVote": "{{price}} per vote",
     "code": "Voting code",
-    "votingSoon": "Voting opens here and by USSD soon."
+    "vote": "Vote",
+    "view": "View",
+    "votes_one": "{{count}} vote",
+    "votes_other": "{{count}} votes",
+    "notLive": "Voting is not open right now. Check back when the organizer opens it."
+  },
+  "vote": {
+    "notLive": "Voting is not open for this event right now.",
+    "form": {
+      "quantity": "Number of votes",
+      "phone": "Mobile money number",
+      "phoneHelper": "The MoMo prompt is sent to this number.",
+      "total": "Total",
+      "submit": "Pay {{amount}}",
+      "submitting": "Starting payment…"
+    },
+    "pending": {
+      "title": "Approve {{amount}} on your phone",
+      "body": "A mobile money prompt has been sent. Enter your PIN to approve it.",
+      "waiting": "Waiting for confirmation… this page updates by itself."
+    },
+    "success": {
+      "title_one": "{{count}} vote for {{name}} counted. Thank you!",
+      "title_other": "{{count}} votes for {{name}} counted. Thank you!",
+      "body": "Your vote was recorded once the payment was confirmed.",
+      "again": "Vote again"
+    },
+    "failed": {
+      "title": "Payment not completed",
+      "body": "The payment was declined or timed out. No vote was counted and nothing was charged.",
+      "retry": "Try again"
+    },
+    "dev": {
+      "title": "Development: mock provider",
+      "approve": "Simulate approval",
+      "decline": "Simulate decline"
+    }
   }
 }

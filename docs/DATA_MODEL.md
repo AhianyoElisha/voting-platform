@@ -18,9 +18,9 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 - **RoundEntry**: roundId, nomineeId, eventId, organizationId, voteCount (cached). Which nominees are in which round, and their frozen tally once the round closes. A nominee gets a round 1 entry when created, unless round 1 is already closed; entries for later rounds wait on #30. Built 2026-10-14 (`round_entries` table).
 
 ### Payments and votes
-- **Payment**: id, organizationId, eventId, roundId, nomineeId, channel (`web` | `ussd`), purpose (`vote` | `ticket`), payerPhone, payerEmail (tickets), network, quantity, amount, platformFee, organizerNet, provider, providerReference (unique), status (`pending` | `success` | `failed` | `refunded`), createdAt, confirmedAt, rawCallback (JSON)
+- **Payment**: id, organizationId, eventId, roundId, nomineeId, channel (`web` | `ussd`), purpose (`vote` | `ticket`), payerPhone, payerEmail (tickets), network, quantity, amount, platformFee, organizerNet, provider, providerReference (unique), status (`pending` | `success` | `failed` | `refunded`), createdAt, confirmedAt, rawCallback (JSON). Built 2026-10-14 (`payments` table, web votes only). `providerReference` starts as `local_<id>` and is replaced by the provider's reference once `initiate` answers.
 - **Vote**: id, paymentId (nullable), nomineeId, eventId, roundId, organizationId, quantity, **source** (`paid` | `free`), grantedBy (userId, required when source = free), reason (free only), createdAt
-  - Paid votes: one Vote row per successful payment, with a quantity; `paymentId` is required.
+  - Paid votes: one Vote row per successful payment, with a quantity; `paymentId` is required and the Vote's id is `v_<paymentId>`, so a replayed confirmation collides instead of double counting. Built 2026-10-14 (`votes` table).
   - Free votes: `paymentId` is null, `source = free`, `grantedBy` is set, and an AuditLog entry is written in the same transaction.
   - Tallies are always computed per round and can be split by source.
 - **UssdSession**: id, sessionId (from aggregator), phone, network, state (JSON), lastStep, createdAt, updatedAt
@@ -31,7 +31,7 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
   - The QR code encodes a signed token (e.g. HMAC of ticket id), never the bare id, so tickets can't be forged by guessing ids.
 
 ### Money out
-- **Wallet / Ledger**: organizationId, entries (credit from vote, debit from payout, adjustments)
+- **LedgerEntry**: organizationId, type (`vote_credit` | `ticket_credit` | `payout_debit` | `adjustment`), amount (pesewas, debits negative), paymentId (unique where set, id `l_<paymentId>`), note. The wallet balance is the sum. Built 2026-10-14 (`ledger_entries` table).
 - **Payout**: id, organizationId, amount, destination (MoMo number or bank), status (`requested` | `approved` | `paid` | `rejected`), requestedBy, approvedBy, timestamps
 
 ### Flyer engine

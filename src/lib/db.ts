@@ -106,6 +106,29 @@ export async function deleteTenantDocument<T extends TenantDoc>(
   await withRetry(() => databases.deleteDocument(databaseId(), collectionId, documentId))
 }
 
+// ─── Transactions ──────────────────────────────────────────────
+
+/**
+ * Runs `fn` inside one Appwrite database transaction. Every write in `fn`
+ * must pass `transactionId` through to the SDK, or it lands immediately. The
+ * transaction is committed when `fn` returns and rolled back when it throws;
+ * a failed commit (e.g. a duplicate id staged by a concurrent transaction)
+ * also throws, with nothing applied.
+ */
+export async function runInTransaction<T>(fn: (transactionId: string) => Promise<T>): Promise<T> {
+  const { databases } = createAdminClient()
+  const tx = await withRetry(() => databases.createTransaction())
+  let result: T
+  try {
+    result = await fn(tx.$id)
+  } catch (err) {
+    await databases.updateTransaction(tx.$id, false, true).catch(() => {})
+    throw err
+  }
+  await databases.updateTransaction(tx.$id, true, false)
+  return result
+}
+
 // ─── Platform-level helpers ────────────────────────────────────
 
 type Doc<T> = T & Models.Document
