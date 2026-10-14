@@ -1,0 +1,48 @@
+# Open Questions
+
+Claude Code: **do not settle these on your own.** Ask, or build behind a placeholder and flag it. When one is settled, move it to `DECISIONS.md`.
+
+## Product and business
+1. **Product name** and domain.
+2. **Pricing model:** commission only, subscription plus commission, or per-event fee? Commission rate?
+3. **Payout flow:** manual approval or automatic? How often? Minimum amount? To MoMo, bank or both?
+4. ~~Ticketing: in the MVP or later?~~ Settled 14 Oct: in scope. See DECISIONS.
+5. **Public nominations** (the public nominates candidates before voting): MVP or later?
+6. **WhatsApp or Telegram voting:** later?
+7. **Free voting** (no payment) for some events?
+8. **Card payments** in addition to MoMo?
+9. **Organizer onboarding:** self-serve sign-up, or approval by the super admin first?
+10. **Partner arrangement** with the sales partner (revenue share, access level in the system).
+
+## USSD and payments
+11. **Aggregator:** Hubtel, Nsano, Arkesel or another? Costs, setup time, dedicated or shared shortcode.
+12. **Nominee code scheme:** platform-wide unique codes, or event code plus nominee code?
+13. **Late payments** after an event closes: honour them or refund?
+14. **SMS receipts** to voters: yes or no? Which provider?
+15. **Refunds and disputes** process.
+16. **Minimum and maximum votes per transaction.**
+
+## Flyer engine
+17. **Who builds templates:** our designers, the organizer's designer, or both? Is there a platform template library?
+18. **Organizer editing freedom** in the browser editor.
+19. **PSD import:** how far should it go, and is it in the MVP?
+20. **Flyer generation:** free for everyone or a paid feature?
+21. **Output sizes:** WhatsApp Status, square post, print?
+22. **Leaderboard flyers:** yes or no?
+
+## Technical
+23. **Tech stack confirmation** (Next.js + Postgres + Prisma proposed). Alternatives include Appwrite as the backend.
+24. **Hosting** and object storage provider.
+25. **Subdomains per organizer**, or slug paths only at first?
+26. **Results visibility defaults** and the real-time approach.
+27. **Fraud controls** beyond payment (rate limits, flagging unusual spikes).
+28. **Data protection:** voter phone number retention and consent (Ghana Data Protection Act 843).
+
+## Added 14 Oct 2026 (from the sales partner's voice note)
+29. **Morale candidates and free votes: legitimacy.** As requested, admins can plant candidates and grant bulk free votes to make categories look competitive. The founder is researching how to make this legitimate (disclosure to voters? labelled as "free votes" publicly? limits? consent from real nominees?). Until settled, the feature ships behind switches with the safeguards in PRD 5.4a. **Claude Code: do not loosen those safeguards, and do not design public results pages that hide the paid/free distinction without an explicit decision here.**
+30. **Rounds:** who decides which nominees advance (manual pick, top N, or threshold)? Can a nominee be added mid-event? Does the price per vote change per round?
+31. **Ticket delivery over USSD:** QR link by SMS to the paying number, or ask for email in the USSD menu, or both?
+32. **Transactional email provider** for nominee credentials and ticket QR codes (e.g. Resend, Postmark, SES). SMS provider if #31 needs it.
+33. **Nominee portal scope:** can nominees edit their profile after the flyer is generated (triggering a regeneration)? Can they see their live vote count?
+34. **Ticket scanning:** a web page for scanner staff on their phones, or a small PWA with camera access? Offline tolerance?
+35. **Cumulative report format:** per nominee, per category, both? Include paid/free split? Branded with organizer logo?
