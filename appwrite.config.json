@@ -703,6 +703,47 @@
                     "array": false,
                     "default": null,
                     "format": ""
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": "email"
+                },
+                {
+                    "key": "inviteTokenHash",
+                    "type": "text",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "inviteExpiresAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "inviteSentAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "claimedAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
                 }
             ],
             "indexes": [
@@ -745,6 +786,17 @@
                     "status": "available",
                     "columns": [
                         "categoryId"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "by_user",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "userId"
                     ],
                     "orders": [
                         "ASC"
@@ -1371,5 +1423,23 @@
             ]
         }
     ],
-    "buckets": []
+    "buckets": [
+        {
+            "$id": "nominee-photos",
+            "$permissions": [],
+            "fileSecurity": true,
+            "name": "nominee-photos",
+            "enabled": true,
+            "maximumFileSize": 10000000,
+            "allowedFileExtensions": [
+                "jpg",
+                "jpeg",
+                "png",
+                "webp"
+            ],
+            "compression": "none",
+            "encryption": false,
+            "antivirus": true
+        }
+    ]
 }

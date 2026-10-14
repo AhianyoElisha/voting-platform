@@ -29,6 +29,9 @@
     },
     "admin": {
       "title": "Admin console"
+    },
+    "claim": {
+      "title": "Set up your nominee login"
     }
   },
   "notFound": {
@@ -290,7 +293,28 @@
       "morale": {
         "label": "Morale candidate",
         "helper": "Planted by the organizer. Flagged in every admin view and report."
-      }
+      },
+      "emailPlaceholder": "Email (for the portal invite, optional)",
+      "invite": "Invite",
+      "reinvite": "Resend",
+      "inviting": "Inviting…",
+      "inviteState": {
+        "none": "Not invited",
+        "sent": "Invited",
+        "claimed": "Portal active",
+        "linkOnly": "Link shared",
+        "existing": "Linked to an existing account; they sign in as usual."
+      },
+      "inviteLink": {
+        "title": "Email is not set up yet. Share this link with the nominee:",
+        "copy": "Copy link",
+        "copied": "Copied"
+      },
+      "photo": {
+        "yes": "Photo uploaded",
+        "no": "No photo yet"
+      },
+      "portal": "Portal"
     },
     "results": {
       "title": "Results and revenue",
@@ -342,6 +366,59 @@
       "title": "Development: mock provider",
       "approve": "Simulate approval",
       "decline": "Simulate decline"
+    }
+  },
+  "portal": {
+    "title": "Nominee portal",
+    "intro": "Your nominations, voting codes and flyers.",
+    "empty": {
+      "title": "No nominations yet",
+      "body": "When an organizer nominates you with this email, your profile appears here."
+    },
+    "signIn": {
+      "title": "Nominee portal",
+      "body": "Sign in with the email and password you set from your invitation link.",
+      "cta": "Sign in"
+    },
+    "card": {
+      "code": "Your voting code",
+      "category": "Category",
+      "event": "Event",
+      "publicPage": "Your public page"
+    },
+    "profile": {
+      "name": "Name as it should appear",
+      "bio": "Short bio",
+      "save": "Save profile",
+      "saving": "Saving…",
+      "saved": "Saved"
+    },
+    "photo": {
+      "title": "Your photo",
+      "helper": "A clear portrait, face centred. JPEG, PNG or WebP up to 10 MB.",
+      "choose": "Choose photo",
+      "upload": "Upload photo",
+      "uploading": "Uploading…",
+      "replace": "Replace photo"
+    },
+    "flyer": {
+      "title": "Your flyer",
+      "soon": "Flyer coming soon. It is generated automatically once the organizer assigns a design and your photo is in.",
+      "needPhoto": "Upload your photo first."
+    },
+    "claim": {
+      "title": "Set up your login",
+      "body": "You've been nominated. Choose a password to access your nominee portal.",
+      "password": "Password",
+      "confirm": "Confirm password",
+      "mismatch": "Passwords do not match.",
+      "submit": "Create password",
+      "submitting": "Saving…",
+      "done": {
+        "title": "Login created",
+        "body": "Sign in with {{email}} and your new password.",
+        "cta": "Go to sign in"
+      }
     }
   }
 }

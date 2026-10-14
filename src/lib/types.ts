@@ -107,8 +107,15 @@ export interface NomineeDoc extends TenantDoc {
   bio: string | null
   status: NomineeStatus
   isMorale: boolean
+  /** The nominee's Auth user id once invited; the portal's only access key. */
   userId: string | null
   profileCompletedAt: string | null
+  email: string | null
+  /** SHA-256 of the one-time claim token; null once claimed or never invited. */
+  inviteTokenHash: string | null
+  inviteExpiresAt: string | null
+  inviteSentAt: string | null
+  claimedAt: string | null
 }
 
 export interface RoundEntryDoc extends TenantDoc {

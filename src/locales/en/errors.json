@@ -53,7 +53,8 @@
     "eventClosed": "This event is closed.",
     "categoryNotInEvent": "That category belongs to a different event.",
     "moraleDisabled": "Morale candidates are not enabled for this workspace.",
-    "codeExhausted": "Could not allocate a nominee code. Try again."
+    "codeExhausted": "Could not allocate a nominee code. Try again.",
+    "emailInvalid": "Enter a valid email address for the nominee."
   },
   "vote": {
     "nomineeNotFound": "No nominee has that code.",
@@ -69,5 +70,28 @@
     "providerNotConfigured": "Payments are not configured yet. Please try again later.",
     "providerFailed": "The payment could not be started. Please try again.",
     "rateLimited": "Too many attempts. Please wait a minute and try again."
+  },
+  "invite": {
+    "noEmail": "Add an email address to the nominee before inviting them.",
+    "alreadyClaimed": "This nominee has already set up their portal login.",
+    "eventClosed": "This event is closed.",
+    "wrongEvent": "Not found."
+  },
+  "claim": {
+    "invalid": "This link is not valid. Ask the organizer for a new one.",
+    "expired": "This link has expired. Ask the organizer for a new one.",
+    "used": "This link was already used. Sign in with your email and password.",
+    "passwordTooShort": "Password must be at least 8 characters."
+  },
+  "profile": {
+    "nameTooShort": "Name is too short.",
+    "nameTooLong": "Name is too long.",
+    "bioTooLong": "Bio is too long."
+  },
+  "photo": {
+    "missing": "Choose a photo to upload.",
+    "tooLarge": "The photo is too large. Keep it under 10 MB.",
+    "unsupportedType": "Use a JPEG, PNG or WebP image.",
+    "failed": "The photo could not be saved. Please try again."
   }
 }

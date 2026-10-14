@@ -129,13 +129,15 @@ export function AddNomineeForm({
   const [name, setName] = useState('')
   const [categoryId, setCategoryId] = useState(categories[0]?.$id ?? '')
   const [bio, setBio] = useState('')
+  const [email, setEmail] = useState('')
   const [isMorale, setIsMorale] = useState(false)
   const submit = (e: FormEvent) => {
     e.preventDefault()
     void run(async () => {
-      await postJson(`/api/orgs/${orgId}/events/${event.$id}/nominees`, { name, categoryId, bio, isMorale })
+      await postJson(`/api/orgs/${orgId}/events/${event.$id}/nominees`, { name, categoryId, bio, email, isMorale })
       setName('')
       setBio('')
+      setEmail('')
       setIsMorale(false)
     })
   }
@@ -168,6 +170,16 @@ export function AddNomineeForm({
           ))}
         </select>
       </div>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        maxLength={254}
+        autoComplete="off"
+        className={inputClass}
+        placeholder={t('web:events.nominees.emailPlaceholder')}
+        aria-label={t('web:events.nominees.emailPlaceholder')}
+      />
       <textarea
         value={bio}
         onChange={(e) => setBio(e.target.value)}

@@ -47,7 +47,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - The organizer admin can nominate contestants directly (no public nomination needed).
 
 ### 5.2a Nominee portal
-- When a nominee is added, they receive an **email confirming the nomination** with their login credentials for the nominee portal.
+- When a nominee is added, they receive an **email confirming the nomination** with their login credentials for the nominee portal. *Built 2026-10-14 as a one-time claim link: the nominee sets their own password on the claim page, so no password travels by email. Until an email provider is chosen (#32) the organizer gets the link to share directly.*
 - In the portal the nominee completes their profile: photo upload, name as it should appear, bio and any other fields the organizer requires.
 - As soon as the photo is uploaded, the platform **generates the nominee's flyer immediately**, and the nominee can download it from the portal.
 - The nominee can see their own voting code and (if the organizer allows) their own vote count.

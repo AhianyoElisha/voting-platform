@@ -18,6 +18,7 @@ export type NomineeProblem =
   | 'categoryNotInEvent'
   | 'moraleDisabled'
   | 'codeExhausted'
+  | 'emailInvalid'
 
 export class NomineeError extends Error {
   constructor(public readonly problem: NomineeProblem) {
@@ -72,7 +73,18 @@ export interface CreateNomineeInput {
   categoryId: string
   name: string
   bio?: string
+  /** Needed to invite the nominee to the portal; optional at creation. */
+  email?: string
   isMorale?: boolean
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export function normalizeEmail(input: string | undefined): string | null {
+  const email = (input ?? '').trim().toLowerCase()
+  if (!email) return null
+  if (email.length > 254 || !EMAIL_PATTERN.test(email)) throw new NomineeError('emailInvalid')
+  return email
 }
 
 export async function listNominees(ctx: TenantContext, eventId: string): Promise<NomineeDoc[]> {
@@ -109,6 +121,7 @@ export async function createNominee(
   if (name.length > 120) throw new NomineeError('nameTooLong')
   const bio = (input.bio ?? '').trim() || null
   if (bio && bio.length > 2000) throw new NomineeError('bioTooLong')
+  const email = normalizeEmail(input.email)
 
   const isMorale = input.isMorale === true
   if (isMorale) {
@@ -139,6 +152,11 @@ export async function createNominee(
         isMorale,
         userId: null,
         profileCompletedAt: null,
+        email,
+        inviteTokenHash: null,
+        inviteExpiresAt: null,
+        inviteSentAt: null,
+        claimedAt: null,
       })
     } catch (err) {
       if (!isConflict(err)) throw err

@@ -20,6 +20,10 @@ export const APPWRITE = {
     VOTES: 'votes',
     LEDGER_ENTRIES: 'ledger_entries',
   },
+
+  BUCKETS: {
+    NOMINEE_PHOTOS: 'nominee-photos',
+  },
 } as const
 
 /**

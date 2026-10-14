@@ -15,6 +15,7 @@ export async function POST(req: Request, { params }: Params) {
       categoryId: str(body.categoryId),
       name: str(body.name),
       bio: str(body.bio),
+      email: str(body.email) || undefined,
       isMorale: body.isMorale === true,
     })
     return NextResponse.json(result, { status: 201 })

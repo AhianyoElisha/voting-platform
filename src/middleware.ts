@@ -87,8 +87,11 @@ async function verifySession(value: string | undefined): Promise<boolean> {
 }
 
 const protectedRoutes = ['/dashboard', '/account', '/portal', '/admin']
+// Reachable without a session: the nominee claim page is how a session comes to exist.
+const publicExceptions = ['/portal/claim/']
 
 function isProtected(pathname: string) {
+  if (publicExceptions.some((prefix) => pathname.startsWith(prefix))) return false
   return protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   )

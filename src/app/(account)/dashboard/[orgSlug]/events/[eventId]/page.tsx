@@ -1,4 +1,5 @@
 import { AddCategoryForm, AddNomineeForm, EventStatusControls, RoundControls } from '@/components/events/EventControls'
+import InviteButton from '@/components/events/InviteButton'
 import { TenantMismatchError } from '@/lib/db'
 import { getEvent } from '@/lib/events-server'
 import { getTranslations } from '@/lib/i18n-server'
@@ -173,6 +174,7 @@ export default async function EventDetailPage({ params }: Props) {
                     <tr>
                       <th className="px-4 py-2">{t('web:events.nominees.name')}</th>
                       <th className="px-4 py-2">{t('web:events.nominees.code')}</th>
+                      <th className="px-4 py-2">{t('web:events.nominees.portal')}</th>
                       <th className="px-4 py-2"></th>
                     </tr>
                   </thead>
@@ -181,6 +183,26 @@ export default async function EventDetailPage({ params }: Props) {
                       <tr key={n.$id}>
                         <td className="px-4 py-2 text-neutral-900 dark:text-white">{n.name}</td>
                         <td className="px-4 py-2 font-mono">{n.code}</td>
+                        <td className="px-4 py-2">
+                          {manager && open ? (
+                            <InviteButton
+                              orgId={organization.$id}
+                              eventId={event.$id}
+                              nomineeId={n.$id}
+                              hasEmail={!!n.email}
+                              state={n.claimedAt ? 'claimed' : n.inviteTokenHash ? 'sent' : 'none'}
+                            />
+                          ) : (
+                            <span className="text-xs text-neutral-500">
+                              {t(
+                                `web:events.nominees.inviteState.${n.claimedAt ? 'claimed' : n.inviteTokenHash ? 'sent' : 'none'}`
+                              )}
+                            </span>
+                          )}
+                          <span className="mt-1 block text-xs text-neutral-400">
+                            {n.photoUrl ? t('web:events.nominees.photo.yes') : t('web:events.nominees.photo.no')}
+                          </span>
+                        </td>
                         <td className="px-4 py-2">
                           {n.isMorale && <Badge color="amber">{t('web:events.nominees.moraleBadge')}</Badge>}
                         </td>
