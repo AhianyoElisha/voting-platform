@@ -11,7 +11,12 @@ on the Hubtel sandbox first, then once more on live with a GHS 1 vote.
    `https://<your host>/api/payments/callback/hubtel`.
 2. Ask Hubtel to allowlist the server's outbound IP for the transaction
    status API. Without it every callback is rejected, because the adapter
-   confirms through that API before crediting (payment rule 2).
+   confirms through that API before crediting (payment rule 2). The app
+   runs on Vercel (decision #24), whose functions have no fixed outbound
+   IP by default: either enable Vercel's static egress IP feature for the
+   project, or route the status calls through a small relay with a fixed
+   address and point `HUBTEL_STATUS_URL` at it. Confirm which with Hubtel
+   before the first live payment.
 3. Set the env on the host: `PAYMENT_PROVIDER=hubtel`, the three `HUBTEL_*`
    credentials, `HUBTEL_PAYLOAD_SHAPE`, `NEXT_PUBLIC_APP_URL`,
    `INTERNAL_JOB_SECRET`. Leave `HUBTEL_RECEIVE_URL` and `HUBTEL_STATUS_URL`

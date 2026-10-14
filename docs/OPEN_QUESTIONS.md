@@ -32,7 +32,7 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 
 ## Technical
 23. ~~**Tech stack confirmation** (Next.js + Postgres + Prisma proposed). Alternatives include Appwrite as the backend.~~ Settled 2026-10-14: mirror pickLT (Next.js 15 + Appwrite). See DECISIONS and ARCHITECTURE.
-24. **Hosting.** Object storage is settled (Appwrite Storage, with #23). Still open: where the Next.js app runs (pickLT uses Vercel) and which Appwrite Cloud region or self-hosted instance.
+24. ~~**Hosting.** Object storage is settled (Appwrite Storage, with #23). Still open: where the Next.js app runs (pickLT uses Vercel) and which Appwrite Cloud region or self-hosted instance.~~ Settled 2026-10-14: Vercel and Appwrite Cloud Frankfurt. See DECISIONS. Note: Vercel functions have no fixed outbound IP by default, which Hubtel's status API allowlist needs; see `docs/HUBTEL_SMOKE_TEST.md`.
 25. **Subdomains per organizer**, or slug paths only at first?
 26. **Results visibility defaults** and the real-time approach.
 27. **Fraud controls** beyond payment (rate limits, flagging unusual spikes).

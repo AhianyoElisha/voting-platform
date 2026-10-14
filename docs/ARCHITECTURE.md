@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **decided 2026-10-14** (see `DECISIONS.md`; was OPEN_QUESTIONS #23). The stack, folder structure, UI kit, icons and fonts mirror the **pickLT** project at `../moverapp/pickLT`. When this document and pickLT disagree on *how* something is done, look at pickLT first, do it that way, and record the difference here. Still open: where the app is hosted and which Appwrite region (OPEN_QUESTIONS #24).
+Status: **decided 2026-10-14** (see `DECISIONS.md`; was OPEN_QUESTIONS #23). The stack, folder structure, UI kit, icons and fonts mirror the **pickLT** project at `../moverapp/pickLT`. When this document and pickLT disagree on *how* something is done, look at pickLT first, do it that way, and record the difference here. Hosting is settled too (2026-10-14, #24): Vercel for the Next.js app, Appwrite Cloud in Frankfurt for the backend.
 
 ## Reference project: pickLT
 
@@ -22,7 +22,7 @@ pickLT is a Next.js 15 booking and rental app on Appwrite, grown from the Chisfi
 | Monitoring | Sentry (`@sentry/nextjs`) with the `/monitoring` tunnel route. |
 | Tests | Vitest, node environment, `src/**/__tests__/**/*.test.ts`. |
 | Tooling | Prettier (no semicolons, single quotes, width 120, organize-imports and tailwind plugins), ESLint `next/core-web-vitals`, `.npmrc` with `legacy-peer-deps=true`. |
-| Hosting | pickLT runs the Next.js app on Vercel and Appwrite Cloud in Frankfurt. **Not yet decided for us** (#24). |
+| Hosting | Same as pickLT (decided 2026-10-14, #24): the Next.js app on Vercel, Appwrite Cloud in Frankfurt (`fra.cloud.appwrite.io`, already the default in `appwrite.config.json` and `.env.example`). Scheduled jobs (payment reconciliation) run as Vercel cron jobs declared in `vercel.json`, not yet added. Vercel functions have no fixed egress IP by default; Hubtel's status API allowlist needs one (a Vercel static-IP add-on or a small relay), see `docs/HUBTEL_SMOKE_TEST.md`. |
 
 Not carried over: Mapbox and Google Maps, LiveKit calls, Stripe, the moving and vehicle domain, the blog and listing demo pages.
 
