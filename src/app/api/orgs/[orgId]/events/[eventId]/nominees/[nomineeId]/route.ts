@@ -7,7 +7,7 @@ type Params = { params: Promise<{ orgId: string; eventId: string; nomineeId: str
 
 const optional = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
 
-/** PATCH { name?, bio?, email? }: organizer edits. Managers only; the nominee must be in the event in the URL. */
+/** PATCH { name?, bio?, email?, photoFocus? }: organizer edits. Managers only; the nominee must be in the event in the URL. */
 export async function PATCH(req: Request, { params }: Params) {
   const { orgId, eventId, nomineeId } = await params
   const r = await withTenant(orgId)
@@ -18,6 +18,7 @@ export async function PATCH(req: Request, { params }: Params) {
       name: optional(body.name),
       bio: optional(body.bio),
       email: optional(body.email),
+      photoFocus: 'photoFocus' in body ? body.photoFocus : undefined,
     })
     // The name is on the flyer; ensureFlyer does nothing when nothing it draws changed.
     after(() => ensureFlyer(nominee.$id).catch((err) => console.error('[flyer] after nominee edit', err)))

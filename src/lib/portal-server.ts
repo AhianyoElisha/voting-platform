@@ -3,6 +3,7 @@ import { createAdminClient, withRetry } from './appwrite-server'
 import { APPWRITE, APPWRITE as TABLES } from './constants'
 import { databaseId } from './db'
 import { normalizePhoto } from './photo'
+import { CENTRE, focusColumns, focusOf, isCentred, parsePhotoFocus } from './photo-focus'
 import type { CategoryDoc, EventDoc, GeneratedFlyerDoc, NomineeDoc, OrganizationDoc } from './types'
 
 /**
@@ -21,7 +22,7 @@ export class NotOwnNomineeError extends Error {
   }
 }
 
-export type ProfileProblem = 'nameTooShort' | 'nameTooLong' | 'bioTooLong'
+export type ProfileProblem = 'nameTooShort' | 'nameTooLong' | 'bioTooLong' | 'focusInvalid'
 
 export class ProfileError extends Error {
   constructor(public readonly problem: ProfileProblem) {
@@ -126,7 +127,7 @@ export async function portalEntries(userId: string): Promise<PortalEntry[]> {
 export async function updateOwnProfile(
   userId: string,
   nomineeId: string,
-  input: { name?: string; bio?: string }
+  input: { name?: string; bio?: string; /** Untrusted; see `photo-focus.ts`. */ photoFocus?: unknown }
 ): Promise<NomineeDoc> {
   const nominee = await requireOwnNominee(userId, nomineeId)
   const data: Partial<NomineeDoc> = {}
@@ -140,6 +141,12 @@ export async function updateOwnProfile(
     const bio = input.bio.trim() || null
     if (bio && bio.length > 2000) throw new ProfileError('bioTooLong')
     data.bio = bio
+  }
+  if (input.photoFocus !== undefined) {
+    const focus = parsePhotoFocus(input.photoFocus)
+    if (!focus) throw new ProfileError('focusInvalid')
+    const current = focusOf(nominee)
+    if (focus.x !== current.x || focus.y !== current.y) Object.assign(data, focusColumns(focus))
   }
   if (Object.keys(data).length === 0) return nominee
   const { databases } = createAdminClient()
@@ -188,6 +195,8 @@ export async function storeNomineePhoto(
   const updated = await withRetry(() =>
     databases.updateDocument<NomineeDoc>(db(), APPWRITE.TABLES.NOMINEES, nominee.$id, {
       photoUrl: photoViewUrl(file.$id),
+      // A new photo starts centred again. Only written when a focus was set.
+      ...(isCentred(focusOf(nominee)) ? {} : focusColumns(CENTRE)),
       ...extra,
     })
   )

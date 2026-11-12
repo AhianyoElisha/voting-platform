@@ -33,7 +33,7 @@ Added for this product (not in pickLT): Fabric.js for the flyer editor and rende
 ```
 src/app/(app)       public site: organizer pages, events, nominees, vote, tickets
 src/app/(auth)      login, signup, forgot-password, reset-password (Appwrite recovery)
-src/app/(account)   organizer dashboard (events, nominees, flyers, tickets, report, team, payouts, settings)
+src/app/(account)   the user's account page and the organizer dashboard (events, nominees, flyers, tickets, report, team, payouts, settings)
 src/app/(nominee)   nominee portal (new route group)
 src/app/(admin)     super admin console (new route group): overview, organizations, transactions, payouts, audit
 src/app/api         route handlers: reads, auth, webhooks (ussd, payments)
@@ -77,6 +77,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 - One shared Appwrite database. Every tenant-owned collection has an `organizationId` attribute with an index.
 - A data-access layer in `src/lib` takes a tenant context and adds the `organizationId` filter, so route handlers never write raw unscoped queries.
 - Tenant isolation is enforced server-side with the admin client plus membership checks from the session (`src/lib/tenant.ts` builds the `TenantContext` from the caller's Membership). Tables have row security off and no table-level grants: the browser SDK is used for Auth only, and all reads and writes go through route handlers or Functions with the admin key. Document permissions can be added later as a second line of defence, not the boundary.
+- `/events` is the one public page that reads across tenants (`src/lib/public-events-server.ts`): it lists only what each active organization already publishes at `/o/{slug}`.
 - Public pages resolve tenants by slug: `/o/{slug}` is the organization's page (its public events), `/o/{slug}/{eventSlug}` an event, `/o/{slug}/{eventSlug}/vote/{code}` a nominee's vote page. Which event statuses are public is defined once, in `src/lib/public-events.ts`. Subdomains are optional and can come later (#25).
 
 ## Key flows

@@ -6,7 +6,7 @@ import { NextResponse, after } from 'next/server'
 
 type Params = { params: Promise<{ nomineeId: string }> }
 
-/** PATCH { name?, bio? } on the caller's own nominee row. */
+/** PATCH { name?, bio?, photoFocus? } on the caller's own nominee row. */
 export async function PATCH(req: Request, { params }: Params) {
   const { t } = await getTranslations()
   const userId = await getSessionUserId()
@@ -17,6 +17,7 @@ export async function PATCH(req: Request, { params }: Params) {
     const nominee = await updateOwnProfile(userId, nomineeId, {
       name: typeof body?.name === 'string' ? body.name : undefined,
       bio: typeof body?.bio === 'string' ? body.bio : undefined,
+      photoFocus: body && 'photoFocus' in body ? body.photoFocus : undefined,
     })
     after(() => ensureFlyer(nominee.$id).catch((err) => console.error('[flyer] after profile update', err)))
     return NextResponse.json({ nominee: { id: nominee.$id, name: nominee.name, bio: nominee.bio } })

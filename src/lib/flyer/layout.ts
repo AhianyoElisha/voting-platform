@@ -11,14 +11,26 @@ export interface Rect {
   h: number
 }
 
-/** Source rectangle of an image that covers `frame` (object-fit: cover, centred). */
-export function coverCrop(imageW: number, imageH: number, frameW: number, frameH: number): Rect {
+/**
+ * Source rectangle of an image that covers `frame` (object-fit: cover).
+ * `focusX` and `focusY` (0 to 1, default centre) choose which part survives
+ * the crop along the axis that overflows, as CSS `object-position` does.
+ */
+export function coverCrop(
+  imageW: number,
+  imageH: number,
+  frameW: number,
+  frameH: number,
+  focusX = 0.5,
+  focusY = 0.5
+): Rect {
   if (imageW <= 0 || imageH <= 0 || frameW <= 0 || frameH <= 0)
     return { x: 0, y: 0, w: Math.max(imageW, 0), h: Math.max(imageH, 0) }
   const scale = Math.max(frameW / imageW, frameH / imageH)
   const w = frameW / scale
   const h = frameH / scale
-  return { x: (imageW - w) / 2, y: (imageH - h) / 2, w, h }
+  const clamp = (n: number) => (Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.5)
+  return { x: (imageW - w) * clamp(focusX), y: (imageH - h) * clamp(focusY), w, h }
 }
 
 export type Measure = (text: string, fontSize: number) => number

@@ -242,6 +242,29 @@ describe('ensureFlyer', () => {
     expect(fake.dump('generated_flyers')).toHaveLength(1)
   })
 
+  test('moving the photo re-renders with that focus; a centred photo keeps its hash', async () => {
+    const { event, nominee } = await seed()
+    await publishedTemplate(event.$id)
+    await withPhoto(nominee.$id)
+    const seen: unknown[] = []
+    const render = async (inputs: { photoFocus?: unknown }) => {
+      seen.push(inputs.photoFocus)
+      return new Uint8Array(200)
+    }
+    expect((await ensureFlyer(nominee.$id, { render })).outcome).toBe('generated')
+    // Explicit nulls (centre) are the same flyer as a row without the columns.
+    await fake.updateDocument('voteapp', 'nominees', nominee.$id, { photoFocusX: null, photoFocusY: null })
+    expect((await ensureFlyer(nominee.$id, { render })).outcome).toBe('current')
+
+    await fake.updateDocument('voteapp', 'nominees', nominee.$id, { photoFocusX: 50, photoFocusY: 15 })
+    expect((await ensureFlyer(nominee.$id, { render })).outcome).toBe('generated')
+    expect((await ensureFlyer(nominee.$id, { render })).outcome).toBe('current')
+    expect(seen).toEqual([
+      { x: 50, y: 50 },
+      { x: 50, y: 15 },
+    ])
+  })
+
   test('a republished template invalidates every flyer', async () => {
     const { event, nominee } = await seed()
     const t = await publishedTemplate(event.$id)

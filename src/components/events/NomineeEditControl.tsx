@@ -1,7 +1,9 @@
 'use client'
 
 import { apiErrorMessage, postJson } from '@/components/events/api'
+import PhotoFocusPicker from '@/components/flyer/PhotoFocusPicker'
 import { inputClass } from '@/components/organization/OrganizationFields'
+import type { PhotoFocus } from '@/lib/photo-focus'
 import { compressImage } from '@/utils/compressImage'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useState } from 'react'
@@ -22,7 +24,15 @@ export default function NomineeEditControl({
 }: {
   orgId: string
   eventId: string
-  nominee: { id: string; name: string; email: string | null; bio: string | null; claimed: boolean; hasPhoto: boolean }
+  nominee: {
+    id: string
+    name: string
+    email: string | null
+    bio: string | null
+    claimed: boolean
+    photoUrl: string | null
+    photoFocus: PhotoFocus
+  }
 }) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -163,11 +173,22 @@ export default function NomineeEditControl({
         >
           {busy === 'photo'
             ? t('web:events.nominees.edit.uploading')
-            : nominee.hasPhoto
+            : nominee.photoUrl
               ? t('web:events.nominees.edit.replacePhoto')
               : t('web:events.nominees.edit.uploadPhoto')}
         </button>
       </div>
+
+      {nominee.photoUrl && (
+        <div className="border-t border-neutral-200 pt-2 dark:border-neutral-700">
+          <PhotoFocusPicker
+            key={nominee.photoUrl}
+            photoUrl={nominee.photoUrl}
+            initial={nominee.photoFocus}
+            endpoint={base}
+          />
+        </div>
+      )}
 
       {notice && <p className="text-green-600">{notice}</p>}
       {error && <p className="text-red-600">{error}</p>}

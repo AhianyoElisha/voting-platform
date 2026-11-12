@@ -6,6 +6,7 @@ import path from 'path'
 import { createAdminClient, withRetry } from '../appwrite-server'
 import { APPWRITE } from '../constants'
 import { databaseId, listTenantDocuments, type TenantContext } from '../db'
+import { focusOf, isCentred } from '../photo-focus'
 import { photoFileId } from '../portal-server'
 import type { CategoryDoc, EventDoc, FlyerTemplateDoc, FontDoc, GeneratedFlyerDoc, NomineeDoc } from '../types'
 import type { BindingContext } from './bindings'
@@ -101,6 +102,7 @@ export async function ensureFlyer(
     eventTitle: event.title,
     ussdShortcode: process.env.USSD_SHORTCODE ?? null,
   }
+  const focus = focusOf(nominee)
   const hash = sourceHash({
     renderer: RENDERER_VERSION,
     templateId: template.$id,
@@ -109,6 +111,7 @@ export async function ensureFlyer(
     // Only when present, so flyers of templates without them keep their hashes.
     ...(template.foregroundFileId ? { foregroundFileId: template.foregroundFileId } : {}),
     ...(template.photoMaskFileId ? { photoMaskFileId: template.photoMaskFileId } : {}),
+    ...(isCentred(focus) ? {} : { photoFocus: focus }),
     ...context,
   })
   if (!opts.force && existing && existing.sourceHash === hash && existing.templateId === template.$id) {
@@ -133,6 +136,7 @@ export async function ensureFlyer(
     foreground,
     photoMask,
     photo,
+    photoFocus: focus,
     model,
     context,
     fonts,

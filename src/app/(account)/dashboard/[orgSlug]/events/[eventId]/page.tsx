@@ -15,6 +15,7 @@ import { formatPesewas } from '@/lib/money'
 import { listCategories, listNominees } from '@/lib/nominees-server'
 import { resolveWorkspace } from '@/lib/page-tenant'
 import { maskPhone } from '@/lib/phone'
+import { focusOf } from '@/lib/photo-focus'
 import { loadCumulativeReport } from '@/lib/report/data'
 import { listRounds } from '@/lib/rounds-server'
 import { canDesign, canManage } from '@/lib/tenant'
@@ -434,7 +435,8 @@ export default async function EventDetailPage({ params }: Props) {
                                   email: n.email,
                                   bio: n.bio,
                                   claimed: !!n.claimedAt,
-                                  hasPhoto: !!n.photoUrl,
+                                  photoUrl: n.photoUrl,
+                                  photoFocus: focusOf(n),
                                 }}
                               />
                             </div>

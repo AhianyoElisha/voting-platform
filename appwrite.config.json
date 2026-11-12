@@ -407,6 +407,17 @@
             ],
             "indexes": [
                 {
+                    "key": "by_status",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "status"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
                     "key": "by_org",
                     "type": "key",
                     "status": "available",
@@ -672,6 +683,24 @@
                     "size": 512,
                     "default": null,
                     "encrypt": false
+                },
+                {
+                    "key": "photoFocusX",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 100
+                },
+                {
+                    "key": "photoFocusY",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 100
                 },
                 {
                     "key": "bio",

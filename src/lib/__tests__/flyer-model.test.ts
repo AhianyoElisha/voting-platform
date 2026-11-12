@@ -79,6 +79,16 @@ describe('layout', () => {
     expect(coverCrop(0, 0, 10, 10)).toEqual({ x: 0, y: 0, w: 0, h: 0 })
   })
 
+  test('coverCrop follows the focus along the axis that overflows', () => {
+    // Portrait photo in a square frame: only the vertical position can move.
+    expect(coverCrop(1000, 2000, 500, 500, 0.5, 0)).toEqual({ x: 0, y: 0, w: 1000, h: 1000 })
+    expect(coverCrop(1000, 2000, 500, 500, 0.5, 1)).toEqual({ x: 0, y: 1000, w: 1000, h: 1000 })
+    expect(coverCrop(1000, 2000, 500, 500, 0, 0.25)).toEqual({ x: 0, y: 250, w: 1000, h: 1000 })
+    // Out-of-range or broken values never leave the photo.
+    expect(coverCrop(2000, 1000, 500, 500, 7, -3)).toEqual({ x: 1000, y: 0, w: 1000, h: 1000 })
+    expect(coverCrop(2000, 1000, 500, 500, NaN, 0.5)).toEqual({ x: 500, y: 0, w: 1000, h: 1000 })
+  })
+
   // 0.6em per character: a predictable stand-in for a real font.
   const measure = (text: string, size: number) => text.length * size * 0.6
 

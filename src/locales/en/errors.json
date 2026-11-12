@@ -58,7 +58,8 @@
     "codeExhausted": "Could not allocate a nominee code. Try again.",
     "emailInvalid": "Enter a valid email address for the nominee.",
     "notInEvent": "That nominee is not in this event.",
-    "emailLocked": "The nominee has already signed in to the portal with this email, so it can't be changed."
+    "emailLocked": "The nominee has already signed in to the portal with this email, so it can't be changed.",
+    "focusInvalid": "That photo position is not valid."
   },
   "vote": {
     "nomineeNotFound": "No nominee has that code.",
@@ -93,7 +94,8 @@
   "profile": {
     "nameTooShort": "Name is too short.",
     "nameTooLong": "Name is too long.",
-    "bioTooLong": "Bio is too long."
+    "bioTooLong": "Bio is too long.",
+    "focusInvalid": "That photo position is not valid."
   },
   "photo": {
     "missing": "Choose a photo to upload.",
@@ -190,5 +192,9 @@
     "colorInvalid": "Choose valid colours.",
     "badImage": "Upload a PNG, JPEG or WebP image of at most 5 MB.",
     "noChange": "Nothing changed."
+  },
+  "account": {
+    "nameTooShort": "Enter your name (at least 2 characters).",
+    "nameTooLong": "That name is too long (120 characters at most)."
   }
 }

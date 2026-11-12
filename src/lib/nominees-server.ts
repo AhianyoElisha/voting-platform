@@ -11,6 +11,7 @@ import {
 } from './db'
 import { allocateNomineeCode, isNomineeCodeTaken } from './nominee-code'
 import { releaseInviteAccount } from './nominee-invite-server'
+import { focusColumns, focusOf, parsePhotoFocus } from './photo-focus'
 import { storeNomineePhoto } from './portal-server'
 import { assertCanManage, canManage } from './tenant'
 import type { CategoryDoc, EventDoc, MembershipRole, NomineeDoc, RoundDoc, RoundEntryDoc } from './types'
@@ -30,6 +31,7 @@ export type NomineeProblem =
   | 'emailInvalid'
   | 'notInEvent'
   | 'emailLocked'
+  | 'focusInvalid'
 
 export class NomineeError extends Error {
   constructor(public readonly problem: NomineeProblem) {
@@ -232,6 +234,8 @@ export interface UpdateNomineeInput {
   bio?: string
   /** Empty string clears it. */
   email?: string
+  /** Untrusted; where the photo is anchored on the flyer (`photo-focus.ts`). */
+  photoFocus?: unknown
 }
 
 /**
@@ -270,6 +274,12 @@ export async function updateNominee(
       Object.assign(data, { email, userId: null, inviteTokenHash: null, inviteExpiresAt: null, inviteSentAt: null })
     }
   }
+  if (input.photoFocus !== undefined) {
+    const focus = parsePhotoFocus(input.photoFocus)
+    if (!focus) throw new NomineeError('focusInvalid')
+    const current = focusOf(nominee)
+    if (focus.x !== current.x || focus.y !== current.y) Object.assign(data, focusColumns(focus))
+  }
   if (Object.keys(data).length === 0) return nominee
 
   const updated = await updateTenantDocument<NomineeDoc>(ctx, APPWRITE.TABLES.NOMINEES, nominee.$id, data)
@@ -283,7 +293,9 @@ export async function updateNominee(
     // Field names only: the values are personal data and already on the row.
     metadata: {
       eventId,
-      fields: Object.keys(data).filter((k) => ['name', 'bio', 'email'].includes(k)),
+      fields: Object.keys(data)
+        .filter((k) => ['name', 'bio', 'email', 'photoFocusX'].includes(k))
+        .map((k) => (k === 'photoFocusX' ? 'photoFocus' : k)),
       ...(accountReleased ? { accountReleased } : {}),
     },
   })

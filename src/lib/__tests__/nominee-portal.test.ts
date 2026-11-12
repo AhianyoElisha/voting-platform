@@ -308,6 +308,26 @@ describe('portal access (own row only)', () => {
     expect(photoFileId(replaced.photoUrl)).toBe('file_2')
     expect(photoFileId(null)).toBeNull()
   })
+
+  test('the nominee can move their photo; a new photo starts centred again', async () => {
+    const { nominee, userId } = await claimed()
+    await attachPhoto(userId, nominee.$id, new Uint8Array([1]))
+    // Nothing is written for the photo position until someone sets one.
+    expect(await fake.getDocument('voteapp', 'nominees', nominee.$id)).not.toHaveProperty('photoFocusX')
+
+    const moved = await updateOwnProfile(userId, nominee.$id, { photoFocus: { x: 40.2, y: 10 } })
+    expect([moved.photoFocusX, moved.photoFocusY]).toEqual([40, 10])
+    await expect(updateOwnProfile(userId, nominee.$id, { photoFocus: { x: 400, y: 10 } })).rejects.toThrow(
+      /focusInvalid/
+    )
+    await expect(updateOwnProfile('someone_else', nominee.$id, { photoFocus: { x: 1, y: 1 } })).rejects.toBeInstanceOf(
+      NotOwnNomineeError
+    )
+
+    storage.createFile.mockResolvedValueOnce({ $id: 'file_2' })
+    const replaced = await attachPhoto(userId, nominee.$id, new Uint8Array([2]))
+    expect([replaced.photoFocusX, replaced.photoFocusY]).toEqual([null, null])
+  })
 })
 
 describe('organizer edits (updateNominee, setNomineePhoto)', () => {
@@ -330,6 +350,19 @@ describe('organizer edits (updateNominee, setNomineePhoto)', () => {
     const audit = fake.dump('audit_logs').filter((a) => a.action === 'nominee.update')
     expect(audit).toHaveLength(1)
     expect(JSON.parse(audit[0].metadata as string)).toEqual({ eventId: event.$id, fields: ['name', 'bio'] })
+  })
+
+  test('the organizer can move the photo; it is validated, audited and refused for staff', async () => {
+    const { nominee, event } = await seed()
+    const moved = await updateNominee(owner, event.$id, nominee.$id, { photoFocus: { x: 60, y: 20 } })
+    expect([moved.photoFocusX, moved.photoFocusY]).toEqual([60, 20])
+    await expect(updateNominee(owner, event.$id, nominee.$id, { photoFocus: 'top' })).rejects.toThrow(/focusInvalid/)
+    await expect(updateNominee(staff, event.$id, nominee.$id, { photoFocus: { x: 1, y: 1 } })).rejects.toThrow()
+    // The same position again changes nothing and is not audited twice.
+    await updateNominee(owner, event.$id, nominee.$id, { photoFocus: { x: 60, y: 20 } })
+    const audit = fake.dump('audit_logs').filter((a) => a.action === 'nominee.update')
+    expect(audit).toHaveLength(1)
+    expect(JSON.parse(audit[0].metadata as string)).toEqual({ eventId: event.$id, fields: ['photoFocus'] })
   })
 
   test('changing the email before claim drops the pending invite, so the old link dies', async () => {

@@ -108,6 +108,13 @@ export interface NomineeDoc extends TenantDoc {
   /** Platform-wide unique (decision #12). */
   code: string
   photoUrl: string | null
+  /**
+   * Where the photo is anchored in the flyer's frame, percent; null or absent = centre
+   * (`photo-focus.ts`). Optional: rows are created without them and they are only written
+   * when someone moves the photo.
+   */
+  photoFocusX?: number | null
+  photoFocusY?: number | null
   bio: string | null
   status: NomineeStatus
   isMorale: boolean

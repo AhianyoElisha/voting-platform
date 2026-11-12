@@ -1,6 +1,7 @@
 import NomineeCard from '@/components/portal/NomineeCard'
 import { getSessionUserId } from '@/lib/auth-session'
 import { getTranslations } from '@/lib/i18n-server'
+import { focusOf } from '@/lib/photo-focus'
 import { portalEntries } from '@/lib/portal-server'
 import { Heading } from '@/shared/Heading'
 import { Metadata } from 'next'
@@ -42,6 +43,7 @@ export default async function PortalPage() {
               code: nominee.code,
               bio: nominee.bio,
               photoUrl: nominee.photoUrl,
+              photoFocus: focusOf(nominee),
               profileCompletedAt: nominee.profileCompletedAt,
               flyerUrl,
               event: event ? { title: event.title, slug: event.slug, status: event.status } : null,

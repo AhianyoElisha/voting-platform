@@ -146,10 +146,6 @@
       "title": "Organizer dashboard",
       "body": "Events, nominees, results and payouts will live here."
     },
-    "account": {
-      "title": "My account",
-      "body": "Profile and workspace settings will live here."
-    },
     "portal": {
       "title": "Nominee portal",
       "body": "Your profile, voting code and flyer will live here."
@@ -157,10 +153,6 @@
     "admin": {
       "title": "Admin console",
       "body": "Organizations, fees, templates and payouts will live here."
-    },
-    "events": {
-      "title": "Events",
-      "body": "Live and upcoming voting campaigns will be listed here."
     }
   },
   "dashboard": {
@@ -932,5 +924,34 @@
     },
     "opens": "Opens {{when}}",
     "closes": "Closes {{when}}"
+  },
+  "directory": {
+    "title": "Events",
+    "description": "Live and upcoming voting campaigns. Vote for nominees and buy tickets.",
+    "subtitle": "Live and upcoming voting campaigns from every organizer."
+  },
+  "account": {
+    "title": "My account",
+    "profile": "Profile",
+    "name": "Full name",
+    "email": "Sign-in email",
+    "phone": "Phone",
+    "noPhone": "Not set",
+    "save": "Save",
+    "saved": "Saved.",
+    "password": "Password",
+    "passwordHelper": "We email you a link to choose a new password. Changing it signs you out on every device.",
+    "passwordCta": "Reset my password",
+    "noWorkspaces": "You do not belong to a workspace yet.",
+    "portalCta": "Open the nominee portal"
+  },
+  "photoFocus": {
+    "title": "Position on the flyer",
+    "helper": "Tap the part of the photo that must stay in view, usually the face. The flyer keeps it in frame when the photo is cropped.",
+    "save": "Save position",
+    "saving": "Saving…",
+    "saved": "Position saved. The flyer is being updated.",
+    "reset": "Centre",
+    "marker": "Chosen point"
   }
 }

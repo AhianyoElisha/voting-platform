@@ -1,7 +1,9 @@
 'use client'
 
 import { apiErrorMessage, postJson } from '@/components/events/api'
+import PhotoFocusPicker from '@/components/flyer/PhotoFocusPicker'
 import { inputClass } from '@/components/organization/OrganizationFields'
+import type { PhotoFocus } from '@/lib/photo-focus'
 import { compressImage } from '@/utils/compressImage'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -14,6 +16,7 @@ export interface PortalEntryView {
   code: string
   bio: string | null
   photoUrl: string | null
+  photoFocus: PhotoFocus
   profileCompletedAt: string | null
   flyerUrl: string | null
   event: { title: string; slug: string; status: string } | null
@@ -107,6 +110,7 @@ export default function NomineeCard({ entry }: { entry: PortalEntryView }) {
               src={entry.photoUrl}
               alt={entry.name}
               className="aspect-square w-full max-w-xs rounded-2xl object-cover"
+              style={{ objectPosition: `${entry.photoFocus.x}% ${entry.photoFocus.y}%` }}
             />
           ) : (
             <div className="flex aspect-square w-full max-w-xs items-center justify-center rounded-2xl bg-neutral-100 text-sm text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400">
@@ -133,6 +137,14 @@ export default function NomineeCard({ entry }: { entry: PortalEntryView }) {
                   : t('web:portal.photo.upload')}
             </button>
           </form>
+          {entry.photoUrl && (
+            <PhotoFocusPicker
+              key={entry.photoUrl}
+              photoUrl={entry.photoUrl}
+              initial={entry.photoFocus}
+              endpoint={`/api/portal/nominees/${entry.id}`}
+            />
+          )}
         </section>
 
         <section className="space-y-3">

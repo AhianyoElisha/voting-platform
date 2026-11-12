@@ -26,6 +26,8 @@ export interface RenderInputs {
   height: number
   background: Uint8Array | null
   photo: Uint8Array | null
+  /** Percent point of the photo kept in the frame; centre when absent (`photo-focus.ts`). */
+  photoFocus?: { x: number; y: number }
   /** Transparent PNG over the photo; stretched to the template size. */
   foreground?: Uint8Array | null
   /** Alpha mask for a photo slot with shape `mask`; stretched to the slot. Without it, `mask` is a rectangle. */
@@ -136,7 +138,8 @@ export async function renderFlyer(inputs: RenderInputs): Promise<Uint8Array> {
       const layer = createCanvas(w, h)
       const lctx = layer.getContext('2d')
       if (photo) {
-        const crop = coverCrop(photo.width, photo.height, slot.w, slot.h)
+        const focus = inputs.photoFocus ?? { x: 50, y: 50 }
+        const crop = coverCrop(photo.width, photo.height, slot.w, slot.h, focus.x / 100, focus.y / 100)
         lctx.drawImage(photo, crop.x, crop.y, crop.w, crop.h, 0, 0, w, h)
       } else {
         lctx.fillStyle = '#9ca3af'
