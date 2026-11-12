@@ -1,4 +1,5 @@
 import { Client, Databases, Storage, Users } from 'node-appwrite'
+import { plainResults } from './plain'
 
 // ─── Appwrite Server SDK (for API routes / server components) ───
 function createAdminClient() {
@@ -7,11 +8,12 @@ function createAdminClient() {
     .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
     .setKey(process.env.APPWRITE_API_KEY!)
 
+  // Plain objects out, so rows can be passed straight to Client Components (see `./plain`).
   return {
     client,
-    databases: new Databases(client),
-    storage: new Storage(client),
-    users: new Users(client),
+    databases: plainResults(new Databases(client)),
+    storage: plainResults(new Storage(client)),
+    users: plainResults(new Users(client)),
   }
 }
 
