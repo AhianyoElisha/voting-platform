@@ -35,7 +35,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 
 ### 5.1 Organizer workspace
 - Sign up and create an organization. Self-serve: the workspace is active immediately, with no super-admin approval step (decided 2026-10-14, see DECISIONS). The super admin can suspend an organization later.
-- Branded public page (logo, colours). Custom subdomain is an open question (#25). *Built 2026-11-12: owners and admins set the name, a logo (stored in the `org-logos` bucket) and two brand colours at `/dashboard/{org}/settings`; the public event and vote pages show a header band in the main colour with the logo and name (text colour chosen for contrast), and the round report uses the logo. The public address (slug) does not change, because flyers and shared links carry it. A full public organization page is not built.*
+- Branded public page (logo, colours). Custom subdomain is an open question (#25). *Built 2026-11-12: owners and admins set the name, a logo (stored in the `org-logos` bucket) and two brand colours at `/dashboard/{org}/settings`; the public event and vote pages show a header band in the main colour with the logo and name (text colour chosen for contrast), and the round report uses the logo. The public address (slug) does not change, because flyers and shared links carry it. The organization's public page at `/o/{slug}` lists its scheduled, live and paused events (voting now, coming up, paused) under the same header; drafts and closed events are not listed, and a suspended organization's page is not found. The header on the event and vote pages links back to it.*
 - Invite team members. *Built 2026-10-14: owners and admins invite by email as admin, staff, designer or scanner; the invitee accepts a one-time link with an account whose email matches; roles can be changed and members removed, never the last owner. Invites are emailed through Resend (#32, decided 2026-11-12); if sending fails, the organizer gets the link to share. Until then the link is the credential for a brand-new account, since nothing verifies email ownership; once a provider exists, acceptance should require a verified email for accounts created after the invite.*
 
 ### 5.2 Events, categories and nominees
@@ -50,7 +50,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - When a nominee is added, they receive an **email confirming the nomination** with their login credentials for the nominee portal. *Built 2026-10-14 as a one-time claim link: the nominee sets their own password on the claim page, so no password travels by email. The link is emailed through Resend (decided 2026-11-12, #32); if sending fails, the organizer gets it to share directly.*
 - In the portal the nominee completes their profile: photo upload, name as it should appear, bio and any other fields the organizer requires.
 - As soon as the photo is uploaded, the platform **generates the nominee's flyer immediately**, and the nominee can download it from the portal.
-- The nominee can see their own voting code and (if the organizer allows) their own vote count.
+- The nominee can see their own voting code and (if the organizer allows) their own vote count. *The voting code is shown; the vote count is not built and waits on #33.*
 
 ### 5.2b Voting rounds (optional per event)
 - An organizer can run an event in **rounds** (e.g. round 1, round 2, final).

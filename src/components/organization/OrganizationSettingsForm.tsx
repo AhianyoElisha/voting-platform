@@ -131,7 +131,11 @@ export default function OrganizationSettingsForm({
         </label>
         <div className="space-y-1 text-sm">
           <span className="font-medium text-neutral-800 dark:text-neutral-200">{t('web:orgSettings.address')}</span>
-          <p className="font-mono text-neutral-600 dark:text-neutral-300">/o/{slug}</p>
+          <p className="font-mono text-neutral-600 dark:text-neutral-300">
+            <a href={`/o/${slug}`} target="_blank" rel="noreferrer" className="underline">
+              /o/{slug}
+            </a>
+          </p>
           <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('web:orgSettings.addressHelper')}</p>
         </div>
 

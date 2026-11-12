@@ -1,4 +1,5 @@
 import { textColorOn, type BrandColors } from '@/lib/branding'
+import Link from 'next/link'
 
 /**
  * The organization's header on its public pages: logo and name on the brand
@@ -9,8 +10,11 @@ export default function BrandBand({
   name,
   logoUrl,
   colors,
+  href,
   className = '',
 }: {
+  /** The organization's home page; the name links there. */
+  href?: string
   name: string
   logoUrl: string | null
   colors: BrandColors | null
@@ -21,11 +25,18 @@ export default function BrandBand({
     // eslint-disable-next-line @next/next/no-img-element
     <img src={logoUrl} alt="" className="h-10 w-auto max-w-[120px] object-contain" />
   ) : null
+  const label = href ? (
+    <Link href={href} className="hover:underline">
+      {name}
+    </Link>
+  ) : (
+    name
+  )
   if (!colors) {
     return (
       <div className={`flex items-center gap-3 ${className}`}>
         {logo}
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">{name}</p>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">{label}</p>
       </div>
     )
   }
@@ -39,7 +50,7 @@ export default function BrandBand({
       }}
     >
       {logo && <span className="rounded-lg bg-white/90 p-1">{logo}</span>}
-      <p className="text-sm font-semibold">{name}</p>
+      <p className="text-sm font-semibold">{label}</p>
     </div>
   )
 }

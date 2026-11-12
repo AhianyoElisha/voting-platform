@@ -6,6 +6,7 @@ import { getOrganizationBySlug, listTenantDocuments, type TenantContext } from '
 import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
 import { isMockProviderActive } from '@/lib/payments'
+import { isPublicEvent } from '@/lib/public-events'
 import { shapeResults } from '@/lib/results'
 import { availableNow } from '@/lib/tickets/purchase-server'
 import { listPublicTiers } from '@/lib/tickets/tiers-server'
@@ -17,9 +18,6 @@ import { notFound } from 'next/navigation'
 import { Query } from 'node-appwrite'
 
 type Props = { params: Promise<{ slug: string; eventSlug: string }> }
-
-/** Statuses the public may see. Drafts and closed events stay private for now. */
-const PUBLIC_STATUSES = new Set(['scheduled', 'live', 'paused'])
 
 /**
  * Public event page (PRD 5.3, "browse events, categories and nominees") with
@@ -38,7 +36,7 @@ export default async function PublicEventPage({ params }: Props) {
     Query.limit(1),
   ])
   const event = events.documents[0]
-  if (!event || !PUBLIC_STATUSES.has(event.status)) notFound()
+  if (!event || !isPublicEvent(event)) notFound()
 
   const { t } = await getTranslations()
   const [categories, nominees, rounds] = await Promise.all([
@@ -95,6 +93,7 @@ export default async function PublicEventPage({ params }: Props) {
   return (
     <main className="container py-16 lg:py-24">
       <BrandBand
+        href={`/o/${organization.slug}`}
         name={organization.name}
         logoUrl={organization.logoUrl}
         colors={parseBrandColors(organization.brandColors)}

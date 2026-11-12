@@ -904,7 +904,7 @@
   "orgSettings": {
     "title": "Organization settings",
     "preview": "How it looks",
-    "previewHelper": "This header appears on your public event and voting pages. The logo is also on the PDF report.",
+    "previewHelper": "This header appears on your public page and on your event and voting pages. The logo is also on the PDF report.",
     "logo": "Logo",
     "uploadLogo": "Upload logo",
     "replaceLogo": "Replace logo",
@@ -921,5 +921,16 @@
     "accent": "Accent stripe",
     "save": "Save",
     "saved": "Saved."
+  },
+  "orgHome": {
+    "description": "Vote for nominees and buy tickets for {{name}} events.",
+    "none": "No events are open right now. Check back soon.",
+    "section": {
+      "live": "Voting now",
+      "upcoming": "Coming up",
+      "paused": "Paused"
+    },
+    "opens": "Opens {{when}}",
+    "closes": "Closes {{when}}"
   }
 }

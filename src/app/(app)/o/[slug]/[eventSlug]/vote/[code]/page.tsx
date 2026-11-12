@@ -7,6 +7,7 @@ import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
 import { findNomineeByCode } from '@/lib/nominee-code'
 import { isMockProviderActive } from '@/lib/payments'
+import { isPublicEvent } from '@/lib/public-events'
 import type { CategoryDoc, EventDoc } from '@/lib/types'
 import { Heading } from '@/shared/Heading'
 import Link from 'next/link'
@@ -26,7 +27,7 @@ export default async function VotePage({ params }: Props) {
     Query.limit(1),
   ])
   const event = events.documents[0]
-  if (!event || !['scheduled', 'live', 'paused'].includes(event.status)) notFound()
+  if (!event || !isPublicEvent(event)) notFound()
 
   const nominee = await findNomineeByCode(code)
   if (
@@ -48,6 +49,7 @@ export default async function VotePage({ params }: Props) {
     <main className="container py-16 lg:py-24">
       <div className="mx-auto max-w-md space-y-6">
         <BrandBand
+          href={`/o/${organization.slug}`}
           name={organization.name}
           logoUrl={organization.logoUrl}
           colors={parseBrandColors(organization.brandColors)}

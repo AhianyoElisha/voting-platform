@@ -23,7 +23,7 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 - Add, move, resize and rotate photo and text slots on a canvas.
 - Bind each slot to a data field.
 - Upload custom fonts (TTF/OTF; WOFF later) at platform or organization level.
-- Photo fitting: cover or contain, with a simple crop and position adjustment per nominee.
+- Photo fitting: cover or contain, with a simple crop and position adjustment per nominee. *Not built: photos are always fitted as a centred cover (`coverCrop` in `layout.ts`); there is no contain mode and no per-nominee adjustment yet.*
 - Text overflow handling: shrink to fit long names, with a minimum size and an ellipsis fallback.
 - Preview with a sample nominee.
 - Server-side rendering to PNG/JPG at high resolution.

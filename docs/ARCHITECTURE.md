@@ -77,7 +77,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 - One shared Appwrite database. Every tenant-owned collection has an `organizationId` attribute with an index.
 - A data-access layer in `src/lib` takes a tenant context and adds the `organizationId` filter, so route handlers never write raw unscoped queries.
 - Tenant isolation is enforced server-side with the admin client plus membership checks from the session (`src/lib/tenant.ts` builds the `TenantContext` from the caller's Membership). Tables have row security off and no table-level grants: the browser SDK is used for Auth only, and all reads and writes go through route handlers or Functions with the admin key. Document permissions can be added later as a second line of defence, not the boundary.
-- Public pages resolve tenants by slug (`/o/{slug}/...`). Subdomains are optional and can come later (#25).
+- Public pages resolve tenants by slug: `/o/{slug}` is the organization's page (its public events), `/o/{slug}/{eventSlug}` an event, `/o/{slug}/{eventSlug}/vote/{code}` a nominee's vote page. Which event statuses are public is defined once, in `src/lib/public-events.ts`. Subdomains are optional and can come later (#25).
 
 ## Key flows
 

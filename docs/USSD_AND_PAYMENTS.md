@@ -7,7 +7,7 @@
 - Each nominee has a short code, unique across the platform, used on both paths.
 
 ## How USSD works (background)
-We don't run a USSD gateway ourselves. An aggregator provides a shortcode (or an extension of a shared code) and forwards each step of a session to our webhook. We reply with the next menu text. **The aggregator is Hubtel** for both USSD and mobile-money payments (decided 2026-10-14, #11). Whether the shortcode is dedicated or shared, and the fees, are confirmed during Hubtel onboarding.
+We don't run a USSD gateway ourselves. An aggregator provides a shortcode (or an extension of a shared code) and forwards each step of a session to our webhook. We reply with the next menu text. **The USSD aggregator is Hubtel** (decided 2026-10-14, #11). Mobile-money payments, including those started from a USSD session, go through Paystack (amended 2026-11-12; see DECISIONS). Whether the shortcode is dedicated or shared, and the fees, are confirmed during Hubtel onboarding.
 
 ## USSD flow (built; the ticket branch below is still a draft, #31)
 
