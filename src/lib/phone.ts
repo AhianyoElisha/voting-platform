@@ -13,3 +13,13 @@ export function normalizeGhanaPhone(input: string): string | null {
   if (!/^[25]\d{8}$/.test(national)) return null
   return `233${national}`
 }
+
+/**
+ * A phone number with all but the last three digits hidden, for anyone who
+ * only needs to tell buyers apart: the ticket page (meant to be forwarded),
+ * the door scanner and staff. Only managers see full numbers (#28).
+ */
+export function maskPhone(phone: string | null | undefined): string {
+  if (!phone) return ''
+  return phone.length > 3 ? `${'•'.repeat(phone.length - 3)}${phone.slice(-3)}` : phone
+}

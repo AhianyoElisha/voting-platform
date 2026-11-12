@@ -14,6 +14,7 @@ import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
 import { listCategories, listNominees } from '@/lib/nominees-server'
 import { resolveWorkspace } from '@/lib/page-tenant'
+import { maskPhone } from '@/lib/phone'
 import { loadCumulativeReport } from '@/lib/report/data'
 import { listRounds } from '@/lib/rounds-server'
 import { canDesign, canManage } from '@/lib/tenant'
@@ -324,7 +325,9 @@ export default async function EventDetailPage({ params }: Props) {
                 {tickets.slice(0, 200).map((tk) => (
                   <tr key={tk.$id}>
                     <td className="px-3 py-2 text-neutral-900 dark:text-white">
-                      {tk.buyerName ?? ''} <span className="text-neutral-500">{tk.buyerPhone}</span>
+                      {tk.buyerName ?? ''}{' '}
+                      {/* Full numbers for managers only; scanner and staff roles can read this page too (#28). */}
+                      <span className="text-neutral-500">{manager ? tk.buyerPhone : maskPhone(tk.buyerPhone)}</span>
                     </td>
                     <td className="px-3 py-2">{tierName.get(tk.tierId) ?? ''}</td>
                     <td className="px-3 py-2">{t(`web:tickets.panel.status.${tk.status}`)}</td>

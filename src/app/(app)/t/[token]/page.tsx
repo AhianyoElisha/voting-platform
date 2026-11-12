@@ -2,6 +2,7 @@ import { createAdminClient, withRetry } from '@/lib/appwrite-server'
 import { APPWRITE } from '@/lib/constants'
 import { databaseId, getOrganization } from '@/lib/db'
 import { getTranslations } from '@/lib/i18n-server'
+import { maskPhone } from '@/lib/phone'
 import { verifyTicketToken } from '@/lib/tickets/token'
 import type { EventDoc, TicketDoc, TicketTierDoc } from '@/lib/types'
 import { Heading } from '@/shared/Heading'
@@ -9,11 +10,6 @@ import { notFound } from 'next/navigation'
 import QRCode from 'qrcode'
 
 type Props = { params: Promise<{ token: string }> }
-
-/** The page is meant to be forwarded; the door sees the full number, the link does not. */
-function maskPhone(phone: string): string {
-  return phone.length > 3 ? `${'•'.repeat(Math.max(0, phone.length - 3))}${phone.slice(-3)}` : phone
-}
 
 /**
  * The buyer's ticket. Reachable only with the signed token, which is also what
