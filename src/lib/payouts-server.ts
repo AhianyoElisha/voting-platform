@@ -11,7 +11,7 @@ import { assertCanManage } from './tenant'
 import type { LedgerEntryDoc, PayoutDestination, PayoutDoc, PayoutStatus } from './types'
 
 /**
- * Payouts (PRD 5.6, OPEN_QUESTIONS #3 placeholder: manual approval). The
+ * Payouts (PRD 5.6; manual approval, decided 2026-11-12, #3). The
  * organizer requests; the super admin approves or rejects, transfers the
  * money outside the platform, and marks the payout paid. Money leaves the
  * ledger only at `paid`, in one transaction with the debit row, and only if

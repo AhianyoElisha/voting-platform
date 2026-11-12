@@ -6,8 +6,8 @@ import type { CategoryDoc, EventDoc, NomineeDoc, RoundDoc, VoteDoc } from '../ty
  * round, so summing per round and then across rounds cannot double count.
  * The cached RoundEntry tallies are not consulted.
  *
- * Superset of the formats OPEN_QUESTIONS #35 may choose between: per
- * category and per nominee, paid and free split, morale flag.
+ * The format decided in #35 (the superset): per category and per nominee,
+ * paid and free split, morale flag.
  */
 export interface ReportRoundRef {
   id: string

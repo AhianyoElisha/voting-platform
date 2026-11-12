@@ -56,7 +56,7 @@ export interface CreateEventInput {
   votePrice?: number
   startsAt: string
   endsAt: string
-  /** No default on purpose: OPEN_QUESTIONS #26. The organizer must choose. */
+  /** No default on purpose (decision #26): the organizer must choose. */
   resultsVisibility: string
   moraleCandidatesEnabled?: boolean
   freeVotesEnabled?: boolean

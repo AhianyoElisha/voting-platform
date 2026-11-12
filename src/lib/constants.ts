@@ -69,8 +69,8 @@ export const VOTE_QUANTITY_MAX_PLACEHOLDER = 10_000
 export const TICKET_QUANTITY_MAX_PLACEHOLDER = 20
 
 /**
- * PLACEHOLDER for OPEN_QUESTIONS #3: minimum payout in pesewas, from env, no
- * default (none until set).
+ * Minimum payout in pesewas, set per deployment from env (decision #3); no
+ * default, so there is no minimum until it is set.
  */
 export function payoutMinimumPesewas(): number {
   const raw = process.env.PAYOUT_MIN_PESEWAS

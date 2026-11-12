@@ -19,7 +19,7 @@ declare global {
 }
 
 /**
- * Entrance scanner (PRD 5.4b; #34 placeholder). Uses the browser's built-in
+ * Entrance scanner (PRD 5.4b; a web page, online only, decision #34). Uses the browser's built-in
  * barcode detector when present (Chrome on Android), with a paste box always
  * available. Each code is sent once; the server decides.
  */
