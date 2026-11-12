@@ -47,7 +47,7 @@ Everything is documented in `.env.example`. Beyond the Appwrite keys and `SESSIO
 
 ## Password reset
 
-`/forgot-password` asks Appwrite to email a reset link (`account.createRecovery`), and the link opens `/reset-password`, which sets the new password (`src/lib/password-recovery.ts`). Appwrite sends this email itself, not Resend through `EMAIL_PROVIDER`. In the Appwrite console:
+`/forgot-password` asks Appwrite to email a reset link (`account.createRecovery`), and the link opens `/reset-password`. That page posts the new password to `/api/auth/reset-password`, which completes the recovery on the server and signs the user out everywhere: it deletes their Appwrite sessions, and our session cookie is refused if it was issued before the last password change (`src/lib/session-revocation.ts`; checked against Appwrite's `passwordUpdate`, cached per server instance for a minute). Appwrite sends this email itself, not Resend through `EMAIL_PROVIDER`. In the Appwrite console:
 
 - Add each production and preview hostname as a Web platform. Appwrite refuses a reset link that points anywhere else.
 - Optionally, under project Settings → SMTP, send through Resend (`smtp.resend.com`, port 465, user `resend`, the Resend API key as password) so the email comes from your domain, and edit the wording under Auth → Templates → Reset password.

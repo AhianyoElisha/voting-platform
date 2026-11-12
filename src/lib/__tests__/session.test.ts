@@ -74,4 +74,14 @@ describe('session cookie', () => {
     mod = await load()
     expect(() => mod.signSessionCookie('user_123')).toThrow(/must not be the same/)
   })
+
+  test('parseSessionCookie returns the issue time', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-12T10:00:00Z'))
+    const { signSessionCookie, parseSessionCookie } = await load()
+    expect(parseSessionCookie(signSessionCookie('user_123'))).toEqual({
+      userId: 'user_123',
+      issuedAt: Date.parse('2026-11-12T10:00:00Z'),
+    })
+  })
 })

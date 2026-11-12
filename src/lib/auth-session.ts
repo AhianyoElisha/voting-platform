@@ -1,12 +1,15 @@
 import { cookies } from 'next/headers'
-import { verifySessionCookie, COOKIE_NAME } from '@/lib/session'
+import { parseSessionCookie, COOKIE_NAME } from '@/lib/session'
+import { isSessionCurrent } from '@/lib/session-revocation'
 
 /**
  * Get the authenticated user's ID from the signed session cookie.
  * Returns the Appwrite Auth user ID if valid, null otherwise.
  *
  * The cookie is set by POST /api/auth/init-session after the client
- * authenticates via the Appwrite Web SDK.
+ * authenticates via the Appwrite Web SDK. A cookie issued before the user's
+ * last password change is refused (`session-revocation.ts`), which signs out
+ * other devices after a password reset.
  *
  * Usage in API routes:
  *   const userId = await getSessionUserId()
@@ -18,5 +21,7 @@ export async function getSessionUserId(): Promise<string | null> {
 
   if (!sessionCookie) return null
 
-  return verifySessionCookie(sessionCookie)
+  const parsed = parseSessionCookie(sessionCookie)
+  if (!parsed) return null
+  return (await isSessionCurrent(parsed.userId, parsed.issuedAt)) ? parsed.userId : null
 }

@@ -69,7 +69,7 @@ describe('resetProblem', () => {
 
   it('maps password rule failures and throttling', () => {
     expect(resetProblem({ code: 400, type: 'password_recently_used' })).toBe('passwordRejected')
-    expect(resetProblem({ code: 400, type: 'general_argument_invalid' })).toBe('passwordRejected')
+    expect(resetProblem({ code: 400, type: 'general_argument_invalid' })).toBe('recoveryLinkInvalid')
     expect(resetProblem({ code: 429 })).toBe('rateLimited')
     expect(resetProblem(new Error('network'))).toBe('unknown')
   })

@@ -748,7 +748,7 @@
     "submitting": "Saving…",
     "done": {
       "title": "Password changed",
-      "body": "Sign in with your new password.",
+      "body": "You have been signed out on every device. Sign in with your new password.",
       "cta": "Sign in"
     },
     "invalid": {

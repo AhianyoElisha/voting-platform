@@ -1,5 +1,6 @@
 import { getTranslations } from '@/lib/i18n-server'
 import { COOKIE_NAME, MAX_AGE, signSessionCookie } from '@/lib/session'
+import { issuedBeforePasswordChange } from '@/lib/session-revocation'
 import { NextResponse } from 'next/server'
 import { Account, Client } from 'node-appwrite'
 
@@ -39,6 +40,13 @@ export async function POST(req: Request) {
       // session-gated route (e.g. create organizations and squat slugs). The
       // project settings also disable anonymous auth; this holds if they drift.
       if (!authUser.email) {
+        return NextResponse.json({ error: t('errors:auth.noActiveSession') }, { status: 401 })
+      }
+      // A session older than the last password change belongs to a device
+      // that a password reset signed out (`src/lib/session-revocation.ts`).
+      // Reset deletes those sessions; this holds if that deletion failed.
+      const session = await new Account(userClient).getSession('current')
+      if (issuedBeforePasswordChange(Date.parse(session.$createdAt), authUser.passwordUpdate)) {
         return NextResponse.json({ error: t('errors:auth.noActiveSession') }, { status: 401 })
       }
       userId = authUser.$id

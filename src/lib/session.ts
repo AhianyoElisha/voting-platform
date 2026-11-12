@@ -59,10 +59,12 @@ export function signSessionCookie(userId: string): string {
 }
 
 /**
- * Verify a signed session cookie and extract the userId.
- * Returns null if invalid or expired.
+ * Verify a signed session cookie and return its user and issue time.
+ * Returns null if invalid or expired. Whether the cookie was issued before the
+ * user's last password change is checked separately (`session-revocation.ts`),
+ * because that needs Appwrite and this module stays pure.
  */
-export function verifySessionCookie(value: string): string | null {
+export function parseSessionCookie(value: string): { userId: string; issuedAt: number } | null {
   try {
     const parts = value.split(':')
     if (parts.length !== 3) return null
@@ -83,11 +85,18 @@ export function verifySessionCookie(value: string): string | null {
     }
 
     // Check expiration
-    const age = Date.now() - parseInt(timestamp)
+    const issuedAt = parseInt(timestamp)
+    if (!Number.isFinite(issuedAt)) return null
+    const age = Date.now() - issuedAt
     if (age > MAX_AGE * 1000) return null
 
-    return userId
+    return { userId, issuedAt }
   } catch {
     return null
   }
+}
+
+/** Signature and expiry only; see `parseSessionCookie`. */
+export function verifySessionCookie(value: string): string | null {
+  return parseSessionCookie(value)?.userId ?? null
 }

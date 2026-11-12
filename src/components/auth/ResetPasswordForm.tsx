@@ -1,8 +1,7 @@
 'use client'
 
 import { inputClass } from '@/components/organization/OrganizationFields'
-import { account } from '@/lib/appwrite'
-import { MIN_PASSWORD_LENGTH, parseRecoveryParams, resetProblem } from '@/lib/password-recovery'
+import { MIN_PASSWORD_LENGTH, parseRecoveryParams, type RecoveryProblem } from '@/lib/password-recovery'
 import { Alert02Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import Link from 'next/link'
@@ -10,7 +9,10 @@ import { useSearchParams } from 'next/navigation'
 import { FormEvent, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-/** Sets the new password from the emailed link (`src/lib/password-recovery.ts`). */
+/**
+ * Sets the new password from the emailed link through `POST /api/auth/reset-password`,
+ * which also signs the user out of every device.
+ */
 export default function ResetPasswordForm() {
   const { t } = useTranslation()
   const searchParams = useSearchParams()
@@ -67,12 +69,22 @@ export default function ResetPasswordForm() {
     }
     setBusy(true)
     try {
-      await account.updateRecovery(link.userId, link.secret, password)
-      setDone(true)
-    } catch (err) {
-      const problem = resetProblem(err)
+      // Server-side so every other device is signed out too (password-recovery-server.ts).
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: link.userId, secret: link.secret, password }),
+      })
+      if (res.ok) {
+        setDone(true)
+        return
+      }
+      const body = (await res.json().catch(() => ({}))) as { problem?: RecoveryProblem }
+      const problem = body.problem ?? 'unknown'
       if (problem === 'recoveryLinkInvalid') setLinkDead(true)
       else setError(t(`errors:auth.${problem}`))
+    } catch {
+      setError(t('errors:auth.unknown'))
     } finally {
       setBusy(false)
     }

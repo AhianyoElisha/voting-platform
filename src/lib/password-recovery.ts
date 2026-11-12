@@ -5,8 +5,10 @@
  * 1. `/forgot-password` calls `account.createRecovery(email, url)`. Appwrite
  *    emails a link to `url?userId=…&secret=…&expire=…` (its own mailer, or
  *    custom SMTP set in the Appwrite console). The link is valid for one hour.
- * 2. `/reset-password` reads those parameters and calls
- *    `account.updateRecovery(userId, secret, password)`.
+ * 2. `/reset-password` reads those parameters and posts them with the new
+ *    password to `/api/auth/reset-password`, which calls `updateRecovery`
+ *    on the server and then signs the user out of every device
+ *    (`password-recovery-server.ts`, `session-revocation.ts`).
  *
  * Appwrite answers 404 for an email with no account. The page shows the same
  * "check your inbox" message either way, so the form cannot be used to find
@@ -72,7 +74,10 @@ export function resetProblem(err: unknown): RecoveryProblem {
   if (code === 401 || code === 404 || type === 'user_invalid_token' || type === 'user_not_found') {
     return 'recoveryLinkInvalid'
   }
-  // Appwrite's password rules (length, and history or dictionary if switched on).
-  if (code === 400) return 'passwordRejected'
+  // Appwrite's password rules (history, dictionary, personal data) when switched on.
+  if (code === 400 && type !== undefined && type.startsWith('password_')) return 'passwordRejected'
+  // Any other 400 is a malformed parameter. The length rule is checked before
+  // calling Appwrite, so that is the link's userId or secret.
+  if (code === 400) return 'recoveryLinkInvalid'
   return 'unknown'
 }
