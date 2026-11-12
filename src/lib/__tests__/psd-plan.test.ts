@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { validateModel, type TextSlot } from '../flyer/model'
-import { alignOf, buildSlots, colorOf, placeholderOf, planPsd, type PsdLike } from '../flyer/psd-plan'
+import {
+  alignOf,
+  bezierSegments,
+  buildSlots,
+  colorOf,
+  layerBox,
+  placeholderOf,
+  planPsd,
+  roomInside,
+  type PsdLike,
+} from '../flyer/psd-plan'
 
 const nameLayer = {
   name: '{{name}}',
@@ -179,5 +189,98 @@ describe('style helpers', () => {
     expect(alignOf('justify-right')).toBe('right')
     expect(alignOf('justify-all')).toBe('center')
     expect(alignOf(undefined)).toBe('left')
+  })
+})
+
+describe('bezierSegments', () => {
+  it('turns a closed rounded rectangle path into curves back to the start', () => {
+    // From a real shape layer: 40 px top corners, square bottom.
+    const knots = [
+      [1170, 1458, 1192, 1458, 1192, 1458],
+      [1660, 1458, 1660, 1458, 1682, 1458],
+      [1700, 1476, 1700, 1498, 1700, 1498],
+      [1700, 2000, 1700, 2000, 1700, 2000],
+      [1152, 2000, 1152, 2000, 1152, 2000],
+      [1152, 1498, 1152, 1498, 1152, 1476],
+    ].map((points) => ({ points }))
+    const segs = bezierSegments({ open: false, knots })
+    expect(segs[0]).toEqual({ op: 'move', x: 1192, y: 1458 })
+    expect(segs).toHaveLength(1 + 6 + 1)
+    expect(segs[2]).toEqual({ op: 'curve', c1x: 1682, c1y: 1458, c2x: 1700, c2y: 1476, x: 1700, y: 1498 })
+    expect(segs[6]).toEqual({ op: 'curve', c1x: 1152, c1y: 1476, c2x: 1170, c2y: 1458, x: 1192, y: 1458 })
+    expect(segs[7]).toEqual({ op: 'close' })
+  })
+
+  it('leaves an open path open and ignores malformed knots', () => {
+    const segs = bezierSegments({
+      open: true,
+      knots: [{ points: [0, 0, 0, 0, 0, 0] }, { points: [1] }, { points: [5, 5, 5, 5, 5, 5] }],
+    })
+    expect(segs.map((s) => s.op)).toEqual(['move', 'curve'])
+  })
+})
+
+describe('placeholders inside a shape', () => {
+  // The real KNUST flyer: a rounded box drawn as a vector shape (no pixels), with
+  // left-aligned point text {{name}} inside it, 55 px from the box's left edge.
+  const box = {
+    name: 'Rectangle',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    vectorMask: {
+      paths: [
+        {
+          knots: [
+            [1170, 1458, 1192, 1458, 1192, 1458],
+            [1660, 1458, 1660, 1458, 1682, 1458],
+            [1700, 1476, 1700, 1498, 1700, 1498],
+            [1700, 2000, 1700, 2000, 1700, 2000],
+            [1152, 2000, 1152, 2000, 1152, 2000],
+            [1152, 1498, 1152, 1498, 1152, 1476],
+          ].map((points) => ({ points })),
+        },
+      ],
+    },
+  }
+  const name = {
+    name: '{{name}}',
+    left: 1207,
+    top: 1567,
+    right: 1448,
+    bottom: 1640,
+    text: {
+      text: 'KNUST',
+      transform: [2, 0, 0, 2, 1207, 1630],
+      style: { fontSize: 38 },
+      paragraphStyle: { justification: 'left' },
+    },
+  }
+
+  it('reads a shape layer extent from its outline', () => {
+    expect(layerBox(box)).toEqual({ left: 1152, top: 1458, right: 1700, bottom: 2000 })
+    expect(layerBox({ name: 'empty' })).toBeNull()
+  })
+
+  it('keeps the slot inside the box with the same margin on both sides', () => {
+    const plan = planPsd({
+      width: 2000,
+      height: 2000,
+      children: [{ name: 'Background', left: 0, top: 0, right: 2000, bottom: 2000 }, box, name],
+    })
+    expect(plan.containers).toEqual([{ left: 1152, top: 1458, right: 1700, bottom: 2000 }])
+    const slot = buildSlots(plan, [], 1)[0] as TextSlot
+    expect(slot.x).toBe(1207)
+    expect(slot.x + slot.w).toBe(1700 - 55)
+  })
+
+  it('centres and right-aligns within the box too', () => {
+    const c = [{ left: 100, top: 0, right: 500, bottom: 100 }]
+    const t = { left: 250, top: 10, right: 350, bottom: 50 }
+    expect(roomInside(c, t, 'center')).toEqual({ x: 250, w: 100 })
+    expect(roomInside(c, { ...t, left: 120, right: 200 }, 'center')).toEqual({ x: 120, w: 360 })
+    expect(roomInside(c, { ...t, left: 300, right: 480 }, 'right')).toEqual({ x: 120, w: 360 })
+    expect(roomInside(c, { ...t, left: 600, right: 700 }, 'left')).toBeNull()
   })
 })

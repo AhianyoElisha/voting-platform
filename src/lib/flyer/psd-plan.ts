@@ -44,7 +44,16 @@ export interface PsdLayerLike {
     boxBounds?: number[]
   }
   effects?: { disabled?: boolean } & Record<string, unknown>
+  /** Shape layers: the outline, when the layer stores no pixels. */
+  vectorMask?: { paths?: { knots: { points: number[] }[] }[]; disable?: boolean }
   children?: PsdLayerLike[]
+}
+
+export interface Box {
+  left: number
+  top: number
+  right: number
+  bottom: number
 }
 
 export interface PsdLike {
@@ -62,7 +71,8 @@ export interface SlotLayer {
   round: boolean
 }
 
-export type PsdWarning = 'noSlots' | 'slotsVisible' | 'effects' | 'duplicatePhoto' | 'tooManySlots' | 'noComposite'
+export type PsdWarning =
+  'noSlots' | 'slotsVisible' | 'effects' | 'shapeFill' | 'duplicatePhoto' | 'tooManySlots' | 'noComposite'
 
 export interface PsdPlan {
   width: number
@@ -75,6 +85,8 @@ export interface PsdPlan {
   /** All placeholder layers are hidden, so Photoshop's flattened image is the exact background. */
   exactBackground: boolean
   warnings: PsdWarning[]
+  /** Visible background shapes smaller than the page: a placeholder inside one stays inside it. */
+  containers: Box[]
 }
 
 const KINDS: Record<string, PlaceholderKind> = {
@@ -121,11 +133,17 @@ export function planPsd(psd: PsdLike): PsdPlan {
   const designFonts = new Set<string>()
   let anySlotVisible = false
   let photo = false
+  const containers: Box[] = []
+  const pageArea = psd.width * psd.height
   for (const { layer, hidden } of walkLayers(psd.children)) {
     for (const run of [layer.text?.style, ...(layer.text?.styleRuns ?? []).map((r) => r.style)]) {
       if (run?.font?.name) designFonts.add(run.font.name)
     }
     const ph = placeholderOf(layer)
+    if (!ph && !hidden && !layer.text) {
+      const box = layerBox(layer)
+      if (box && (box.right - box.left) * (box.bottom - box.top) < pageArea * 0.8) containers.push(box)
+    }
     if (!ph) continue
     if (ph.kind === 'photo') {
       if (photo) {
@@ -157,6 +175,7 @@ export function planPsd(psd: PsdLike): PsdPlan {
     slotFonts,
     designFonts: [...designFonts],
     exactBackground: !anySlotVisible,
+    containers,
     warnings: [...warnings],
   }
 }
@@ -252,11 +271,16 @@ export function buildSlots(plan: PsdPlan, fonts: ResolvedFont[], scale: number):
       }
       const bw = Math.max(1, pr - pl)
       const bh = Math.max(1, pb - pt)
-      w = Math.min(W * 0.9, Math.max(bw, W * 0.6))
       h = Math.max(bh, fontSize * 1.25)
       y = pt + bh / 2 - h / 2
-      x = align === 'left' ? pl : align === 'right' ? pr - w : (pl + pr) / 2 - w / 2
-      if (w <= W) x = clamp(x, 0, W - w)
+      const room = roomInside(plan.containers, { left: pl, top: pt, right: pr, bottom: pb }, align)
+      if (room) {
+        ;({ x, w } = room)
+      } else {
+        w = Math.min(W * 0.9, Math.max(bw, W * 0.6))
+        x = align === 'left' ? pl : align === 'right' ? pr - w : (pl + pr) / 2 - w / 2
+        if (w <= W) x = clamp(x, 0, W - w)
+      }
       maxLines = 1
     }
     const font = byName.get(style.font?.name ?? '')
@@ -284,4 +308,74 @@ export function buildSlots(plan: PsdPlan, fonts: ResolvedFont[], scale: number):
     slots.push(slot)
   })
   return slots
+}
+
+/** A vector path knot as ag-psd gives it: [inX, inY, anchorX, anchorY, outX, outY] in document pixels. */
+export interface PsdKnot {
+  points: number[]
+}
+
+export type PathSegment =
+  | { op: 'move'; x: number; y: number }
+  | { op: 'curve'; c1x: number; c1y: number; c2x: number; c2y: number; x: number; y: number }
+  | { op: 'close' }
+
+/**
+ * Drawing commands for one Photoshop vector path (shape layers such as
+ * rounded rectangles store no pixels, only this path and a fill). Each knot's
+ * outgoing handle and the next knot's incoming handle make a cubic curve.
+ */
+export function bezierSegments(path: { open?: boolean; knots: PsdKnot[] }): PathSegment[] {
+  const k = path.knots.filter((n) => n.points.length >= 6)
+  if (k.length === 0) return []
+  const out: PathSegment[] = [{ op: 'move', x: k[0].points[2], y: k[0].points[3] }]
+  const curve = (a: PsdKnot, b: PsdKnot): PathSegment => ({
+    op: 'curve',
+    c1x: a.points[4],
+    c1y: a.points[5],
+    c2x: b.points[0],
+    c2y: b.points[1],
+    x: b.points[2],
+    y: b.points[3],
+  })
+  for (let i = 1; i < k.length; i++) out.push(curve(k[i - 1], k[i]))
+  if (!path.open) {
+    out.push(curve(k[k.length - 1], k[0]))
+    out.push({ op: 'close' })
+  }
+  return out
+}
+
+/** A layer's extent: its pixel bounds, or the anchors of its vector outline when it has no pixels. */
+export function layerBox(layer: PsdLayerLike): Box | null {
+  const { left = 0, top = 0, right = 0, bottom = 0 } = layer
+  if (right - left >= 1 && bottom - top >= 1) return { left, top, right, bottom }
+  if (layer.vectorMask?.disable) return null
+  const pts = (layer.vectorMask?.paths ?? []).flatMap((p) => p.knots.filter((k) => k.points.length >= 6))
+  if (pts.length === 0) return null
+  const xs = pts.map((k) => k.points[2])
+  const ys = pts.map((k) => k.points[3])
+  const box = { left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys) }
+  return box.right - box.left >= 1 && box.bottom - box.top >= 1 ? box : null
+}
+
+/**
+ * Horizontal room for point text that sits inside a background shape: the
+ * smallest shape containing the placeholder, minus the margin the designer
+ * left on the anchored side (left text grows right, right text grows left,
+ * centred text grows both ways).
+ */
+export function roomInside(containers: Box[], text: Box, align: TextSlot['align']): { x: number; w: number } | null {
+  const inside = containers
+    .filter((c) => c.left <= text.left && c.right >= text.right && c.top <= text.top && c.bottom >= text.bottom)
+    .sort((a, b) => (a.right - a.left) * (a.bottom - a.top) - (b.right - b.left) * (b.bottom - b.top))
+  const c = inside[0]
+  if (!c) return null
+  const leftGap = text.left - c.left
+  const rightGap = c.right - text.right
+  if (align === 'left') return { x: text.left, w: Math.max(text.right - text.left, c.right - leftGap - text.left) }
+  if (align === 'right')
+    return { x: c.left + rightGap, w: Math.max(text.right - text.left, text.right - c.left - rightGap) }
+  const gap = Math.min(leftGap, rightGap)
+  return { x: c.left + gap, w: Math.max(text.right - text.left, c.right - c.left - 2 * gap) }
 }

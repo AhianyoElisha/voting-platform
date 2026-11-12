@@ -556,7 +556,8 @@
         "effects": "Some layers use effects (shadows, strokes, glows) that the redrawn background does not include.",
         "noComposite": "This PSD has no flattened image (“Maximize compatibility” was off), so the background was redrawn from the layers.",
         "duplicatePhoto": "More than one {{photoTag}} layer; only the first is used.",
-        "tooManySlots": "More than 20 placeholders; the rest were skipped."
+        "tooManySlots": "More than 20 placeholders; the rest were skipped.",
+        "shapeFill": "Some shapes use gradient or pattern fills, which the redrawn background leaves out."
       }
     }
   },

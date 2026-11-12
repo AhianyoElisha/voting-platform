@@ -1,6 +1,13 @@
 'use client'
 
-import { planPsd, type PsdLayerLike, type PsdPlan } from '@/lib/flyer/psd-plan'
+import {
+  bezierSegments,
+  colorOf,
+  planPsd,
+  type PsdLayerLike,
+  type PsdPlan,
+  type PsdWarning,
+} from '@/lib/flyer/psd-plan'
 import type { Layer, Psd } from 'ag-psd'
 
 /**
@@ -74,11 +81,54 @@ function maskedPixels(layer: Layer, docW: number, docH: number): HTMLCanvasEleme
 }
 
 /**
- * Re-draw the visible layers, bottom to top, leaving out the slots. Handles
- * opacity, the common blend modes, groups, layer masks and clipping masks;
- * not layer effects.
+ * A shape layer (rectangle, ellipse, pen path) that stores only its vector
+ * path and fill, no pixels. Solid colour fills and strokes are drawn; gradient
+ * and pattern fills are not (the caller warns).
  */
-function recomposite(psd: Psd, skip: Set<PsdLayerLike>, warn: (w: 'effects') => void): HTMLCanvasElement {
+function vectorPixels(
+  layer: Layer,
+  docW: number,
+  docH: number,
+  warn: (w: PsdWarning) => void
+): HTMLCanvasElement | null {
+  const paths = layer.vectorMask?.paths
+  if (!paths?.length || layer.vectorMask?.disable) return null
+  const path = new Path2D()
+  for (const p of paths) {
+    for (const seg of bezierSegments(p)) {
+      if (seg.op === 'move') path.moveTo(seg.x, seg.y)
+      else if (seg.op === 'curve') path.bezierCurveTo(seg.c1x, seg.c1y, seg.c2x, seg.c2y, seg.x, seg.y)
+      else path.closePath()
+    }
+  }
+  const out = canvasOf(docW, docH)
+  const ctx = out.getContext('2d')!
+  const evenOdd = paths.some((p) => p.fillRule === 'even-odd')
+  const stroke = layer.vectorStroke
+  const fill = layer.vectorFill
+  if (fill && stroke?.fillEnabled !== false) {
+    if (fill.type === 'color') {
+      ctx.fillStyle = colorOf({ fillColor: fill.color as Parameters<typeof colorOf>[0]['fillColor'] })
+      ctx.fill(path, evenOdd ? 'evenodd' : 'nonzero')
+    } else {
+      warn('shapeFill')
+    }
+  }
+  if (stroke?.strokeEnabled && stroke.content?.type === 'color' && stroke.lineWidth?.value) {
+    ctx.strokeStyle = colorOf({ fillColor: stroke.content.color as Parameters<typeof colorOf>[0]['fillColor'] })
+    ctx.lineWidth = stroke.lineWidth.value
+    ctx.globalAlpha = stroke.opacity ?? 1
+    ctx.stroke(path)
+  }
+  return out
+}
+
+/**
+ * Re-draw the visible layers, bottom to top, leaving out the slots. Handles
+ * opacity, the common blend modes, groups, layer masks, clipping masks and
+ * solid-colour shape layers; not layer effects.
+ */
+function recomposite(psd: Psd, skip: Set<PsdLayerLike>, warn: (w: PsdWarning) => void): HTMLCanvasElement {
   const { width: W, height: H } = psd
   const draw = (target: CanvasRenderingContext2D, layers: Layer[] | undefined) => {
     const list = layers ?? []
@@ -91,14 +141,14 @@ function recomposite(psd: Psd, skip: Set<PsdLayerLike>, warn: (w: 'effects') => 
         pixels = canvasOf(W, H)
         draw(pixels.getContext('2d')!, layer.children)
       } else {
-        pixels = maskedPixels(layer, W, H)
+        pixels = maskedPixels(layer, W, H) ?? vectorPixels(layer, W, H, warn)
       }
       if (!pixels) continue
       // Clipping masks: the layers above with `clipping` paint only where this one is opaque.
       while (list[i + 1]?.clipping) {
         const clipped = list[++i]
         if (clipped.hidden || skip.has(clipped as PsdLayerLike)) continue
-        const clipPixels = clipped.children ? null : maskedPixels(clipped, W, H)
+        const clipPixels = clipped.children ? null : (maskedPixels(clipped, W, H) ?? vectorPixels(clipped, W, H, warn))
         if (!clipPixels) continue
         const pctx = pixels.getContext('2d')!
         pctx.globalAlpha = (clipped.opacity ?? 1) as number

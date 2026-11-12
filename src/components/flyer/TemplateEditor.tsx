@@ -252,7 +252,9 @@ export default function TemplateEditor({
       }
     }
     canvas.requestRenderAll()
-  }, [model, scale])
+    // The canvas is rebuilt when the background changes (a PSD import of the same size keeps
+    // `scale`), and a rebuilt canvas starts empty, so redraw then too.
+  }, [model, scale, template.backgroundUrl])
 
   const update = (patch: Partial<Slot>) => {
     if (!selected) return
