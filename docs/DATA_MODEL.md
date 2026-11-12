@@ -1,6 +1,6 @@
 # Data Model
 
-Status: **built** as of 2026-10-14; every entity below except Payout has a table in `appwrite.config.json`. Each entry says when it was built.
+Status: **built** as of 2026-10-14; every entity below has a table in `appwrite.config.json`. Each entry says when it was built.
 
 Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITECTURE.md`; the Appwrite CLI now calls them *tables* and *columns*, which is how `appwrite.config.json` spells them). Money is stored as integer **pesewas**. Timestamps are stored in UTC. All tenant-owned collections carry an indexed `organizationId`. JSON-shaped fields (`brandColors`, `state`, `rawCallback`, `canvasJson`, `metadata`) are string attributes holding serialized JSON, since Appwrite has no JSON attribute type.
 
@@ -9,8 +9,8 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 ### Platform level
 - **User**: id (= the Appwrite Auth user id), fullName, email, phone, isSuperAdmin, createdAt. Passwords live in Appwrite Auth, not here. Built 2026-10-14 (`users` table).
 - **Organization** (tenant): id, name, slug (platform-wide unique index), logoUrl, brandColors, status (`active` | `suspended`; new organizations start `active`, decided 2026-10-14 (#9); only the super admin suspends), commissionRate (basis points, overrides the platform default of 10% when set; null means use the default; super admin only, #2), moraleCandidatesEnabled and freeVotesEnabled (per-organization switches, super admin only, default true since decision #29), createdAt. Built 2026-10-14 (`organizations` table).
-- **Membership**: userId, organizationId, role (`owner` | `admin` | `staff` | `designer` | `scanner`; permissions per role decided 2026-10-14, see DECISIONS and `src/lib/tenant.ts`). Unique on (userId, organizationId). Created by signup (owner) or by accepting a TeamInvite.
-- **TeamInvite**: organizationId, email, role (never owner), tokenHash (SHA-256 of a one-time link, seven days, rotated on re-send), expiresAt, invitedBy, status (`pending` | `accepted` | `revoked`), acceptedBy, acceptedAt. Accepting requires a session whose account email matches; for a brand-new account that match is unverified until #32 lands, so the link is the credential. Built 2026-10-14 (`team_invites` table, `src/lib/team-server.ts`). The user who creates an organization is its `owner`. Built 2026-10-14 (`memberships` table).
+- **Membership**: userId, organizationId, role (`owner` | `admin` | `staff` | `designer` | `scanner`; permissions per role decided 2026-10-14, see DECISIONS and `src/lib/tenant.ts`). Unique on (userId, organizationId). Created by signup (owner) or by accepting a TeamInvite. The user who creates an organization is its `owner`. Built 2026-10-14 (`memberships` table).
+- **TeamInvite**: organizationId, email, role (never owner), tokenHash (SHA-256 of a one-time link, seven days, rotated on re-send), expiresAt, invitedBy, status (`pending` | `accepted` | `revoked`), acceptedBy, acceptedAt. Accepting requires a session whose account email matches; for a brand-new account that match is unverified until #32 lands, so the link is the credential. Built 2026-10-14 (`team_invites` table, `src/lib/team-server.ts`).
   - Nominees also have a User row (for the nominee portal) but no Membership; their access is through `Nominee.userId` and is limited to their own record.
 
 ### Campaigns
@@ -37,6 +37,7 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 ### Money out
 - **LedgerEntry**: organizationId, type (`vote_credit` | `ticket_credit` | `payout_debit` | `adjustment`), amount (pesewas, debits negative), paymentId (unique where set, id `l_<paymentId>`), note. The wallet balance is the sum; available = credits + debits − payouts still requested or approved (`src/lib/ledger-server.ts`). Built 2026-10-14 (`ledger_entries` table).
 - **Payout**: id (`po_<hash(organizationId, idempotencyKey)>`), organizationId, amount (pesewas), destinationKind (`momo` | `bank`), destination (JSON), status (`requested` | `approved` | `paid` | `rejected`), requestedBy, decidedBy, note, decidedAt, paidAt. Built 2026-10-14 (`payouts` table). A request reserves its amount against the available balance; `paid` writes the `payout_debit` ledger row (id `l_po_<id>`, `paymentId = payout:<id>`) in the same transaction and re-checks that settled credits cover it, so money out never exceeds money in.
+- **PayoutLock**: id = organizationId, organizationId, holder, expiresAt. Serializes marking payouts paid per organization, so two concurrent `paid` transitions can't both pass the settled-credits check: a second holder collides on creation, and an expired lock (a crashed holder) is reclaimed once (`withPayoutLock` in `src/lib/payouts-server.ts`). Built 2026-10-14 (`payout_locks` table).
 
 ### Flyer engine
 - **Font**: id, organizationId (null = platform-wide), family, fileId, weight, style. TTF/OTF only. Built 2026-10-14 (`fonts` table, `fonts` bucket).
@@ -45,7 +46,7 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 - **GeneratedFlyer**: id, organizationId, nomineeId (unique), templateId, templateVersion, fileId, sourceHash (of every input; regenerate only when it changes), createdAt. Built 2026-10-14 (`generated_flyers` table, `flyers` bucket).
 
 ### Operations
-- **AuditLog**: id, actorId, organizationId, action, target, metadata, createdAt. Written for event status changes, round open and close, and morale candidate creation; later for free votes and payouts. Built 2026-10-14 (`audit_logs` table).
+- **AuditLog**: id, actorId, organizationId, action, target, metadata, createdAt. Written for event status changes, round open and close, morale candidate creation, free-vote grants, and payout requests, cancellations, decisions and payments. Built 2026-10-14 (`audit_logs` table).
 
 ## Relationships
 
@@ -54,8 +55,8 @@ Event 1–* Round 1–* RoundEntry *–1 Nominee
 Nominee 1–* Payment 1–1 Vote (paid)
 Nominee 1–* Vote (free, no Payment)
 Event 1–* TicketTier 1–* Ticket *–1 Payment
-Organization 1–* FlyerTemplate 1–* TemplateSlot
-Nominee 1–* GeneratedFlyer
+Organization 1–* FlyerTemplate 1–* TemplateSlot (embedded in `canvasJson`, not a table)
+Nominee 1–1 GeneratedFlyer (the current flyer; regenerated in place)
 
 ## Integrity constraints
 

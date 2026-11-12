@@ -33,7 +33,7 @@ Added for this product (not in pickLT): Fabric.js for the flyer editor and rende
 ```
 src/app/(app)       public site: organizer pages, events, nominees, vote, tickets
 src/app/(auth)      login, signup, forgot-password
-src/app/(account)   organizer dashboard (events, nominees, flyers, tickets, report); settings, team and payouts not built
+src/app/(account)   organizer dashboard (events, nominees, flyers, tickets, report, team, payouts); settings not built
 src/app/(nominee)   nominee portal (new route group)
 src/app/(admin)     super admin console (new route group)
 src/app/api         route handlers: reads, auth, webhooks (ussd, payments)
@@ -83,7 +83,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 
 1. **Web vote:** voter picks nominee and quantity → server creates a `Payment` document (`pending`) → provider sends MoMo prompt → provider callback (verified) → in one Appwrite database transaction: mark payment `success`, create the `Vote`, bump the `RoundEntry` tally, credit the ledger → live tally updates.
 2. **USSD vote:** Hubtel posts each session step to a route handler → server returns menu text → on confirmation, server starts a MoMo debit → the payment callback follows the same path as step 1. See `USSD_AND_PAYMENTS.md`.
-3. **Flyer generation:** nominee photo uploaded → render function invoked → loads template, fills slots, exports PNG/JPG → stored in Appwrite Storage and linked to the nominee. See `FLYER_ENGINE.md`.
+3. **Flyer generation:** nominee photo uploaded → `ensureFlyer` runs after the response (Next's `after()`) → loads template, fills slots, exports PNG/JPG → stored in Appwrite Storage and linked to the nominee. See `FLYER_ENGINE.md`.
 
 ## Real-time results
 
@@ -92,5 +92,5 @@ Not built. Every page renders on request; the organizer refreshes to see new vot
 ## Reliability notes
 
 - Webhook handlers must be fast and idempotent. Acknowledge quickly, process inside a transaction.
-- A scheduled Appwrite Function reconciles stale `pending` payments against the provider's status API (same pattern as pickLT's `expirerentals`), so votes are never lost to missed callbacks.
+- A scheduled job reconciles stale `pending` payments against the provider's status API, so votes are never lost to missed callbacks. It runs as a Vercel cron (`vercel.json`) calling `/api/internal/payments/reconcile`, not as an Appwrite Function (see `functions/README.md`).
 - Rate-limit public vote endpoints.

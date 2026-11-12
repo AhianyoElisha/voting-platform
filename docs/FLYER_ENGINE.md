@@ -22,7 +22,7 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 - Upload a template background (PNG/JPG). Optionally upload a layered file; see "PSD import" below.
 - Add, move, resize and rotate photo and text slots on a canvas.
 - Bind each slot to a data field.
-- Upload custom fonts (TTF/OTF/WOFF) at platform or organization level.
+- Upload custom fonts (TTF/OTF; WOFF later) at platform or organization level.
 - Photo fitting: cover or contain, with a simple crop and position adjustment per nominee.
 - Text overflow handling: shrink to fit long names, with a minimum size and an ellipsis fallback.
 - Preview with a sample nominee.
@@ -56,7 +56,7 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 
 ## Technical notes
 
-- Use the same Fabric JSON for the browser editor and the server renderer, so what the designer sees is what gets rendered.
+- What the designer sees must be what gets rendered. As built, this is done with shared slot geometry and text-fitting code (`layout.ts`) rather than running Fabric on the server; see "Built" above.
 - Fonts must be loaded on the server renderer before rendering, or text will fall back to a default font.
 - Rendering runs in a background Appwrite Function (or a server-only route invoked asynchronously). Never block the request.
 - Templates, fonts, nominee photos and generated flyers live in Appwrite Storage buckets.

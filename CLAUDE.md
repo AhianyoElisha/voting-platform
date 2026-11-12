@@ -63,6 +63,7 @@ Same scripts as pickLT:
 ```
 npm run dev          # next dev
 npm run build        # next build
+npm start            # next start
 npm run lint         # next lint
 npm test             # vitest run (src/**/__tests__/**/*.test.ts)
 npm run test:watch   # vitest

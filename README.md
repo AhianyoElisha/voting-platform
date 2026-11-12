@@ -23,7 +23,7 @@ Appwrite schema and buckets are managed with the Appwrite CLI against `appwrite.
 ```bash
 appwrite login
 appwrite push settings   # auth methods
-appwrite push tables     # 19 tables
+appwrite push tables     # 22 tables
 appwrite push buckets    # photos, templates, fonts, flyers
 ```
 

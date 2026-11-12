@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 /**
  * Email/password sign-in. Same page layout as pickLT's login (logo, centred
  * card, inline error, show/hide password). Google sign-in and phone
- * verification are left out until the onboarding decision (#9) lands.
+ * verification are not built.
  */
 function LoginContent() {
   const { t } = useTranslation()

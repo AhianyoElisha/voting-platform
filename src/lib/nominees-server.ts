@@ -8,7 +8,7 @@ import type { CategoryDoc, EventDoc, MembershipRole, NomineeDoc, RoundDoc, Round
 
 /**
  * Categories and nominees (PRD 5.2) and morale candidates (PRD 5.4a, behind
- * switches pending OPEN_QUESTIONS #29).
+ * switches, publicly disclosed per decision #29).
  */
 export type NomineeProblem =
   | 'nameTooShort'
