@@ -29,6 +29,7 @@ export const APPWRITE = {
     PAYOUTS: 'payouts',
     PAYOUT_LOCKS: 'payout_locks',
     TEAM_INVITES: 'team_invites',
+    RATE_LIMITS: 'rate_limits',
   },
 
   BUCKETS: {

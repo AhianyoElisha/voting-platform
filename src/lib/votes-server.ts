@@ -172,7 +172,7 @@ export async function initiateVotePayment(
 
   // One budget per payer number across every channel (#27 placeholder): each
   // initiation sends a real MoMo prompt to that phone.
-  if (!rateLimit(`initiate:phone:${payerPhone}`, INITIATIONS_PER_PHONE_PER_MINUTE, 60_000, now.getTime()).ok) {
+  if (!(await rateLimit(`initiate:phone:${payerPhone}`, INITIATIONS_PER_PHONE_PER_MINUTE, 60_000, now.getTime())).ok) {
     throw new VoteError('rateLimited')
   }
 

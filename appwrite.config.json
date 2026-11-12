@@ -2487,6 +2487,46 @@
                     ]
                 }
             ]
+        },
+        {
+            "$id": "rate_limits",
+            "$permissions": [],
+            "databaseId": "voteapp",
+            "name": "rate_limits",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "count",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 1000000
+                },
+                {
+                    "key": "expiresAt",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "by_expires",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "expiresAt"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
         }
     ],
     "buckets": [

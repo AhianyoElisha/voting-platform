@@ -1,13 +1,13 @@
 import { getTranslations } from '@/lib/i18n-server'
 import { ClaimError, claimInvite } from '@/lib/nominee-invite-server'
-import { rateLimit } from '@/lib/rate-limit'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 
 /** POST { token, password }: set the nominee's password from a claim link. No session needed; the token is the proof. */
 export async function POST(req: Request) {
   const { t } = await getTranslations()
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  if (!rateLimit(`claim:${ip}`, 10, 60_000).ok) {
+  const ip = clientIp(req.headers)
+  if (!(await rateLimit(`claim:${ip}`, 10, 60_000)).ok) {
     return NextResponse.json({ error: t('errors:vote.rateLimited'), code: 'rateLimited' }, { status: 429 })
   }
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null

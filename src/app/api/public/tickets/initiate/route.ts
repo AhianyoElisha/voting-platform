@@ -1,5 +1,5 @@
 import { getTranslations } from '@/lib/i18n-server'
-import { rateLimit } from '@/lib/rate-limit'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 import { ticketErrorResponse } from '@/lib/tickets/api'
 import { initiateTicketPayment } from '@/lib/tickets/purchase-server'
 import { paymentAccessKey } from '@/lib/tickets/token'
@@ -9,8 +9,8 @@ import { NextResponse } from 'next/server'
 export async function POST(req: Request) {
   const { t } = await getTranslations()
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  if (!rateLimit(`initiate:ip:${ip}`, 20, 60_000).ok) {
+  const ip = clientIp(req.headers)
+  if (!(await rateLimit(`initiate:ip:${ip}`, 20, 60_000)).ok) {
     return NextResponse.json(
       { error: t('errors:vote.rateLimited'), code: 'rateLimited' },
       { status: 429, headers: { 'Retry-After': '60' } }

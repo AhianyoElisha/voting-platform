@@ -48,6 +48,8 @@ Entities are **Appwrite Database collections** (decided 2026-10-14, see `ARCHITE
 ### Operations
 - **AuditLog**: id, actorId, organizationId, action, target, metadata, createdAt. Written for event status changes (`event.<status>`), round open and close (`round.open`, `round.close`), morale candidate creation (`nominee.create_morale`), free-vote grants (`vote.grant_free`), nominee edits, photo uploads, invites and claims (`nominee.update`, `nominee.photo`, `nominee.invite`, `nominee.claim`), team invites and changes (`team.invite`, `team.invite_accept`, `team.invite_resend`, `team.invite_revoke`, `team.role_change`, `team.remove`), payment anomalies (`vote.late`, `ticket.oversold`, `payment.amount_mismatch`), and payout requests, cancellations, decisions and payments (`payout.request`, `payout.cancel`, `payout.<decision>`, `payout.paid`). Built 2026-10-14 (`audit_logs` table).
 
+- **RateLimit**: id (a hash of the limited key and the window, so no phone number or IP is stored), count, expiresAt. One row per key per window; see `src/lib/rate-limit.ts`. Built 2026-11-12 (`rate_limits` table). Not tenant-owned.
+
 ## Relationships
 
 Organization 1–* Event 1–* Category 1–* Nominee

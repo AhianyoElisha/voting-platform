@@ -1,5 +1,5 @@
 import { getTranslations } from '@/lib/i18n-server'
-import { rateLimit } from '@/lib/rate-limit'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 import { VoteError, initiateVotePayment } from '@/lib/votes-server'
 import { NextResponse } from 'next/server'
 
@@ -17,10 +17,10 @@ export async function POST(req: Request) {
   const phone = typeof body?.phone === 'string' ? body.phone : ''
   const quantity = body?.quantity
 
-  // PLACEHOLDER (#27): a per-instance limit by client IP here; the per-phone
-  // budget lives in initiateVotePayment so USSD shares it.
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const byIp = rateLimit(`initiate:ip:${ip}`, 20, 60_000)
+  // Limits are #27 placeholders. By client IP here; the per-phone budget
+  // lives in initiateVotePayment so USSD shares it.
+  const ip = clientIp(req.headers)
+  const byIp = await rateLimit(`initiate:ip:${ip}`, 20, 60_000)
   if (!byIp.ok) {
     const retry = Math.ceil(byIp.retryAfterMs / 1000)
     return NextResponse.json(

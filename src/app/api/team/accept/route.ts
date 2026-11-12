@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const { t } = await getTranslations()
   const userId = await getSessionUserId()
   if (!userId) return NextResponse.json({ error: t('errors:auth.unauthorized') }, { status: 401 })
-  if (!rateLimit(`team-accept:${userId}`, 10, 60_000).ok) {
+  if (!(await rateLimit(`team-accept:${userId}`, 10, 60_000)).ok) {
     return NextResponse.json({ error: t('errors:vote.rateLimited'), code: 'rateLimited' }, { status: 429 })
   }
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null

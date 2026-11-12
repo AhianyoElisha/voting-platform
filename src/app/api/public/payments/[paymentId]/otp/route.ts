@@ -1,5 +1,5 @@
 import { getTranslations } from '@/lib/i18n-server'
-import { rateLimit } from '@/lib/rate-limit'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
 import { VoteError, submitPaymentOtp } from '@/lib/votes-server'
 import { NextResponse } from 'next/server'
 
@@ -16,9 +16,10 @@ type Params = { params: Promise<{ paymentId: string }> }
 export async function POST(req: Request, { params }: Params) {
   const { paymentId } = await params
   const { t } = await getTranslations()
-  // PLACEHOLDER (#27): per-instance limits, like the initiate routes.
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  if (!rateLimit(`otp:ip:${ip}`, 20, 60_000).ok || !rateLimit(`otp:payment:${paymentId}`, 5, 15 * 60_000).ok) {
+  // Limits are #27 placeholders, like the initiate routes.
+  const ip = clientIp(req.headers)
+  const byIp = await rateLimit(`otp:ip:${ip}`, 20, 60_000)
+  if (!byIp.ok || !(await rateLimit(`otp:payment:${paymentId}`, 5, 15 * 60_000)).ok) {
     return NextResponse.json(
       { error: t('errors:vote.rateLimited'), code: 'rateLimited' },
       { status: 429, headers: { 'Retry-After': '60' } }

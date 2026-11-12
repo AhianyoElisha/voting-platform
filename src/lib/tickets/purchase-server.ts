@@ -90,7 +90,7 @@ export async function initiateTicketPayment(
   const payerName = (input.name ?? '').trim().replace(/\s+/g, ' ') || null
   if (payerName && payerName.length > 120) throw new TicketError('nameTooLong')
 
-  if (!rateLimit(`initiate:phone:${payerPhone}`, INITIATIONS_PER_PHONE_PER_MINUTE, 60_000, now.getTime()).ok) {
+  if (!(await rateLimit(`initiate:phone:${payerPhone}`, INITIATIONS_PER_PHONE_PER_MINUTE, 60_000, now.getTime())).ok) {
     throw new TicketError('rateLimited')
   }
 

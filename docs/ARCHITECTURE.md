@@ -93,4 +93,4 @@ Not built. Every page renders on request; the organizer refreshes to see new vot
 
 - Webhook handlers must be fast and idempotent. Acknowledge quickly, process inside a transaction.
 - A scheduled job reconciles stale `pending` payments against the provider's status API, so votes are never lost to missed callbacks. It runs as a Vercel cron (`vercel.json`) calling `/api/internal/payments/reconcile`, not as an Appwrite Function (see `functions/README.md`).
-- Rate-limit public vote endpoints.
+- Public vote, ticket, OTP, USSD and claim endpoints are rate-limited across instances (`src/lib/rate-limit.ts`): a fixed-window counter per hashed key in the `rate_limits` table, raised with Appwrite's atomic increment-with-max, behind a per-instance counter that turns away a client already over the limit without a database call. It fails open if Appwrite is unreachable. Expired windows are deleted by the reconciliation cron. The limit values are placeholders (#27).

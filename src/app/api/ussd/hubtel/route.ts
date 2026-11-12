@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   const input = parseHubtelUssdRequest(body)
   if (!input) return NextResponse.json({ error: 'Bad request' }, { status: 400 })
 
-  const limited = rateLimit(`ussd:${input.phone.replace(/\D/g, '')}`, 40, 60_000)
+  const limited = await rateLimit(`ussd:${input.phone.replace(/\D/g, '')}`, 40, 60_000)
   if (!limited.ok) {
     return NextResponse.json(
       buildHubtelUssdResponse(input.sessionId, { message: 'Too many requests. Try again shortly.', end: true })
