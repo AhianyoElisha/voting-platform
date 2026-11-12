@@ -7,8 +7,15 @@ import { normalizeEmail } from '../nominees-server'
 import { PaymentProviderNotConfiguredError, getPaymentProvider, type PaymentProvider } from '../payments'
 import { normalizeGhanaPhone } from '../phone'
 import { rateLimit } from '../rate-limit'
-import type { EventDoc, PaymentDoc, TicketTierDoc } from '../types'
-import { INITIATIONS_PER_PHONE_PER_MINUTE, VoteError, startProviderDebit, type VoteProblem } from '../votes-server'
+import type { EventDoc, PaymentDoc, TicketDoc, TicketTierDoc } from '../types'
+import {
+  INITIATIONS_PER_PHONE_PER_MINUTE,
+  VoteError,
+  getPayment,
+  startProviderDebit,
+  type VoteProblem,
+} from '../votes-server'
+import { verifyPaymentAccessKey } from './token'
 
 /**
  * Ticket purchase (PRD 5.4b), web path. Same shape as a vote: validate,
@@ -161,5 +168,43 @@ export async function initiateTicketPayment(
   } catch (err) {
     if (err instanceof VoteError) throw new TicketError(err.problem)
     throw err
+  }
+}
+
+export interface BuyerTickets {
+  status: PaymentDoc['status']
+  tierName: string
+  tickets: { id: string; token: string; status: TicketDoc['status'] }[]
+}
+
+/**
+ * What the buyer's page polls for after paying: the purchase's tickets, once
+ * the payment is confirmed. Null (a 404) unless `accessKey` is the key handed
+ * to the buyer at initiation; checked before any read, so a guessed or
+ * ticket-derived payment id learns nothing, not even whether it exists.
+ */
+export async function buyerTickets(paymentId: string, accessKey: string | null): Promise<BuyerTickets | null> {
+  if (!verifyPaymentAccessKey(paymentId, accessKey)) return null
+  const payment = await getPayment(paymentId)
+  if (!payment || payment.purpose !== 'ticket') return null
+  if (payment.status !== 'success') return { status: payment.status, tierName: '', tickets: [] }
+  const { databases } = createAdminClient()
+  const [tickets, tier] = await Promise.all([
+    withRetry(() =>
+      databases.listDocuments<TicketDoc>(databaseId(), APPWRITE.TABLES.TICKETS, [
+        Query.equal('paymentId', [paymentId]),
+        Query.limit(100),
+      ])
+    ),
+    payment.tierId
+      ? withRetry(() =>
+          databases.getDocument<TicketTierDoc>(databaseId(), APPWRITE.TABLES.TICKET_TIERS, payment.tierId as string)
+        ).catch(() => null)
+      : null,
+  ])
+  return {
+    status: payment.status,
+    tierName: tier?.name ?? '',
+    tickets: tickets.documents.map((t) => ({ id: t.$id, token: t.qrToken, status: t.status })),
   }
 }

@@ -39,3 +39,22 @@ export function verifyTicketToken(token: string, key = secret()): string | null 
 export function ticketId(paymentId: string, index: number): string {
   return `tk_${paymentId}_${index}`
 }
+
+/**
+ * The buyer's key to a ticket purchase. A payment id is not a secret: Appwrite
+ * ids are a timestamp plus 28 non-cryptographic random bits, and every ticket
+ * carries its payment id (`ticketId`), so anyone holding one ticket knows it.
+ * Listing a purchase's tickets therefore needs this key, which is returned only
+ * to the buyer's page when the purchase starts and never appears on a ticket.
+ */
+export function paymentAccessKey(paymentId: string, key = secret()): string {
+  return crypto.createHmac('sha256', key).update(`payment-access:${paymentId}`).digest('base64url').slice(0, SIG_LENGTH)
+}
+
+export function verifyPaymentAccessKey(paymentId: string, given: string | null | undefined, key = secret()): boolean {
+  if (!paymentId || typeof given !== 'string' || given.length !== SIG_LENGTH) return false
+  const enc = new TextEncoder()
+  const a = enc.encode(given)
+  const b = enc.encode(paymentAccessKey(paymentId, key))
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
+}

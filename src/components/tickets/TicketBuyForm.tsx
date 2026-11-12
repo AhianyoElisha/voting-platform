@@ -18,7 +18,7 @@ export interface TierOption {
 
 type Stage =
   | { kind: 'form' }
-  | { kind: 'pending'; paymentId: string; amount: number; instructions: string | null }
+  | { kind: 'pending'; paymentId: string; accessKey: string; amount: number; instructions: string | null }
   | { kind: 'success'; tierName: string; tickets: { id: string; url: string }[] }
   | { kind: 'failed' }
 
@@ -43,7 +43,10 @@ export default function TicketBuyForm({ tiers, mockProvider }: { tiers: TierOpti
     let cancelled = false
     const tick = async () => {
       try {
-        const res = await fetch(`/api/public/payments/${stage.paymentId}/tickets`, { cache: 'no-store' })
+        const res = await fetch(`/api/public/payments/${stage.paymentId}/tickets`, {
+          cache: 'no-store',
+          headers: { 'X-Payment-Key': stage.accessKey },
+        })
         if (!res.ok) return
         const data = (await res.json()) as { status: string; tierName?: string; tickets: { id: string; url: string }[] }
         if (cancelled) return
@@ -67,19 +70,20 @@ export default function TicketBuyForm({ tiers, mockProvider }: { tiers: TierOpti
     setError('')
     setBusy(true)
     try {
-      const data = await postJson<{ payment: { id: string; amount: number }; instructions: string | null }>(
-        '/api/public/tickets/initiate',
-        {
-          tierId,
-          quantity: qty,
-          phone,
-          email,
-          name,
-        }
-      )
+      const data = await postJson<{
+        payment: { id: string; accessKey: string; amount: number }
+        instructions: string | null
+      }>('/api/public/tickets/initiate', {
+        tierId,
+        quantity: qty,
+        phone,
+        email,
+        name,
+      })
       setStage({
         kind: 'pending',
         paymentId: data.payment.id,
+        accessKey: data.payment.accessKey,
         amount: data.payment.amount,
         instructions: data.instructions,
       })

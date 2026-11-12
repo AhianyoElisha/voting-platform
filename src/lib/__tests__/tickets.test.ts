@@ -13,7 +13,7 @@ import { MockPaymentProvider } from '../payments/mock'
 import type { CallbackResult } from '../payments/provider'
 import { resetRateLimits } from '../rate-limit'
 import { ForbiddenError } from '../tenant'
-import { initiateTicketPayment } from '../tickets/purchase-server'
+import { buyerTickets, initiateTicketPayment } from '../tickets/purchase-server'
 import { scanTicket } from '../tickets/scan-server'
 import {
   TierError,
@@ -24,7 +24,7 @@ import {
   ticketFigures,
   updateTier,
 } from '../tickets/tiers-server'
-import { ticketId, verifyTicketToken } from '../tickets/token'
+import { paymentAccessKey, ticketId, verifyTicketToken } from '../tickets/token'
 import { confirmPayment } from '../votes-server'
 
 const owner: TenantContext = { organizationId: 'org1', userId: 'u1', role: 'owner' }
@@ -275,5 +275,39 @@ describe('scanning (atomic valid → used)', () => {
     process.env.TICKET_SECRET = 'n'.repeat(32)
     const { signTicketToken } = await import('../tickets/token')
     expect((await scanTicket(scanner, event.$id, signTicketToken(t1.$id as string))).outcome).toBe('invalid')
+  })
+})
+
+describe('buyerTickets (the buyer page poll)', () => {
+  test("needs the buyer's key: one ticket's payment id does not unlock its siblings", async () => {
+    const { tier } = await seed()
+    const { payment } = await buy(tier.$id, 2)
+    const key = paymentAccessKey(payment.$id)
+
+    // Before confirmation: the status, no tickets.
+    expect(await buyerTickets(payment.$id, key)).toEqual({ status: 'pending', tierName: '', tickets: [] })
+
+    await confirmPayment(callbackFor(payment.providerReference))
+    const out = await buyerTickets(payment.$id, key)
+    expect(out?.status).toBe('success')
+    expect(out?.tierName).toBe('Regular')
+    expect(out?.tickets.map((t) => t.id).sort()).toEqual([ticketId(payment.$id, 0), ticketId(payment.$id, 1)])
+
+    // Someone holding ticket 0 knows the payment id, but not the key.
+    const [, paymentIdFromTicket] = /^tk_(.+)_\d+$/.exec(ticketId(payment.$id, 0))!
+    expect(await buyerTickets(paymentIdFromTicket, null)).toBeNull()
+    const ticketSig = out!.tickets[0].token.split('.')[1]
+    expect(await buyerTickets(paymentIdFromTicket, ticketSig)).toBeNull()
+    expect(await buyerTickets(paymentIdFromTicket, 'x'.repeat(22))).toBeNull()
+  })
+
+  test("another purchase's key does not open this one, and vote payments are never listed", async () => {
+    const { tier } = await seed()
+    const a = await buy(tier.$id, 1, '0241234567')
+    const b = await buy(tier.$id, 1, '0241234568')
+    expect(await buyerTickets(a.payment.$id, paymentAccessKey(b.payment.$id))).toBeNull()
+
+    fake.seed('payments', { $id: 'pay_vote', purpose: 'vote', status: 'success', organizationId: 'org1' })
+    expect(await buyerTickets('pay_vote', paymentAccessKey('pay_vote'))).toBeNull()
   })
 })

@@ -1,44 +1,24 @@
-import { createAdminClient, withRetry } from '@/lib/appwrite-server'
-import { APPWRITE } from '@/lib/constants'
-import { databaseId } from '@/lib/db'
-import type { TicketDoc, TicketTierDoc } from '@/lib/types'
-import { getPayment } from '@/lib/votes-server'
+import { buyerTickets } from '@/lib/tickets/purchase-server'
 import { NextResponse } from 'next/server'
-import { Query } from 'node-appwrite'
 
 type Params = { params: Promise<{ paymentId: string }> }
 
-/** GET: the tickets of a successful payment, by the unguessable payment id the buyer's page holds. */
-export async function GET(_req: Request, { params }: Params) {
+/**
+ * GET: the tickets of a confirmed ticket purchase, for the buyer's page. The
+ * payment id is printed inside every ticket, so it is not enough on its own:
+ * the request must carry the buyer's access key (`X-Payment-Key`), returned
+ * only by the initiate call. A header, not a query string, so it stays out of
+ * request logs. Any mismatch is a plain 404.
+ */
+export async function GET(req: Request, { params }: Params) {
   const { paymentId } = await params
-  const payment = await getPayment(paymentId)
-  if (!payment || payment.purpose !== 'ticket') return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  if (payment.status !== 'success')
-    return NextResponse.json({ status: payment.status, tickets: [] }, { headers: { 'Cache-Control': 'no-store' } })
-  const { databases } = createAdminClient()
-  const [tickets, tier] = await Promise.all([
-    withRetry(() =>
-      databases.listDocuments<TicketDoc>(databaseId(), APPWRITE.TABLES.TICKETS, [
-        Query.equal('paymentId', [paymentId]),
-        Query.limit(100),
-      ])
-    ),
-    payment.tierId
-      ? withRetry(() =>
-          databases.getDocument<TicketTierDoc>(databaseId(), APPWRITE.TABLES.TICKET_TIERS, payment.tierId as string)
-        )
-      : null,
-  ])
+  const out = await buyerTickets(paymentId, req.headers.get('x-payment-key'))
+  if (!out) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(
     {
-      status: payment.status,
-      tierName: tier?.name ?? '',
-      tickets: tickets.documents.map((t) => ({
-        id: t.$id,
-        token: t.qrToken,
-        status: t.status,
-        url: `/t/${t.qrToken}`,
-      })),
+      status: out.status,
+      tierName: out.tierName,
+      tickets: out.tickets.map((t) => ({ id: t.id, token: t.token, status: t.status, url: `/t/${t.token}` })),
     },
     { headers: { 'Cache-Control': 'no-store' } }
   )
