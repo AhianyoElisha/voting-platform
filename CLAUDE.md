@@ -69,4 +69,4 @@ npm test             # vitest run (src/**/__tests__/**/*.test.ts)
 npm run test:watch   # vitest
 ```
 
-Appwrite schema and functions are managed with the Appwrite CLI against `appwrite.config.json` (`appwrite push`).
+Appwrite schema, buckets and functions are managed with the Appwrite CLI against `appwrite.config.json`, one resource at a time: `appwrite push settings`, `appwrite push tables`, `appwrite push buckets`, `appwrite push functions`. Add `--all --force` when running without a TTY (e.g. `! appwrite push tables --all --force`).

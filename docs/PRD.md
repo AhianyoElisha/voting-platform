@@ -35,7 +35,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 
 ### 5.1 Organizer workspace
 - Sign up and create an organization. Self-serve: the workspace is active immediately, with no super-admin approval step (decided 2026-10-14, see DECISIONS). The super admin can suspend an organization later.
-- Branded public page (logo, colours). Custom subdomain is an open question.
+- Branded public page (logo, colours). Custom subdomain is an open question (#25). *Not built: `logoUrl` and `brandColors` exist on the organization, but no settings UI sets them yet; only the round report reads the logo.*
 - Invite team members. *Built 2026-10-14: owners and admins invite by email as admin, staff, designer or scanner; the invitee accepts a one-time link with an account whose email matches; roles can be changed and members removed, never the last owner. Email delivery waits on #32; the organizer gets the link to share. Until then the link is the credential for a brand-new account, since nothing verifies email ownership; once a provider exists, acceptance should require a verified email for accounts created after the invite.*
 
 ### 5.2 Events, categories and nominees
@@ -124,7 +124,7 @@ These came up in discussion and still need a yes or no (see OPEN_QUESTIONS):
 ## 7. Non-functional requirements
 
 - **Integrity:** no paid vote without a confirmed payment, idempotent callback handling, and audit logs. Free votes are admin-only and always audited.
-- **Email delivery:** nominee credentials and ticket QR codes go out by email, so a reliable transactional email provider is required (TBD).
+- **Email delivery:** nominee credentials and ticket QR codes go out by email, so a reliable transactional email provider is required (TBD, #32).
 - **Tenant isolation:** organizers can never see each other's data.
 - **Performance:** public pages stay fast on 3G and low-end Android phones. The system handles voting spikes near deadlines.
 - **Availability:** USSD and payment callbacks must be highly reliable, because a missed callback means a paid vote is lost.

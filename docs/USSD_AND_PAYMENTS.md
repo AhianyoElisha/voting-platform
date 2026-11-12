@@ -54,7 +54,7 @@ Note: USSD can't collect an email address comfortably, so for USSD ticket purcha
 Considerations:
 - USSD sessions time out after roughly 60–180 seconds, so keep menus short.
 - The MoMo approval prompt arrives outside the USSD session. The vote is counted only when the payment callback confirms it.
-- Send an SMS receipt after a successful vote (cost and provider TBD).
+- Send an SMS receipt after a successful vote (cost and provider TBD, #14).
 - Code scheme (decided 2026-10-14, #12): one shared shortcode with **platform-wide unique nominee codes**. Voting never asks for an event code. The ticket branch still uses the event code (`Event.eventCode`), because tickets belong to an event rather than a nominee.
 
 ## Built (2026-10-14): web votes behind a provider interface
