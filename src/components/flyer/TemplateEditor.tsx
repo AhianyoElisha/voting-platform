@@ -100,10 +100,11 @@ export default function TemplateEditor({
         if (!obj) return slot
         const w = obj.getScaledWidth() / scale
         const h = obj.getScaledHeight() / scale
+        // Objects are center-origin (see `common` below): left/top is the box center.
         return {
           ...slot,
-          x: Math.round((obj.left ?? 0) / scale),
-          y: Math.round((obj.top ?? 0) / scale),
+          x: Math.round((obj.left ?? 0) / scale - w / 2),
+          y: Math.round((obj.top ?? 0) / scale - h / 2),
           w: Math.round(w),
           h: Math.round(h),
           rotation: Math.round(obj.angle ?? 0),
@@ -135,6 +136,8 @@ export default function TemplateEditor({
       FabricImage.fromURL(template.backgroundUrl, { crossOrigin: 'anonymous' })
         .then((img) => {
           img.scaleToWidth(template.width * scale)
+          // Fabric >= 6 defaults to a center origin, which would hang the image off the canvas.
+          img.set({ originX: 'left', originY: 'top', left: 0, top: 0 })
           canvas.backgroundImage = img
           canvas.requestRenderAll()
         })
@@ -157,7 +160,17 @@ export default function TemplateEditor({
     for (const slot of model.slots) {
       seen.add(slot.id)
       let obj = objectsRef.current.get(slot.id)
-      const common = { left: slot.x * scale, top: slot.y * scale, angle: slot.rotation, scaleX: 1, scaleY: 1 }
+      // Center origin, so rotation pivots on the box center exactly as the server renderer
+      // does (render.ts); the model keeps x/y as the unrotated box's top-left corner.
+      const common = {
+        originX: 'center' as const,
+        originY: 'center' as const,
+        left: (slot.x + slot.w / 2) * scale,
+        top: (slot.y + slot.h / 2) * scale,
+        angle: slot.rotation,
+        scaleX: 1,
+        scaleY: 1,
+      }
       if (slot.type === 'photo') {
         const style = { fill: 'rgba(59,130,246,0.25)', stroke: '#3b82f6', strokeDashArray: [6, 4], strokeUniform: true }
         const wantEllipse = slot.shape === 'ellipse'
@@ -281,7 +294,9 @@ export default function TemplateEditor({
       if (!res.ok) throw new Error(data?.error ?? 'upload failed')
       router.refresh()
     })
-  const previewUrl = `${base}/preview?model=${encodeURIComponent(JSON.stringify(model))}&v=${Date.now()}`
+  // No cache-buster: the route answers `no-store`, and a Date.now() here made the server
+  // and client render different hrefs (hydration mismatch).
+  const previewUrl = `${base}/preview?model=${encodeURIComponent(JSON.stringify(model))}`
 
   return (
     <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
