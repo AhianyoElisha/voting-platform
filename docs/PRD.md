@@ -108,7 +108,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - Organizers request payouts; the super admin approves them (decided 2026-11-12, #3): manual approval, the money is transferred outside the platform, and marking it paid is what debits the ledger. A request reserves its amount; money out can never exceed settled credits. Minimum from `PAYOUT_MIN_PESEWAS`, none until set. Destination: MoMo or bank.
 
 ### 5.7 Super admin console
-*Partly built 2026-10-14: `/admin` handles payouts for a user whose `users.isSuperAdmin` is set (in the Appwrite console). Organization management, fee overrides and the per-organization switches are still columns without a UI.*
+*Built 2026-11-12 for a user whose `users.isSuperAdmin` is set (in the Appwrite console): an overview, organizations (search, suspend and reactivate with a reason, commission override, the morale-candidate and free-vote switches, wallet, events, recent payments and audit), platform-wide transactions with lookup by payment id or provider reference (payer numbers masked, #28), payouts, and the audit log. Every change is audited. Suspension hides the public pages and stops new votes and ticket sales; payments already started still complete. Not built: disputes and refunds (no refund policy yet, see #13), and platform-level templates (#17).*
 - Manage organizations, events, fees, templates and payouts.
 - View transactions and audit logs, and handle disputes and refunds.
 

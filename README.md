@@ -54,6 +54,6 @@ Everything is documented in `.env.example`. Beyond the Appwrite keys and `SESSIO
 
 ## What is built
 
-Organizer signup and workspaces; events with rounds, categories and nominees; paid voting on the web and by USSD through one pipeline with the Paystack adapter (USSD sessions on Hubtel); the nominee portal with claim links and photos; the flyer engine (Fabric.js editor, `@napi-rs/canvas` renderer); tickets with signed QR codes and an entrance scanner; the cumulative round report as PDF. See `docs/OPEN_QUESTIONS.md` for what each placeholder waits on.
+Organizer signup and workspaces; events with rounds, categories and nominees; paid voting on the web and by USSD through one pipeline with the Paystack adapter (USSD sessions on Hubtel); the nominee portal with claim links and photos; the flyer engine (Fabric.js editor, `@napi-rs/canvas` renderer); tickets with signed QR codes and an entrance scanner; the cumulative round report as PDF; the super admin console at `/admin` (organizations, commission, switches, suspension, transactions, payouts, audit log). To become super admin, set `isSuperAdmin` to true on your row in the `users` table in the Appwrite console. See `docs/OPEN_QUESTIONS.md` for what each placeholder waits on.
 
 Added beyond pickLT: `@napi-rs/canvas`, `fabric`, `fflate`, `pdfkit`, `qrcode`. The canvas and `sharp` are server externals in `next.config.mjs`.

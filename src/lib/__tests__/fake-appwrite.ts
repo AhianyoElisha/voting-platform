@@ -3,7 +3,8 @@ import { vi } from 'vitest'
 /**
  * In-memory stand-in for `node-appwrite`'s Databases, enough for the domain
  * modules: create/get/list/update/delete with the JSON query strings the SDK
- * emits (`equal`, `lessThan`, `limit`, `orderAsc`, `orderDesc`), unique
+ * emits (`equal`, `lessThan`, `startsWith`, `limit`, `orderAsc`, `orderDesc`,
+ * `cursorAfter`), unique
  * indexes that reject duplicates with a 409, atomic increments, and
  * transactions: writes carrying a `transactionId` are staged and applied at
  * commit, all or nothing, with duplicate ids and unique indexes checked
@@ -134,6 +135,12 @@ export function createFakeDatabases(uniqueIndexes: Record<string, string[][]> = 
         } else if (q.method === 'lessThan') {
           const v = q.values?.[0] as string | number
           list = list.filter((r) => (r[q.attribute!] as string | number) < v)
+        } else if (q.method === 'startsWith') {
+          const v = String(q.values?.[0] ?? '')
+          list = list.filter((r) => String(r[q.attribute!] ?? '').startsWith(v))
+        } else if (q.method === 'cursorAfter') {
+          const at = list.findIndex((r) => r.$id === q.values?.[0])
+          list = at === -1 ? [] : list.slice(at + 1)
         } else if (q.method === 'limit') {
           limit = Number(q.values?.[0] ?? 25)
         } else if (q.method === 'orderAsc' || q.method === 'orderDesc') {
@@ -142,8 +149,9 @@ export function createFakeDatabases(uniqueIndexes: Record<string, string[][]> = 
           list.sort((a, b) => (a[key]! > b[key]! ? dir : a[key]! < b[key]! ? -dir : 0))
         }
       }
+      const total = list.length
       list = list.slice(0, limit)
-      return { total: list.length, documents: list.map((r) => ({ ...r })) }
+      return { total, documents: list.map((r) => ({ ...r })) }
     }),
     updateDocument: vi.fn(
       async (

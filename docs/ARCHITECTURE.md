@@ -35,7 +35,7 @@ src/app/(app)       public site: organizer pages, events, nominees, vote, ticket
 src/app/(auth)      login, signup, forgot-password, reset-password (Appwrite recovery)
 src/app/(account)   organizer dashboard (events, nominees, flyers, tickets, report, team, payouts); settings not built
 src/app/(nominee)   nominee portal (new route group)
-src/app/(admin)     super admin console (new route group)
+src/app/(admin)     super admin console (new route group): overview, organizations, transactions, payouts, audit
 src/app/api         route handlers: reads, auth, webhooks (ussd, payments)
 src/components      feature components, grouped by area
 src/shared          UI primitives lifted from pickLT

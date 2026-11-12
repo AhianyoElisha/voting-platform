@@ -694,6 +694,112 @@
       "reject": "Reject",
       "markPaid": "Mark paid",
       "paidConfirm": "Mark this payout as paid? Only do this after the money has been sent. This debits the organizer and cannot be undone."
+    },
+    "nav": {
+      "overview": "Overview",
+      "organizations": "Organizations",
+      "transactions": "Transactions",
+      "payouts": "Payouts",
+      "audit": "Audit log"
+    },
+    "on": "On",
+    "off": "Off",
+    "filter": "Filter",
+    "nextPage": "Next page →",
+    "seeAll": "See all",
+    "clearFilter": "Show all organizations",
+    "overview": {
+      "organizations": "Organizations",
+      "suspended": "Suspended",
+      "pendingPayouts": "Payouts waiting",
+      "pendingPayments": "Payments pending",
+      "platform": "Platform settings",
+      "commission": "Default commission",
+      "rateInvalid": "PLATFORM_COMMISSION_BPS is invalid",
+      "platformHelper": "Set on the server (PLATFORM_COMMISSION_BPS, MORALE_CANDIDATES_ENABLED, FREE_VOTES_ENABLED). Per-organization settings are on each organization."
+    },
+    "orgs": {
+      "search": "Search by URL name",
+      "anyStatus": "Any status",
+      "platformRate": "Platform rate",
+      "col": {
+        "name": "Organization",
+        "status": "Status",
+        "commission": "Commission",
+        "switches": "Switches",
+        "created": "Created"
+      }
+    },
+    "org": {
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members",
+      "owners": "Owners",
+      "balance": "Wallet",
+      "credits": "Earned",
+      "paidOut": "Paid out",
+      "reserved": "Requested, not yet paid",
+      "available": "Available",
+      "events": "Events",
+      "event": "Event"
+    },
+    "settings": {
+      "title": "Controls",
+      "commission": "Commission",
+      "commissionHelper": "Leave empty for the platform rate ({{rate}}%). Applies to payments started from now on.",
+      "commissionInvalid": "Enter a percentage between 0 and 100, up to two decimals.",
+      "morale": "Morale candidates",
+      "freeVotes": "Free votes",
+      "switchHelper": "When off, organizers cannot add morale candidates or grant free votes. Existing ones stay.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Kept in the audit log; required to suspend",
+      "reasonRequired": "Give a reason before suspending.",
+      "save": "Save",
+      "saved": "Saved.",
+      "suspend": "Suspend organization",
+      "reactivate": "Reactivate organization",
+      "suspendConfirm": "Suspend this organization? Its public pages go offline and new votes and ticket sales stop. Payments already started still complete.",
+      "suspendHelper": "Suspending hides the public pages and stops new votes and ticket sales. Payments already started still complete, and the organizers can still sign in.",
+      "reactivateHelper": "Reactivating brings the public pages back and allows votes and ticket sales again."
+    },
+    "tx": {
+      "lookup": "Payment id or provider reference",
+      "find": "Find",
+      "notFound": "No payment with that id or reference.",
+      "anyStatus": "Any status",
+      "anyPurpose": "Votes and tickets",
+      "forOrg": "For {{name}}",
+      "fee": "Fee",
+      "purpose": {
+        "vote_one": "{{count}} vote",
+        "vote_other": "{{count}} votes",
+        "ticket_one": "{{count}} ticket",
+        "ticket_other": "{{count}} tickets"
+      },
+      "purposeName": {
+        "vote": "Votes",
+        "ticket": "Tickets"
+      },
+      "status": {
+        "pending": "Pending",
+        "success": "Paid",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "col": {
+        "when": "When",
+        "what": "What",
+        "amount": "Amount",
+        "payer": "Payer",
+        "status": "Status",
+        "reference": "Reference"
+      }
+    },
+    "audit": {
+      "col": {
+        "actor": "By",
+        "action": "Action",
+        "details": "Details"
+      }
     }
   },
   "team": {

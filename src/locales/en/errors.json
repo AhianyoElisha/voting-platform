@@ -179,5 +179,10 @@
     "ownerImmutable": "The owner’s role cannot be changed here.",
     "lastOwner": "A workspace must keep at least one owner.",
     "selfChange": "You cannot change or remove your own membership."
+  },
+  "admin": {
+    "notFound": "Organization not found.",
+    "invalid": "Check the values. A suspension needs a reason.",
+    "noChange": "Nothing changed."
   }
 }
