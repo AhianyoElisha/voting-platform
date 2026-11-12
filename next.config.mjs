@@ -6,6 +6,13 @@ const nextConfig = {
   reactStrictMode: false,
   // Native server-side packages: loaded at runtime, never bundled by webpack.
   serverExternalPackages: ['@napi-rs/canvas', 'sharp'],
+  // The flyer renderer reads its bundled Poppins files from disk (src/lib/flyer/render.ts),
+  // which file tracing can't see, so ship them with every API route and page that may render.
+  outputFileTracingIncludes: {
+    '/api/**/*': ['./src/lib/flyer/fonts/**/*'],
+    '/portal': ['./src/lib/flyer/fonts/**/*'],
+    '/dashboard/**/*': ['./src/lib/flyer/fonts/**/*'],
+  },
   images: {
     minimumCacheTTL: 2678400 * 6, // 3 months
     remotePatterns: [

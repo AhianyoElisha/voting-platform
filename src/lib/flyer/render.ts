@@ -1,7 +1,8 @@
 import { GlobalFonts, createCanvas, loadImage, type SKRSContext2D } from '@napi-rs/canvas'
+import path from 'path'
 import { resolveBinding, type BindingContext } from './bindings'
 import { coverCrop, fitText } from './layout'
-import type { PhotoSlot, SlotModel, TextSlot } from './model'
+import { FALLBACK_FONT, type PhotoSlot, type SlotModel, type TextSlot } from './model'
 
 /**
  * Server renderer. Draws a template's background, the nominee photo into the
@@ -43,6 +44,19 @@ export function registerFonts(fonts: FontFile[]): void {
   }
 }
 
+/**
+ * The default slot font (`FALLBACK_FONT`, Poppins, the app font) ships with the
+ * renderer so flyers match the editor without an upload: seven static weights
+ * under the SIL Open Font License, in `./fonts/poppins`. Read from the project
+ * root at runtime; `next.config.mjs` traces them into the serverless bundle.
+ */
+const BUILTIN_FONT_DIR = path.join(process.cwd(), 'src', 'lib', 'flyer', 'fonts', 'poppins')
+const BUILTIN_WEIGHTS = ['Light', 'Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold', 'Black']
+
+export function builtinFonts(): FontFile[] {
+  return BUILTIN_WEIGHTS.map((w) => ({ family: FALLBACK_FONT, path: path.join(BUILTIN_FONT_DIR, `Poppins-${w}.ttf`) }))
+}
+
 function fontSpec(slot: TextSlot, size: number): string {
   return `${slot.fontWeight} ${size}px "${slot.fontFamily}", sans-serif`
 }
@@ -71,7 +85,8 @@ function clipPhoto(ctx: SKRSContext2D, slot: PhotoSlot): void {
 }
 
 export async function renderFlyer(inputs: RenderInputs): Promise<Uint8Array> {
-  registerFonts(inputs.fonts)
+  // Built-ins first, so an organization's own upload under the same family can still add faces.
+  registerFonts([...builtinFonts(), ...inputs.fonts])
   const canvas = createCanvas(inputs.width, inputs.height)
   const ctx = canvas.getContext('2d')
 
