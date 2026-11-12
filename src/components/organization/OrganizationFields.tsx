@@ -1,6 +1,7 @@
 'use client'
 
 import { SLUG_MAX, slugify } from '@/lib/slug'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export const inputClass =
@@ -30,7 +31,9 @@ export default function OrganizationFields({
   idPrefix?: string
 }) {
   const { t } = useTranslation()
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  // Set after mount: reading `window` during render makes the server and client text differ.
+  const [origin, setOrigin] = useState('')
+  useEffect(() => setOrigin(window.location.origin), [])
   const prefix = `${origin}/o/${value.slug || '…'}`
 
   return (
