@@ -105,7 +105,7 @@ export async function saveTemplateModel(
   return updateTenantDocument<FlyerTemplateDoc>(ctx, APPWRITE.TABLES.FLYER_TEMPLATES, templateId, data)
 }
 
-/** Stores the background and makes it the canvas: the template takes the image's size. */
+/** Stores the background and makes it the canvas: the template takes the image's size. Clears the foreground and photo mask. */
 export async function setTemplateBackground(
   ctx: TenantContext,
   templateId: string,
@@ -144,9 +144,66 @@ export async function setTemplateBackground(
     backgroundFileId: file.$id,
     width,
     height,
+    // A new background belongs to a new design: the old overlay and photo mask no longer fit.
+    // PSD import sets them again right after.
+    foregroundFileId: null,
+    photoMaskFileId: null,
   })
-  if (template.backgroundFileId && template.backgroundFileId !== file.$id) {
-    await storage.deleteFile(APPWRITE.BUCKETS.FLYER_TEMPLATES, template.backgroundFileId).catch(() => {})
+  for (const old of [template.backgroundFileId, template.foregroundFileId, template.photoMaskFileId]) {
+    if (old && old !== file.$id) await storage.deleteFile(APPWRITE.BUCKETS.FLYER_TEMPLATES, old).catch(() => {})
+  }
+  return updated
+}
+
+export type TemplateLayerKind = 'foreground' | 'photoMask'
+const LAYER_COLUMN = { foreground: 'foregroundFileId', photoMask: 'photoMaskFileId' } as const
+
+/**
+ * Set or clear (`image` null) one of a template's extra images, both written
+ * by the PSD importer: the foreground (stretched to the template size) and
+ * the photo slot's mask (kept at its own size, at most the template's
+ * bounds). Stored as PNG with alpha, public like the background.
+ */
+export async function setTemplateLayer(
+  ctx: TenantContext,
+  templateId: string,
+  kind: TemplateLayerKind,
+  image: Uint8Array | null
+): Promise<FlyerTemplateDoc> {
+  assertCanDesign(ctx)
+  const template = await getTemplate(ctx, templateId)
+  const column = LAYER_COLUMN[kind]
+  const previous = (template[column] as string | null | undefined) ?? null
+  let fileId: string | null = null
+  const { storage } = createAdminClient()
+  if (image) {
+    const sharp = (await import('sharp')).default
+    let png: Uint8Array
+    try {
+      const pipeline =
+        kind === 'foreground'
+          ? sharp(image).resize(template.width, template.height, { fit: 'fill' })
+          : sharp(image).resize(2160, 3840, { fit: 'inside', withoutEnlargement: true })
+      png = new Uint8Array(await pipeline.ensureAlpha().png().toBuffer())
+    } catch {
+      throw new TemplateError('badImage')
+    }
+    const { InputFile } = await import('node-appwrite/file')
+    const file = await withRetry(() =>
+      storage.createFile(
+        APPWRITE.BUCKETS.FLYER_TEMPLATES,
+        ID.unique(),
+        InputFile.fromBuffer(png, `${templateId}-${kind}.png`),
+        [Permission.read(Role.any())]
+      )
+    )
+    fileId = file.$id
+  }
+  const updated = await updateTenantDocument<FlyerTemplateDoc>(ctx, APPWRITE.TABLES.FLYER_TEMPLATES, templateId, {
+    [column]: fileId,
+  })
+  if (previous && previous !== fileId) {
+    await storage.deleteFile(APPWRITE.BUCKETS.FLYER_TEMPLATES, previous).catch(() => {})
   }
   return updated
 }

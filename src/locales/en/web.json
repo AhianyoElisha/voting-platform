@@ -517,7 +517,11 @@
       "right": "Right",
       "maxLines": "Max lines",
       "uppercase": "UPPERCASE",
-      "italic": "Italic"
+      "italic": "Italic",
+      "maskShape": "Shape from the design",
+      "overlayHint": "The design’s layers above the photo are drawn over it (shown see-through here).",
+      "removeOverlay": "Remove overlay",
+      "overlayRemoved": "Overlay removed."
     },
     "fonts": {
       "title": "Fonts",
@@ -557,7 +561,8 @@
         "noComposite": "This PSD has no flattened image (“Maximize compatibility” was off), so the background was redrawn from the layers.",
         "duplicatePhoto": "More than one {{photoTag}} layer; only the first is used.",
         "tooManySlots": "More than 20 placeholders; the rest were skipped.",
-        "shapeFill": "Some shapes use gradient or pattern fills, which the redrawn background leaves out."
+        "shapeFill": "Some shapes use gradient or pattern fills, which the redrawn background leaves out.",
+        "overlayBlend": "Some layers above the photo use a blend mode (such as a multiply shadow). They stay in the background but are not drawn over the photo."
       }
     }
   },

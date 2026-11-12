@@ -4,7 +4,9 @@ import {
   alignOf,
   bezierSegments,
   buildSlots,
+  clippingBase,
   colorOf,
+  foregroundLayers,
   layerBox,
   placeholderOf,
   planPsd,
@@ -282,5 +284,74 @@ describe('placeholders inside a shape', () => {
     expect(roomInside(c, { ...t, left: 120, right: 200 }, 'center')).toEqual({ x: 120, w: 360 })
     expect(roomInside(c, { ...t, left: 300, right: 480 }, 'right')).toEqual({ x: 120, w: 360 })
     expect(roomInside(c, { ...t, left: 600, right: 700 }, 'left')).toBeNull()
+  })
+})
+
+describe('foreground and clipping (overlays above the photo)', () => {
+  // Bottom to top, as ag-psd lists them: the KNUST flyer's structure.
+  const bg = { name: 'Background', left: 0, top: 0, right: 2000, bottom: 2000 }
+  const frame = { name: 'Phone', left: 138, top: 274, right: 961, bottom: 1684 }
+  const shot = { name: '{{photo}}', left: 142, top: 272, right: 939, bottom: 1665 }
+  const shadow = { name: 'Shadow', left: 0, top: 1050, right: 1434, bottom: 2000 }
+  const map = { name: 'Map', left: 0, top: 1165, right: 1162, bottom: 2000 }
+  const hiddenArt = { name: 'Old', hidden: true, left: 0, top: 0, right: 10, bottom: 10 }
+  const doc = {
+    width: 2000,
+    height: 2000,
+    children: [
+      bg,
+      { name: 'Design', children: [{ name: 'Phone group', children: [frame, shot] }, shadow, map, hiddenArt] },
+    ],
+  }
+
+  it('takes the visible layers above the photo, not those below it', () => {
+    const fg = foregroundLayers(doc, planPsd(doc))
+    expect([...fg.layers].map((l) => l.name)).toEqual(['Shadow', 'Map'])
+    expect(fg.blendSkipped).toBe(false)
+  })
+
+  it('leaves blended layers (a multiply shadow) out of the overlay and says so', () => {
+    const d = {
+      ...doc,
+      children: [bg, frame, shot, { ...shadow, blendMode: 'multiply' }, { ...map, blendMode: 'normal' }],
+    }
+    const fg = foregroundLayers(d, planPsd(d))
+    expect([...fg.layers].map((l) => l.name)).toEqual(['Map'])
+    expect(fg.blendSkipped).toBe(true)
+  })
+
+  it('has no foreground without a photo slot', () => {
+    const noPhoto = { width: 10, height: 10, children: [bg, map] }
+    expect(foregroundLayers(noPhoto, planPsd(noPhoto)).layers.size).toBe(0)
+  })
+
+  it('finds what a clipped layer is clipped to', () => {
+    const circle = { name: 'Circle' }
+    const img = { name: '{{photo}}', clipping: true }
+    const tint = { name: 'Tint', clipping: true }
+    const d = { width: 10, height: 10, children: [{ name: 'g', children: [bg, circle, img, tint] }] }
+    expect(clippingBase(d, img)).toBe(circle)
+    expect(clippingBase(d, tint)).toBe(circle)
+    expect(clippingBase(d, circle)).toBeNull()
+  })
+
+  it('places a vector photo placeholder by its outline', () => {
+    const ellipse = {
+      name: '{{photo:round}}',
+      vectorMask: {
+        paths: [
+          {
+            knots: [
+              [0, 0, 100, 50, 0, 0],
+              [0, 0, 300, 50, 0, 0],
+              [0, 0, 300, 250, 0, 0],
+              [0, 0, 100, 250, 0, 0],
+            ].map((points) => ({ points })),
+          },
+        ],
+      },
+    }
+    const slot = buildSlots(planPsd({ width: 400, height: 400, children: [ellipse] }), [], 1)[0]
+    expect(slot).toMatchObject({ type: 'photo', shape: 'ellipse', x: 100, y: 50, w: 200, h: 200 })
   })
 })

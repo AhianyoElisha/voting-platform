@@ -55,6 +55,12 @@ export default async function TemplateEditorPage({ params }: Props) {
           backgroundUrl: template.backgroundFileId
             ? fileViewUrl(APPWRITE.BUCKETS.FLYER_TEMPLATES, template.backgroundFileId)
             : null,
+          foregroundUrl: template.foregroundFileId
+            ? fileViewUrl(APPWRITE.BUCKETS.FLYER_TEMPLATES, template.foregroundFileId)
+            : null,
+          photoMaskUrl: template.photoMaskFileId
+            ? fileViewUrl(APPWRITE.BUCKETS.FLYER_TEMPLATES, template.photoMaskFileId)
+            : null,
           model: parseModel(template.canvasJson, template.width, template.height),
           status: template.status,
           version: template.version,

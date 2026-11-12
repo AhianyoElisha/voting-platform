@@ -25,7 +25,8 @@ export interface PhotoSlot {
   w: number
   h: number
   rotation: number
-  shape: 'rect' | 'ellipse'
+  /** `mask`: the template's photo mask image, stretched to the slot (PSD import); else a rect or ellipse. */
+  shape: 'rect' | 'ellipse' | 'mask'
   /** Corner radius for `rect`, in template pixels. */
   radius: number
 }
@@ -99,7 +100,8 @@ export function validateModel(input: unknown, width: number, height: number): Mo
     if (s.type === 'photo') {
       photos += 1
       const p = s as Partial<PhotoSlot>
-      if (p.shape !== 'rect' && p.shape !== 'ellipse') problems.push(`${tag}: shape must be rect or ellipse`)
+      if (p.shape !== 'rect' && p.shape !== 'ellipse' && p.shape !== 'mask')
+        problems.push(`${tag}: shape must be rect, ellipse or mask`)
       if (!num(p.radius) || (p.radius as number) < 0) problems.push(`${tag}: radius must be >= 0`)
     } else if (s.type === 'text') {
       const t = s as Partial<TextSlot>

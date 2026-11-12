@@ -39,6 +39,7 @@ import {
   resolveTemplateForNominee,
   saveTemplateModel,
   setTemplateBackground,
+  setTemplateLayer,
   sniffFontFormat,
   uploadFont,
 } from '../flyer/templates-server'
@@ -136,6 +137,28 @@ describe('templates', () => {
     expect([b.width, b.height]).toEqual([100, 100])
     expect(storage.deleteFile).toHaveBeenCalledWith('flyer-templates', a.backgroundFileId)
     await expect(setTemplateBackground(designer, t.$id, new Uint8Array([1, 2, 3]))).rejects.toThrow(/badImage/)
+  })
+
+  test('foreground and photo mask: stored, replaced, cleared, and dropped by a new background', async () => {
+    const { event } = await seed()
+    const t = await createTemplate(designer, event.$id, { name: 'Main' })
+    await setTemplateBackground(designer, t.$id, solidPng(300, 500, '#0000ff'))
+    const a = await setTemplateLayer(designer, t.$id, 'foreground', solidPng(600, 1000, '#ff0000'))
+    expect(a.foregroundFileId).toBeTruthy()
+    const m = await setTemplateLayer(designer, t.$id, 'photoMask', solidPng(50, 50, '#ffffff'))
+    expect(m.photoMaskFileId).toBeTruthy()
+    const b = await setTemplateLayer(designer, t.$id, 'foreground', solidPng(300, 500, '#00ff00'))
+    expect(storage.deleteFile).toHaveBeenCalledWith('flyer-templates', a.foregroundFileId)
+    const cleared = await setTemplateLayer(designer, t.$id, 'foreground', null)
+    expect(cleared.foregroundFileId).toBeNull()
+    expect(storage.deleteFile).toHaveBeenCalledWith('flyer-templates', b.foregroundFileId)
+    const fresh = await setTemplateBackground(designer, t.$id, solidPng(100, 100, '#0000ff'))
+    expect(fresh.photoMaskFileId).toBeNull()
+    expect(storage.deleteFile).toHaveBeenCalledWith('flyer-templates', m.photoMaskFileId)
+    await expect(setTemplateLayer(designer, t.$id, 'photoMask', new Uint8Array([1, 2]))).rejects.toThrow(/badImage/)
+    await expect(setTemplateLayer({ ...designer, role: 'staff' }, t.$id, 'foreground', null)).rejects.toBeInstanceOf(
+      ForbiddenError
+    )
   })
 
   test('invalid models are refused with details; publishing needs a background and bumps the version', async () => {

@@ -30,6 +30,8 @@ export interface PsdTextStyle {
 export interface PsdLayerLike {
   name?: string
   hidden?: boolean
+  clipping?: boolean
+  blendMode?: string
   left?: number
   top?: number
   right?: number
@@ -72,7 +74,14 @@ export interface SlotLayer {
 }
 
 export type PsdWarning =
-  'noSlots' | 'slotsVisible' | 'effects' | 'shapeFill' | 'duplicatePhoto' | 'tooManySlots' | 'noComposite'
+  | 'noSlots'
+  | 'slotsVisible'
+  | 'effects'
+  | 'shapeFill'
+  | 'overlayBlend'
+  | 'duplicatePhoto'
+  | 'tooManySlots'
+  | 'noComposite'
 
 export interface PsdPlan {
   width: number
@@ -224,10 +233,12 @@ export function buildSlots(plan: PsdPlan, fonts: ResolvedFont[], scale: number):
   const slots: Slot[] = []
   plan.slotLayers.forEach((s, i) => {
     const L = s.layer
-    const left = L.left ?? 0
-    const top = L.top ?? 0
-    const right = L.right ?? left
-    const bottom = L.bottom ?? top
+    // Pixel bounds, or a shape layer's outline (a vector ellipse named {{photo}} has no pixels).
+    const extent = s.kind === 'photo' ? layerBox(L) : null
+    const left = extent?.left ?? L.left ?? 0
+    const top = extent?.top ?? L.top ?? 0
+    const right = extent?.right ?? L.right ?? left
+    const bottom = extent?.bottom ?? L.bottom ?? top
     if (s.kind === 'photo') {
       const slot: PhotoSlot = {
         id: `psd_photo_${i}`,
@@ -378,4 +389,52 @@ export function roomInside(containers: Box[], text: Box, align: TextSlot['align'
     return { x: c.left + rightGap, w: Math.max(text.right - text.left, text.right - c.left - rightGap) }
   const gap = Math.min(leftGap, rightGap)
   return { x: c.left + gap, w: Math.max(text.right - text.left, c.right - c.left - 2 * gap) }
+}
+
+/**
+ * The visible, non-placeholder layers that sit above the photo placeholder in
+ * the PSD (later in ag-psd's bottom-to-top order): a frame, a hand, a ribbon
+ * crossing the photo. They become the template's foreground, drawn over the
+ * nominee's photo. Empty without a photo slot. Layers with a blend mode
+ * (multiply, screen, ...) are left out and reported, since a flat overlay
+ * cannot blend.
+ */
+export function foregroundLayers(psd: PsdLike, plan: PsdPlan): { layers: Set<PsdLayerLike>; blendSkipped: boolean } {
+  const photo = plan.slotLayers.find((s) => s.kind === 'photo')?.layer
+  const out = new Set<PsdLayerLike>()
+  let blendSkipped = false
+  if (!photo) return { layers: out, blendSkipped }
+  const slots = new Set(plan.slotLayers.map((s) => s.layer))
+  let above = false
+  for (const { layer, hidden } of walkLayers(psd.children)) {
+    if (layer === photo) {
+      above = true
+      continue
+    }
+    if (!above || hidden || slots.has(layer)) continue
+    // An overlay image is drawn normally over the photo; a multiply shadow or a screen glow
+    // would turn into a flat slab, so those stay in the background only.
+    if (layer.blendMode && layer.blendMode !== 'normal' && layer.blendMode !== 'pass through') blendSkipped = true
+    else out.add(layer)
+  }
+  return { layers: out, blendSkipped }
+}
+
+/** The layer a clipped layer is clipped to: the nearest earlier sibling that is not itself clipped. */
+export function clippingBase(psd: PsdLike, layer: PsdLayerLike & { clipping?: boolean }): PsdLayerLike | null {
+  if (!layer.clipping) return null
+  const find = (list: (PsdLayerLike & { clipping?: boolean })[] | undefined): PsdLayerLike | null | undefined => {
+    if (!list) return undefined
+    const i = list.indexOf(layer)
+    if (i !== -1) {
+      for (let j = i - 1; j >= 0; j--) if (!list[j].clipping) return list[j]
+      return null
+    }
+    for (const l of list) {
+      const r = find(l.children)
+      if (r !== undefined) return r
+    }
+    return undefined
+  }
+  return find(psd.children) ?? null
 }

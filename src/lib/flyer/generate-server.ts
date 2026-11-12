@@ -106,6 +106,9 @@ export async function ensureFlyer(
     templateId: template.$id,
     version: template.version,
     photoId,
+    // Only when present, so flyers of templates without them keep their hashes.
+    ...(template.foregroundFileId ? { foregroundFileId: template.foregroundFileId } : {}),
+    ...(template.photoMaskFileId ? { photoMaskFileId: template.photoMaskFileId } : {}),
     ...context,
   })
   if (!opts.force && existing && existing.sourceHash === hash && existing.templateId === template.$id) {
@@ -113,15 +116,27 @@ export async function ensureFlyer(
   }
 
   const model = parseModel(template.canvasJson, template.width, template.height)
-  const [background, photo, fonts] = await Promise.all([
-    template.backgroundFileId
-      ? download(APPWRITE.BUCKETS.FLYER_TEMPLATES, template.backgroundFileId)
-      : Promise.resolve(null),
+  const layer = (id: string | null | undefined) =>
+    id ? download(APPWRITE.BUCKETS.FLYER_TEMPLATES, id) : Promise.resolve(null)
+  const [background, foreground, photoMask, photo, fonts] = await Promise.all([
+    layer(template.backgroundFileId),
+    layer(template.foregroundFileId),
+    layer(template.photoMaskFileId),
     download(APPWRITE.BUCKETS.NOMINEE_PHOTOS, photoId),
     fontFilesFor(model, nominee.organizationId),
   ])
   const render = opts.render ?? renderFlyer
-  const png = await render({ width: template.width, height: template.height, background, photo, model, context, fonts })
+  const png = await render({
+    width: template.width,
+    height: template.height,
+    background,
+    foreground,
+    photoMask,
+    photo,
+    model,
+    context,
+    fonts,
+  })
 
   const { InputFile } = await import('node-appwrite/file')
   const file = await withRetry(() =>

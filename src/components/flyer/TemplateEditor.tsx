@@ -27,6 +27,10 @@ export interface TemplateView {
   width: number
   height: number
   backgroundUrl: string | null
+  /** Layers drawn over the photo (PSD import). */
+  foregroundUrl: string | null
+  /** The photo slot's shape when it is `mask` (PSD import). */
+  photoMaskUrl: string | null
   model: SlotModel
   status: string
   version: number
@@ -162,12 +166,23 @@ export default function TemplateEditor({
     } else {
       canvas.backgroundColor = '#111827'
     }
+    if (template.foregroundUrl) {
+      // Shown over the slots, half see-through so the photo frame underneath stays findable.
+      FabricImage.fromURL(template.foregroundUrl, { crossOrigin: 'anonymous' })
+        .then((img) => {
+          img.scaleToWidth(template.width * scale)
+          img.set({ originX: 'left', originY: 'top', left: 0, top: 0, opacity: 0.6 })
+          canvas.overlayImage = img
+          canvas.requestRenderAll()
+        })
+        .catch(() => {})
+    }
     return () => {
       void canvas.dispose()
       fabricRef.current = null
       objects.clear()
     }
-  }, [template.width, template.height, template.backgroundUrl, scale, syncFromCanvas])
+  }, [template.width, template.height, template.backgroundUrl, template.foregroundUrl, scale, syncFromCanvas])
 
   // Reconcile Fabric objects with the model (positions from the model, styling from the slot).
   useEffect(() => {
@@ -254,7 +269,7 @@ export default function TemplateEditor({
     canvas.requestRenderAll()
     // The canvas is rebuilt when the background changes (a PSD import of the same size keeps
     // `scale`), and a rebuilt canvas starts empty, so redraw then too.
-  }, [model, scale, template.backgroundUrl])
+  }, [model, scale, template.backgroundUrl, template.foregroundUrl])
 
   const update = (patch: Partial<Slot>) => {
     if (!selected) return
@@ -316,6 +331,12 @@ export default function TemplateEditor({
       if (!res.ok) throw new Error(data?.error ?? 'upload failed')
       router.refresh()
     })
+  const removeForeground = () =>
+    run(t('web:flyer.editor.overlayRemoved'), async () => {
+      const res = await fetch(`${base}/layers/foreground`, { method: 'DELETE' })
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? 'failed')
+      router.refresh()
+    })
   const importPsd = async (file: File) => {
     if (model.slots.length > 0 && !window.confirm(t('web:flyer.psd.replaceConfirm'))) return
     await run(t('web:flyer.psd.imported'), async () => {
@@ -327,7 +348,7 @@ export default function TemplateEditor({
         console.warn('[flyer] PSD read failed', err)
         throw new Error(t('web:flyer.psd.readFailed'))
       }
-      const { plan, background } = parsed
+      const { plan, background, foreground, photoMask } = parsed
       // Detect and fetch the slot fonts first, so the slots can name the right family.
       const fonts = plan.slotFonts.length
         ? (await postJson<{ fonts: FontResolution[] }>(`/api/orgs/${orgId}/fonts/resolve`, { names: plan.slotFonts }))
@@ -339,9 +360,23 @@ export default function TemplateEditor({
       const res = await fetch(`${base}/background`, { method: 'POST', body: form })
       const data = await res.json().catch(() => null)
       if (!res.ok) throw new Error(data?.error ?? 'upload failed')
+      // A new background clears the old overlay and mask; send this design's, if any.
+      for (const [kind, blob] of [
+        ['foreground', foreground],
+        ['photoMask', photoMask],
+      ] as const) {
+        if (!blob) continue
+        const layer = new FormData()
+        layer.append('image', new File([blob], `${kind}.png`, { type: 'image/png' }))
+        const lr = await fetch(`${base}/layers/${kind}`, { method: 'POST', body: layer })
+        if (!lr.ok) throw new Error((await lr.json().catch(() => null))?.error ?? 'upload failed')
+      }
       // The server shrinks large backgrounds; scale the PSD's coordinates the same way.
       const scale = (data.template.width as number) / plan.width
-      const next: SlotModel = { version: 1, slots: buildSlots(plan, fonts, scale) }
+      const slots = buildSlots(plan, fonts, scale).map((s) =>
+        s.type === 'photo' && photoMask ? { ...s, shape: 'mask' as const } : s
+      )
+      const next: SlotModel = { version: 1, slots }
       await postJson(base, { model: next, name }, 'PUT')
       setModel(next)
       setSelectedId(null)
@@ -370,6 +405,14 @@ export default function TemplateEditor({
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
           {template.width} × {template.height} px · {t('web:flyer.editor.canvasHint')}
         </p>
+        {template.foregroundUrl && (
+          <p className="flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+            {t('web:flyer.editor.overlayHint')}
+            <button type="button" onClick={() => void removeForeground()} disabled={busy} className={btnSecondary}>
+              {t('web:flyer.editor.removeOverlay')}
+            </button>
+          </p>
+        )}
         <label className="block text-xs">
           <span className="font-medium text-neutral-700 dark:text-neutral-300">{t('web:flyer.editor.background')}</span>
           <input
@@ -472,6 +515,9 @@ export default function TemplateEditor({
                   >
                     <option value="ellipse">{t('web:flyer.editor.ellipse')}</option>
                     <option value="rect">{t('web:flyer.editor.rect')}</option>
+                    {(template.photoMaskUrl || selected.shape === 'mask') && (
+                      <option value="mask">{t('web:flyer.editor.maskShape')}</option>
+                    )}
                   </select>
                 </label>
                 {selected.shape === 'rect' && (

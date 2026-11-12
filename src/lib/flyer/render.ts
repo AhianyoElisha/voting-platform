@@ -6,7 +6,9 @@ import { FALLBACK_FONT, type PhotoSlot, type SlotModel, type TextSlot } from './
 
 /**
  * Server renderer. Draws a template's background, the nominee photo into the
- * photo slot, and each text slot's resolved binding, and returns a PNG of the
+ * photo slot, the foreground (layers the design puts above the photo, drawn
+ * right after the photo slot so text slots after it stay on top), and each
+ * text slot's resolved binding, and returns a PNG of the
  * template's size (FLYER_ENGINE.md "Generation"). `@napi-rs/canvas` ships
  * prebuilt binaries, so this runs on serverless hosts without a native build;
  * see ARCHITECTURE.md "Added for this product".
@@ -24,6 +26,10 @@ export interface RenderInputs {
   height: number
   background: Uint8Array | null
   photo: Uint8Array | null
+  /** Transparent PNG over the photo; stretched to the template size. */
+  foreground?: Uint8Array | null
+  /** Alpha mask for a photo slot with shape `mask`; stretched to the slot. Without it, `mask` is a rectangle. */
+  photoMask?: Uint8Array | null
   model: SlotModel
   context: BindingContext
   fonts: FontFile[]
@@ -107,6 +113,15 @@ export async function renderFlyer(inputs: RenderInputs): Promise<Uint8Array> {
   }
 
   const photo = inputs.photo ? await loadImage(Buffer.from(inputs.photo)) : null
+  const foreground = inputs.foreground ? await loadImage(Buffer.from(inputs.foreground)) : null
+  const mask = inputs.photoMask ? await loadImage(Buffer.from(inputs.photoMask)) : null
+  let foregroundDrawn = false
+  const drawForeground = () => {
+    if (foreground && !foregroundDrawn) ctx.drawImage(foreground, 0, 0, inputs.width, inputs.height)
+    foregroundDrawn = true
+  }
+  // No photo slot: the foreground goes straight over the background, under every text slot.
+  if (!inputs.model.slots.some((sl) => sl.type === 'photo')) drawForeground()
 
   for (const slot of inputs.model.slots) {
     ctx.save()
@@ -115,13 +130,26 @@ export async function renderFlyer(inputs: RenderInputs): Promise<Uint8Array> {
 
     if (slot.type === 'photo') {
       clipPhoto(ctx, slot)
+      // Draw the photo (or its placeholder) on its own layer so a mask can cut it.
+      const w = Math.max(1, Math.round(slot.w))
+      const h = Math.max(1, Math.round(slot.h))
+      const layer = createCanvas(w, h)
+      const lctx = layer.getContext('2d')
       if (photo) {
         const crop = coverCrop(photo.width, photo.height, slot.w, slot.h)
-        ctx.drawImage(photo, crop.x, crop.y, crop.w, crop.h, -slot.w / 2, -slot.h / 2, slot.w, slot.h)
+        lctx.drawImage(photo, crop.x, crop.y, crop.w, crop.h, 0, 0, w, h)
       } else {
-        ctx.fillStyle = '#9ca3af'
-        ctx.fillRect(-slot.w / 2, -slot.h / 2, slot.w, slot.h)
+        lctx.fillStyle = '#9ca3af'
+        lctx.fillRect(0, 0, w, h)
       }
+      if (slot.shape === 'mask' && mask) {
+        lctx.globalCompositeOperation = 'destination-in'
+        lctx.drawImage(mask, 0, 0, w, h)
+      }
+      ctx.drawImage(layer, -slot.w / 2, -slot.h / 2, slot.w, slot.h)
+      ctx.restore()
+      drawForeground()
+      continue
     } else {
       const text = resolveBinding(slot, inputs.context)
       const measure = (t: string, size: number) => {

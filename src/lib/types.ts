@@ -222,6 +222,10 @@ export interface FlyerTemplateDoc extends TenantDoc {
   width: number
   height: number
   backgroundFileId: string | null
+  /** Drawn over the photo, under the text: the design's layers that sit above the photo (a frame, an overlapping graphic). Transparent PNG, template size. */
+  foregroundFileId?: string | null
+  /** Alpha mask for a photo slot with shape `mask`: the photo shows where it is opaque. */
+  photoMaskFileId?: string | null
   /** Serialized slot model (`src/lib/flyer/model.ts`). */
   canvasJson: string
   status: 'draft' | 'published'

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
-import { FontError, TemplateError } from './templates-server'
+import { APPWRITE } from '../constants'
+import { FontError, TemplateError, fileViewUrl } from './templates-server'
+
+const layerUrl = (fileId: string) => fileViewUrl(APPWRITE.BUCKETS.FLYER_TEMPLATES, fileId)
 
 /** Maps flyer-engine errors to responses; everything else falls through to the shared handler. */
 export function flyerErrorResponse(err: unknown, t: (key: string) => string): NextResponse | null {
@@ -23,6 +26,8 @@ export function templateView(
     width: number
     height: number
     backgroundFileId: string | null
+    foregroundFileId?: string | null
+    photoMaskFileId?: string | null
     canvasJson: string
     status: string
     version: number
@@ -36,6 +41,8 @@ export function templateView(
     width: t.width,
     height: t.height,
     backgroundUrl,
+    foregroundUrl: t.foregroundFileId ? layerUrl(t.foregroundFileId) : null,
+    photoMaskUrl: t.photoMaskFileId ? layerUrl(t.photoMaskFileId) : null,
     model: JSON.parse(t.canvasJson),
     status: t.status,
     version: t.version,

@@ -128,3 +128,81 @@ describe('renderFlyer', () => {
     expect(black).toBeGreaterThan(regular * 1.5)
   })
 })
+
+/** A PNG of the given size: transparent except an opaque rectangle of `color`. */
+function overlayPng(width: number, height: number, rect: [number, number, number, number], color: string): Uint8Array {
+  const c = createCanvas(width, height)
+  const ctx = c.getContext('2d')
+  ctx.fillStyle = color
+  ctx.fillRect(...rect)
+  return new Uint8Array(c.toBuffer('image/png'))
+}
+
+describe('foreground and photo mask (PSD import)', () => {
+  const W = 200
+  const H = 200
+  const photoSlot = { ...newPhotoSlot(W, H), id: 'p', x: 50, y: 50, w: 100, h: 100, rotation: 0, radius: 0 }
+  const name = {
+    ...newTextSlot(W, H, 'nominee.name'),
+    id: 't',
+    x: 0,
+    y: 50,
+    w: W,
+    h: 40,
+    fontSize: 30,
+    minFontSize: 10,
+    color: '#ffffff',
+  }
+  const base = {
+    width: W,
+    height: H,
+    background: solidPng(W, H, '#0000ff'),
+    photo: solidPng(10, 10, '#00ff00'),
+    context: { nomineeName: 'WWWWWWWWWW', nomineeCode: '1', categoryName: '', eventTitle: '', ussdShortcode: null },
+    fonts: builtinFonts(),
+  }
+
+  test('the foreground covers the photo, and text after the photo slot stays above it', async () => {
+    // Red overlay over the whole photo area; transparent elsewhere.
+    const foreground = overlayPng(W, H, [50, 50, 100, 100], '#ff0000')
+    const png = await renderFlyer({
+      ...base,
+      foreground,
+      model: { version: 1, slots: [{ ...photoSlot, shape: 'rect' }, name] },
+    })
+    expect(await pixelAt(png, 140, 140)).toEqual([255, 0, 0, 255]) // overlay over photo
+    expect(await pixelAt(png, 10, 10)).toEqual([0, 0, 255, 255]) // background where the overlay is transparent
+    // White text is drawn over the red overlay.
+    const img = await loadImage(Buffer.from(png))
+    const c = createCanvas(W, H)
+    const ctx = c.getContext('2d')
+    ctx.drawImage(img, 0, 0)
+    const band = ctx.getImageData(50, 50, 100, 40).data
+    let white = 0
+    for (let i = 0; i < band.length; i += 4) if (band[i] > 240 && band[i + 1] > 240 && band[i + 2] > 240) white += 1
+    expect(white).toBeGreaterThan(20)
+  })
+
+  test('a mask cuts the photo to its opaque area', async () => {
+    // Mask: only the left half of the slot is opaque.
+    const photoMask = overlayPng(100, 100, [0, 0, 50, 100], '#ffffff')
+    const png = await renderFlyer({
+      ...base,
+      photoMask,
+      model: { version: 1, slots: [{ ...photoSlot, shape: 'mask' }] },
+    })
+    expect(await pixelAt(png, 70, 100)).toEqual([0, 255, 0, 255]) // left half: photo
+    expect(await pixelAt(png, 130, 100)).toEqual([0, 0, 255, 255]) // right half: background shows through
+  })
+
+  test('without a mask image, the mask shape is a rectangle', async () => {
+    const png = await renderFlyer({ ...base, model: { version: 1, slots: [{ ...photoSlot, shape: 'mask' }] } })
+    expect(await pixelAt(png, 130, 100)).toEqual([0, 255, 0, 255])
+  })
+
+  test('with no photo slot the foreground still draws, under the text', async () => {
+    const foreground = overlayPng(W, H, [0, 0, W, H], '#ff0000')
+    const png = await renderFlyer({ ...base, foreground, model: { version: 1, slots: [name] } })
+    expect(await pixelAt(png, 5, 195)).toEqual([255, 0, 0, 255])
+  })
+})

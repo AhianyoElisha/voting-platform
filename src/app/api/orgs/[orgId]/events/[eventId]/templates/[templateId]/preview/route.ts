@@ -24,11 +24,13 @@ export async function GET(req: Request, { params }: Params) {
     const raw = url.searchParams.get('model')
     const model = parseModel(raw ?? t.canvasJson, t.width, t.height)
     const { storage } = createAdminClient()
-    const background = t.backgroundFileId
-      ? new Uint8Array(
-          await withRetry(() => storage.getFileDownload(APPWRITE.BUCKETS.FLYER_TEMPLATES, t.backgroundFileId as string))
-        )
-      : null
+    const image = async (id: string | null | undefined) =>
+      id ? new Uint8Array(await withRetry(() => storage.getFileDownload(APPWRITE.BUCKETS.FLYER_TEMPLATES, id))) : null
+    const [background, foreground, photoMask] = await Promise.all([
+      image(t.backgroundFileId),
+      image(t.foregroundFileId),
+      image(t.photoMaskFileId),
+    ])
     const families = new Set(model.slots.flatMap((s) => (s.type === 'text' ? [s.fontFamily] : [])))
     const fonts = (await listFonts(r.ctx.organizationId)).filter((f) => families.has(f.family))
     const dir = path.join(os.tmpdir(), 'voteapp-fonts')
@@ -50,6 +52,8 @@ export async function GET(req: Request, { params }: Params) {
       width: t.width,
       height: t.height,
       background,
+      foreground,
+      photoMask,
       photo: solidPng(600, 800, '#6b7280'),
       model,
       context: { ...SAMPLE_CONTEXT, ussdShortcode: process.env.USSD_SHORTCODE ?? null },

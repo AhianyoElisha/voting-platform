@@ -2,8 +2,12 @@
 
 import {
   bezierSegments,
+  clippingBase,
   colorOf,
+  foregroundLayers,
+  layerBox,
   planPsd,
+  type Box,
   type PsdLayerLike,
   type PsdPlan,
   type PsdWarning,
@@ -19,6 +23,10 @@ import type { Layer, Psd } from 'ag-psd'
 export interface PsdImport {
   plan: PsdPlan
   background: Blob
+  /** The layers above the photo, kept only over the photo's area; null when there are none. */
+  foreground: Blob | null
+  /** The photo placeholder's shape (its pixels, mask, or the shape it is clipped to), cropped to the slot; null when it is a plain rectangle. */
+  photoMask: Blob | null
 }
 
 /** Stay under the background route's 30 MB. */
@@ -124,17 +132,25 @@ function vectorPixels(
 }
 
 /**
- * Re-draw the visible layers, bottom to top, leaving out the slots. Handles
+ * Re-draw the visible layers that `include` accepts, bottom to top. Handles
  * opacity, the common blend modes, groups, layer masks, clipping masks and
- * solid-colour shape layers; not layer effects.
+ * solid-colour shape layers; not layer effects. A layer left out takes the
+ * layers clipped to it along.
  */
-function recomposite(psd: Psd, skip: Set<PsdLayerLike>, warn: (w: PsdWarning) => void): HTMLCanvasElement {
+function recomposite(
+  psd: Psd,
+  include: (layer: PsdLayerLike) => boolean,
+  warn: (w: PsdWarning) => void
+): HTMLCanvasElement {
   const { width: W, height: H } = psd
   const draw = (target: CanvasRenderingContext2D, layers: Layer[] | undefined) => {
     const list = layers ?? []
     for (let i = 0; i < list.length; i++) {
       const layer = list[i]
-      if (layer.hidden || skip.has(layer as PsdLayerLike)) continue
+      if (layer.hidden || (!layer.children && !include(layer as PsdLayerLike))) {
+        while (list[i + 1]?.clipping) i++
+        continue
+      }
       if (layer.effects && !(layer.effects as { disabled?: boolean }).disabled) warn('effects')
       let pixels: HTMLCanvasElement | null
       if (layer.children) {
@@ -147,7 +163,7 @@ function recomposite(psd: Psd, skip: Set<PsdLayerLike>, warn: (w: PsdWarning) =>
       // Clipping masks: the layers above with `clipping` paint only where this one is opaque.
       while (list[i + 1]?.clipping) {
         const clipped = list[++i]
-        if (clipped.hidden || skip.has(clipped as PsdLayerLike)) continue
+        if (clipped.hidden || !include(clipped as PsdLayerLike)) continue
         const clipPixels = clipped.children ? null : (maskedPixels(clipped, W, H) ?? vectorPixels(clipped, W, H, warn))
         if (!clipPixels) continue
         const pctx = pixels.getContext('2d')!
@@ -175,6 +191,58 @@ function toBlob(canvas: HTMLCanvasElement, type: string, quality?: number): Prom
   )
 }
 
+/** The pixels of one layer (raster with its mask, or a drawn shape), document-sized. */
+function pixelsOf(layer: Layer, W: number, H: number, warn: (w: PsdWarning) => void): HTMLCanvasElement | null {
+  return maskedPixels(layer, W, H) ?? vectorPixels(layer, W, H, warn)
+}
+
+/** Crop a document-sized canvas to a box. */
+function crop(source: HTMLCanvasElement, box: Box): HTMLCanvasElement {
+  const w = Math.max(1, Math.round(box.right - box.left))
+  const h = Math.max(1, Math.round(box.bottom - box.top))
+  const out = canvasOf(w, h)
+  out.getContext('2d')!.drawImage(source, -Math.round(box.left), -Math.round(box.top))
+  return out
+}
+
+function isFullyOpaque(canvas: HTMLCanvasElement): boolean {
+  const d = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+  for (let i = 3; i < d.length; i += 4) if (d[i] < 250) return false
+  return true
+}
+
+function isEmpty(canvas: HTMLCanvasElement): boolean {
+  const d = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+  for (let i = 3; i < d.length; i += 4) if (d[i] > 3) return false
+  return true
+}
+
+/**
+ * The photo's shape: where the placeholder (or the layer it is clipped to)
+ * is opaque, as white on transparent, cropped to the slot box.
+ */
+function photoMaskOf(psd: Psd, photo: PsdLayerLike, box: Box, warn: (w: PsdWarning) => void): HTMLCanvasElement | null {
+  const base = clippingBase(psd as unknown as Parameters<typeof clippingBase>[0], photo)
+  const pixels = pixelsOf((base ?? photo) as Layer, psd.width, psd.height, warn)
+  if (!pixels) return null
+  if (base) {
+    // Clipped: the image shows where both the base and the placeholder itself are opaque.
+    const own = pixelsOf(photo as Layer, psd.width, psd.height, warn)
+    if (own) {
+      const pctx = pixels.getContext('2d')!
+      pctx.globalCompositeOperation = 'destination-in'
+      pctx.drawImage(own, 0, 0)
+    }
+  }
+  const mask = crop(pixels, box)
+  if (isFullyOpaque(mask)) return null
+  const mctx = mask.getContext('2d')!
+  mctx.globalCompositeOperation = 'source-in'
+  mctx.fillStyle = '#fff'
+  mctx.fillRect(0, 0, mask.width, mask.height)
+  return mask
+}
+
 export async function readPsdForImport(file: File): Promise<PsdImport> {
   const { readPsd } = await import('ag-psd')
   const psd = readPsd(await file.arrayBuffer(), { skipThumbnail: true })
@@ -187,10 +255,41 @@ export async function readPsdForImport(file: File): Promise<PsdImport> {
   } else {
     if (!psd.canvas) warnings.add('noComposite')
     const skip = new Set(plan.slotLayers.map((s) => s.layer))
-    canvas = recomposite(psd, skip, (w) => warnings.add(w))
+    canvas = recomposite(
+      psd,
+      (l) => !skip.has(l),
+      (w) => warnings.add(w)
+    )
   }
 
   let background = await toBlob(canvas, 'image/png')
   if (background.size > MAX_BACKGROUND_BYTES) background = await toBlob(canvas, 'image/jpeg', 0.92)
-  return { plan: { ...plan, warnings: [...warnings] }, background }
+
+  // Overlays: the background already shows them everywhere else, so the foreground
+  // only needs the photo's area, where the photo would otherwise hide them.
+  let foreground: Blob | null = null
+  let photoMask: Blob | null = null
+  const photo = plan.slotLayers.find((s) => s.kind === 'photo')?.layer
+  const box = photo ? layerBox(photo) : null
+  if (photo && box) {
+    const { layers: above, blendSkipped } = foregroundLayers(
+      psd as unknown as Parameters<typeof foregroundLayers>[0],
+      plan
+    )
+    if (blendSkipped) warnings.add('overlayBlend')
+    if (above.size > 0) {
+      const fg = recomposite(
+        psd,
+        (l) => above.has(l),
+        (w) => warnings.add(w)
+      )
+      const fctx = fg.getContext('2d')!
+      fctx.globalCompositeOperation = 'destination-in'
+      fctx.fillRect(box.left, box.top, box.right - box.left, box.bottom - box.top)
+      if (!isEmpty(fg)) foreground = await toBlob(fg, 'image/png')
+    }
+    const mask = photoMaskOf(psd, photo, box, (w) => warnings.add(w))
+    if (mask) photoMask = await toBlob(mask, 'image/png')
+  }
+  return { plan: { ...plan, warnings: [...warnings] }, background, foreground, photoMask }
 }
