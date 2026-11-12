@@ -4,10 +4,9 @@ import { defineConfig } from 'vitest/config'
 /**
  * Unit tests for pure `src/lib` modules.
  *
- * The repo had no test framework at all, which is how the mover-selection page
- * came to quote a rate off a field that does not exist, a third above what the
- * backend charges, undetected. Pricing logic here is now pinned by fixtures
- * shared with the mobile client (`src/lib/__tests__/fixtures/`).
+ * Covers the rules CLAUDE.md asks to be pinned by tests: vote counting,
+ * payment handling, tenant scoping and nominee-code lookup, mostly against the
+ * in-memory Appwrite fake in `src/lib/__tests__/fake-appwrite.ts`.
  *
  * Deliberately node-environment and scoped to `src/lib` — this is not a
  * component-testing setup, and adding one is a separate decision.

@@ -59,6 +59,41 @@ async function resolveAuthUser(email: string, name: string): Promise<{ userId: s
   return { userId: created.$id, created: true }
 }
 
+/**
+ * Deletes the Auth account an invite created for an address the organizer has
+ * since replaced (OPEN_QUESTIONS #28: don't keep personal data nobody uses).
+ * Called only for an unclaimed nominee, whose account came from our own
+ * invite with a random password nobody knows. Still, it is deleted only when
+ * nothing else uses it: no other nominee row, no workspace membership and no
+ * user profile (the address may have signed up as an organizer since).
+ * Best effort: a failure is logged and leaves the account in place.
+ */
+export async function releaseInviteAccount(userId: string): Promise<boolean> {
+  const { databases, users } = createAdminClient()
+  try {
+    const [nominees, memberships, profiles] = await Promise.all([
+      withRetry(() =>
+        databases.listDocuments(databaseId(), APPWRITE.TABLES.NOMINEES, [Query.equal('userId', [userId]), Query.limit(1)])
+      ),
+      withRetry(() =>
+        databases.listDocuments(databaseId(), APPWRITE.TABLES.MEMBERSHIPS, [
+          Query.equal('userId', [userId]),
+          Query.limit(1),
+        ])
+      ),
+      withRetry(() =>
+        databases.listDocuments(databaseId(), APPWRITE.TABLES.USERS, [Query.equal('$id', [userId]), Query.limit(1)])
+      ),
+    ])
+    if (nominees.documents.length || memberships.documents.length || profiles.documents.length) return false
+    await withRetry(() => users.delete(userId))
+    return true
+  } catch (err) {
+    console.warn(`[nominee] could not release invite account ${userId}:`, err)
+    return false
+  }
+}
+
 export interface InviteOutcome {
   nominee: NomineeDoc
   /** `claim`: a link to set a password. `existing`: the email already had an account, which is now linked. */

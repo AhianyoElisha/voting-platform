@@ -6,6 +6,7 @@ const users = {
   list: vi.fn(),
   create: vi.fn(),
   updatePassword: vi.fn(),
+  delete: vi.fn(),
 }
 const storage = { createFile: vi.fn(), deleteFile: vi.fn() }
 vi.mock('../appwrite-server', () => ({
@@ -100,6 +101,7 @@ beforeEach(() => {
   users.list.mockReset().mockResolvedValue({ total: 0, users: [] })
   users.create.mockReset().mockImplementation(async (id: string) => ({ $id: id }))
   users.updatePassword.mockReset().mockResolvedValue({})
+  users.delete.mockReset().mockResolvedValue({})
   storage.createFile.mockReset().mockResolvedValue({ $id: 'file_1' })
   storage.deleteFile.mockReset().mockResolvedValue(undefined)
 })
@@ -336,6 +338,37 @@ describe('organizer edits (updateNominee, setNomineePhoto)', () => {
     const updated = await updateNominee(owner, event.$id, nominee.$id, { email: 'efua@example.com' })
     expect(updated).toMatchObject({ email: 'efua@example.com', userId: null, inviteTokenHash: null })
     await expect(claimInvite(oldUrl!.split('/').pop()!, 'password123')).rejects.toBeInstanceOf(ClaimError)
+  })
+
+  test('changing the email deletes the account the invite made for the old address', async () => {
+    const { nominee, event } = await seed()
+    await inviteNominee(owner, nominee.$id, { email: noEmail })
+    const oldUserId = fake.dump('nominees').find((n) => n.$id === nominee.$id)!.userId as string
+    await updateNominee(owner, event.$id, nominee.$id, { email: 'efua@example.com' })
+    expect(users.delete).toHaveBeenCalledWith(oldUserId)
+    const audit = fake.dump('audit_logs').filter((a) => a.action === 'nominee.update')
+    expect(JSON.parse(audit[0].metadata as string)).toMatchObject({ fields: ['email'], accountReleased: true })
+  })
+
+  test('the old account is kept when anything else still uses it', async () => {
+    const { nominee, event } = await seed()
+    await inviteNominee(owner, nominee.$id, { email: noEmail })
+    const oldUserId = fake.dump('nominees').find((n) => n.$id === nominee.$id)!.userId as string
+    await fake.createDocument('db', 'memberships', 'm_other', {
+      userId: oldUserId,
+      organizationId: 'org_elsewhere',
+      role: 'staff',
+    })
+    await updateNominee(owner, event.$id, nominee.$id, { email: 'efua@example.com' })
+    expect(users.delete).not.toHaveBeenCalled()
+  })
+
+  test('a failed delete does not fail the edit', async () => {
+    const { nominee, event } = await seed()
+    await inviteNominee(owner, nominee.$id, { email: noEmail })
+    users.delete.mockRejectedValue(new Error('appwrite down'))
+    const updated = await updateNominee(owner, event.$id, nominee.$id, { email: 'efua@example.com' })
+    expect(updated.email).toBe('efua@example.com')
   })
 
   test('after claim the email is the login and cannot change; other fields still can', async () => {

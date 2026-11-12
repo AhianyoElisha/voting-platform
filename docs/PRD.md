@@ -1,8 +1,8 @@
 # Product Requirements Document
 
-Status: **Draft v0.2**, 14 Oct 2026. Several areas are still open; see `OPEN_QUESTIONS.md`.
+Status: **Draft v0.3**, 12 Nov 2026. Several areas are still open; see `OPEN_QUESTIONS.md`.
 
-Changelog: v0.2 adds requirements from the sales partner's voice note of 14 Oct 2026 (nominee portal, voting rounds, ticketing, dashboard figures, morale candidates, admin nominations).
+Changelog: v0.3 (12 Nov 2026) records decisions #3, #34, #35 and the defaults half of #26 as built, the amendment to #29 (free-vote counts in every results mode, no public morale labels), and organizer editing of nominees. v0.2 adds requirements from the sales partner's voice note of 14 Oct 2026 (nominee portal, voting rounds, ticketing, dashboard figures, morale candidates, admin nominations).
 
 ## 1. Problem
 

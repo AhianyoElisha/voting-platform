@@ -10,6 +10,7 @@ import {
   type TenantContext,
 } from './db'
 import { allocateNomineeCode, isNomineeCodeTaken } from './nominee-code'
+import { releaseInviteAccount } from './nominee-invite-server'
 import { storeNomineePhoto } from './portal-server'
 import { assertCanManage, canManage } from './tenant'
 import type { CategoryDoc, EventDoc, MembershipRole, NomineeDoc, RoundDoc, RoundEntryDoc } from './types'
@@ -239,9 +240,9 @@ export interface UpdateNomineeInput {
  * moving or re-flagging a nominee touches tallies and disclosures.
  *
  * Email: once the nominee has claimed the portal it is their login and stays
- * fixed. Before that, a change drops any pending invite (the old link and the
- * account made for the old address are no longer used), so the next invite
- * goes to the new address.
+ * fixed. Before that, a change drops any pending invite, so the old link dies
+ * and the next invite goes to the new address; the account the invite made
+ * for the old address is deleted (`releaseInviteAccount`).
  */
 export async function updateNominee(
   ctx: TenantContext,
@@ -272,13 +273,19 @@ export async function updateNominee(
   if (Object.keys(data).length === 0) return nominee
 
   const updated = await updateTenantDocument<NomineeDoc>(ctx, APPWRITE.TABLES.NOMINEES, nominee.$id, data)
+  // After the row no longer points at it, so the "still in use" check sees it free.
+  const accountReleased = 'userId' in data && nominee.userId ? await releaseInviteAccount(nominee.userId) : false
   await writeAuditLog({
     actorId: ctx.userId,
     organizationId: ctx.organizationId,
     action: 'nominee.update',
     target: `nominees/${nominee.$id}`,
     // Field names only: the values are personal data and already on the row.
-    metadata: { eventId, fields: Object.keys(data).filter((k) => ['name', 'bio', 'email'].includes(k)) },
+    metadata: {
+      eventId,
+      fields: Object.keys(data).filter((k) => ['name', 'bio', 'email'].includes(k)),
+      ...(accountReleased ? { accountReleased } : {}),
+    },
   })
   return updated
 }
