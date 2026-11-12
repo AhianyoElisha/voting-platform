@@ -123,14 +123,6 @@ export default async function PublicEventPage({ params }: Props) {
                       <div className="flex items-start justify-between gap-3">
                         <p className="font-medium text-neutral-900 dark:text-white">
                           {n.name}
-                          {n.isMorale && (
-                            <span
-                              className="ml-2 rounded-md bg-amber-100 px-1.5 py-0.5 align-middle text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-                              title={t('web:publicEvent.moraleHelper')}
-                            >
-                              {t('web:publicEvent.morale')}
-                            </span>
-                          )}
                         </p>
                         {r && (
                           <span className="shrink-0 text-sm font-semibold text-primary-700 dark:text-primary-300">

@@ -53,11 +53,6 @@ export default async function VotePage({ params }: Props) {
         </p>
         <div>
           <Heading>{nominee.name}</Heading>
-          {nominee.isMorale && (
-            <p className="mt-1 inline-block rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-              {t('web:publicEvent.morale')} · {t('web:publicEvent.moraleHelper')}
-            </p>
-          )}
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
             {t('web:publicEvent.code')}{' '}
             <span className="font-mono text-neutral-900 dark:text-white">{nominee.code}</span> ·{' '}

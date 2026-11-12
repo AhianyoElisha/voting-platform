@@ -229,7 +229,7 @@
       },
       "morale": {
         "label": "Allow morale candidates in this event",
-        "helper": "Also needs the platform and workspace switches. Morale candidates are always flagged and audited."
+        "helper": "Also needs the platform and workspace switches. Morale candidates are flagged in your dashboard and reports and audited; they are not labelled on public pages."
       },
       "submit": "Create event",
       "submitting": "Creating…",
@@ -356,8 +356,6 @@
     "votes_one": "{{count}} vote",
     "votes_other": "{{count}} votes",
     "notLive": "Voting is not open right now. Check back when the organizer opens it.",
-    "morale": "Morale candidate",
-    "moraleHelper": "Added by the organizer to make the category competitive.",
     "free_one": "{{count}} free",
     "free_other": "{{count}} free",
     "freeHelper": "Free votes are granted by the organizer and are shown separately from paid votes."
