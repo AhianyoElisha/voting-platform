@@ -29,6 +29,11 @@ export interface PhotoSlot {
   shape: 'rect' | 'ellipse' | 'mask'
   /** Corner radius for `rect`, in template pixels. */
   radius: number
+  /**
+   * `cover` (the default, also when absent) fills the frame and crops the photo;
+   * `contain` shows the whole photo and leaves the rest of the frame showing the background.
+   */
+  fit?: 'cover' | 'contain'
 }
 
 export interface TextSlot {
@@ -103,6 +108,8 @@ export function validateModel(input: unknown, width: number, height: number): Mo
       if (p.shape !== 'rect' && p.shape !== 'ellipse' && p.shape !== 'mask')
         problems.push(`${tag}: shape must be rect, ellipse or mask`)
       if (!num(p.radius) || (p.radius as number) < 0) problems.push(`${tag}: radius must be >= 0`)
+      if (p.fit !== undefined && p.fit !== 'cover' && p.fit !== 'contain')
+        problems.push(`${tag}: fit must be cover or contain`)
     } else if (s.type === 'text') {
       const t = s as Partial<TextSlot>
       if (!TEXT_BINDINGS.includes(t.binding as TextBinding)) problems.push(`${tag}: unknown binding`)
@@ -141,6 +148,19 @@ export function parseModel(raw: string | null | undefined, width: number, height
     return EMPTY_MODEL
   }
   return validateModel(parsed, width, height).length === 0 ? (parsed as SlotModel) : EMPTY_MODEL
+}
+
+/** What a photo picker needs to know about a template's photo frame. */
+export interface PhotoFrame {
+  /** Width divided by height. */
+  aspect: number
+  fit: 'cover' | 'contain'
+}
+
+/** The photo frame of a template's stored model; null when it has none. */
+export function photoFrameOf(canvasJson: string | null | undefined, width: number, height: number): PhotoFrame | null {
+  const slot = parseModel(canvasJson, width, height).slots.find((s): s is PhotoSlot => s.type === 'photo')
+  return slot ? { aspect: slot.w / slot.h, fit: slot.fit ?? 'cover' } : null
 }
 
 export function newPhotoSlot(width: number, height: number): PhotoSlot {

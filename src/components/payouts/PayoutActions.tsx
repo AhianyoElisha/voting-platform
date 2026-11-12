@@ -71,12 +71,7 @@ export function AdminPayoutActions({ payoutId, status }: { payoutId: string; sta
       />
       {status === 'requested' && (
         <>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void act('approve')}
-            className={`${btn} bg-primary-600 text-white`}
-          >
+          <button type="button" disabled={busy} onClick={() => void act('approve')} className={`${btn} btn-brand`}>
             {t('web:admin.payouts.approve')}
           </button>
           <button

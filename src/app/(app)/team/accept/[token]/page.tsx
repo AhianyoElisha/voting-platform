@@ -58,7 +58,7 @@ export default async function AcceptPage({ params }: Props) {
               <div className="space-y-2">
                 <Link
                   href={`/login?redirect=${encodeURIComponent(back)}`}
-                  className="block rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white hover:bg-primary-700"
+                  className="block rounded-xl btn-brand px-4 py-3 text-sm font-medium"
                 >
                   {t('web:team.accept.signIn')}
                 </Link>

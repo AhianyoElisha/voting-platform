@@ -105,7 +105,7 @@ export default function FlyerPanel({
       {templates.length === 0 ? (
         <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:flyer.panel.empty')}</p>
       ) : (
-        <ul className="divide-y divide-neutral-200 rounded-2xl border border-neutral-200 dark:divide-neutral-700 dark:border-neutral-700">
+        <ul className="divide-y divide-neutral-200 overflow-hidden surface dark:divide-neutral-700">
           {templates.map((tpl) => (
             <li key={tpl.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
               <div>
@@ -155,7 +155,7 @@ export default function FlyerPanel({
               </option>
             ))}
           </select>
-          <button type="submit" disabled={busy} className={`${btn} bg-primary-600 text-white hover:bg-primary-700`}>
+          <button type="submit" disabled={busy} className={`${btn} btn-brand`}>
             {t('web:flyer.panel.create')}
           </button>
         </form>

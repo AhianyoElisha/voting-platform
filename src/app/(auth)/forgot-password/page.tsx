@@ -24,7 +24,7 @@ const Page = async () => {
 
       <div className="mx-auto max-w-md space-y-6">
         <div className="space-y-2 text-center">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:forgotPassword.title')}</h2>
+          <h2 className="section-title">{t('web:forgotPassword.title')}</h2>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">{t('web:forgotPassword.helper')}</p>
         </div>
         <ForgotPasswordForm />

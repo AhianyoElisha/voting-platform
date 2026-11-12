@@ -1,6 +1,7 @@
 import Footer2 from '@/components/Footer2'
 import Header from '@/components/Header/Header'
 import MobileHeader from '@/components/Header/MobileHeader'
+import PageBackdrop from '@/components/PageBackdrop'
 import Aside from '@/components/aside'
 import AsideSidebarNavigation from '@/components/aside-sidebar-navigation'
 import React, { ReactNode } from 'react'
@@ -14,6 +15,7 @@ interface Props {
 const ApplicationLayout: React.FC<Props> = ({ children, header }) => {
   return (
     <Aside.Provider>
+      <PageBackdrop />
       {/* Desktop header, hidden on mobile */}
       <div className="relative z-20 hidden lg:block">{header ? header : <Header />}</div>
       <MobileHeader />

@@ -29,12 +29,12 @@ export default async function PortalPage() {
         <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{t('web:portal.intro')}</p>
       </div>
       {entries.length === 0 ? (
-        <div className="mx-auto max-w-md space-y-1 rounded-2xl border border-neutral-200 p-6 text-center dark:border-neutral-700">
+        <div className="mx-auto max-w-md space-y-1 surface p-6 text-center">
           <p className="font-semibold text-neutral-900 dark:text-white">{t('web:portal.empty.title')}</p>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:portal.empty.body')}</p>
         </div>
       ) : (
-        entries.map(({ nominee, flyerUrl, event, category, organizationSlug }) => (
+        entries.map(({ nominee, flyerUrl, event, category, organizationSlug, photoFrame }) => (
           <NomineeCard
             key={nominee.$id}
             entry={{
@@ -44,6 +44,7 @@ export default async function PortalPage() {
               bio: nominee.bio,
               photoUrl: nominee.photoUrl,
               photoFocus: focusOf(nominee),
+              photoFrame,
               profileCompletedAt: nominee.profileCompletedAt,
               flyerUrl,
               event: event ? { title: event.title, slug: event.slug, status: event.status } : null,

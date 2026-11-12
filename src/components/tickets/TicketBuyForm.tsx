@@ -273,7 +273,7 @@ export default function TicketBuyForm({ tiers, mockProvider }: { tiers: TierOpti
       <button
         type="submit"
         disabled={busy || qty < 1 || !tier}
-        className="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+        className="w-full rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         {busy ? t('web:vote.form.submitting') : t('web:vote.form.submit', { amount: formatPesewas(amount) })}
       </button>

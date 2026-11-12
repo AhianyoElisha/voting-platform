@@ -33,6 +33,58 @@ export function coverCrop(
   return { x: (imageW - w) * clamp(focusX), y: (imageH - h) * clamp(focusY), w, h }
 }
 
+export interface PhotoPlacement {
+  /** Part of the photo that is drawn, in photo pixels. */
+  src: Rect
+  /** Where it lands in the frame, in frame pixels (origin the frame's top-left). */
+  dst: Rect
+}
+
+export interface PlaceOptions {
+  /** `cover` fills the frame and crops; `contain` shows the whole photo and leaves the rest of the frame empty. */
+  fit?: 'cover' | 'contain'
+  /** 1 = the size the fit gives; larger enlarges the photo. */
+  zoom?: number
+  /** 0 to 1: which part survives along an axis where the photo is larger than the frame. */
+  focusX?: number
+  focusY?: number
+}
+
+/**
+ * How a photo is drawn into a frame. The photo is scaled to cover or to fit
+ * inside the frame, then by `zoom`. Along each axis, a photo larger than the
+ * frame is cropped around the focus; a smaller one is centred. With the
+ * defaults this is `coverCrop` filling the whole frame.
+ */
+export function placePhoto(
+  imageW: number,
+  imageH: number,
+  frameW: number,
+  frameH: number,
+  opts: PlaceOptions = {}
+): PhotoPlacement {
+  if (imageW <= 0 || imageH <= 0 || frameW <= 0 || frameH <= 0) {
+    return { src: { x: 0, y: 0, w: Math.max(imageW, 0), h: Math.max(imageH, 0) }, dst: { x: 0, y: 0, w: 0, h: 0 } }
+  }
+  const unit = (n: number | undefined) =>
+    typeof n === 'number' && Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.5
+  const zoom = typeof opts.zoom === 'number' && Number.isFinite(opts.zoom) ? Math.max(1, opts.zoom) : 1
+  const fill = opts.fit === 'contain' ? Math.min : Math.max
+  const scale = fill(frameW / imageW, frameH / imageH) * zoom
+  const axis = (image: number, frame: number, focus: number) => {
+    const drawn = image * scale
+    // A hair of tolerance so a photo that exactly fills the frame is not treated as smaller.
+    if (drawn >= frame - 1e-6) {
+      const visible = Math.min(image, frame / scale)
+      return { s: (image - visible) * focus, sl: visible, d: 0, dl: frame }
+    }
+    return { s: 0, sl: image, d: (frame - drawn) / 2, dl: drawn }
+  }
+  const h = axis(imageW, frameW, unit(opts.focusX))
+  const v = axis(imageH, frameH, unit(opts.focusY))
+  return { src: { x: h.s, y: v.s, w: h.sl, h: v.sl }, dst: { x: h.d, y: v.d, w: h.dl, h: v.dl } }
+}
+
 export type Measure = (text: string, fontSize: number) => number
 
 export interface FitInput {

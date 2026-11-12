@@ -1,3 +1,4 @@
+import PhotoAvatar from '@/components/PhotoAvatar'
 import CreateOrganizationForm from '@/components/organization/CreateOrganizationForm'
 import { getSessionUserId } from '@/lib/auth-session'
 import { listOrganizationsForUser } from '@/lib/db'
@@ -52,7 +53,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       {workspaces.length === 0 ? (
         <section className="mx-auto mt-10 max-w-md space-y-6">
           <div className="space-y-1 text-center">
-            <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:dashboard.empty.title')}</h2>
+            <h2 className="section-title">{t('web:dashboard.empty.title')}</h2>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:dashboard.empty.body')}</p>
           </div>
           <CreateOrganizationForm />
@@ -60,58 +61,55 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       ) : (
         <section className="mt-10 space-y-6">
           <div>
-            <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
-              {t('web:dashboard.workspaces.title')}
-            </h2>
+            <h2 className="section-title">{t('web:dashboard.workspaces.title')}</h2>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:dashboard.workspaces.helper')}</p>
           </div>
 
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {workspaces.map(({ organization, membership }) => (
-              <li
-                key={organization.$id}
-                className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-800"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="font-semibold text-neutral-900 dark:text-white">{organization.name}</h3>
+              <li key={organization.$id} className="flex flex-col surface p-5">
+                <div className="flex items-start gap-3">
+                  <PhotoAvatar
+                    name={organization.name}
+                    photoUrl={organization.logoUrl}
+                    className="size-12 shrink-0 rounded-xl object-contain! text-base"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="leading-snug font-semibold text-neutral-900 dark:text-white">{organization.name}</h3>
+                    <p className="font-mono text-xs break-all text-neutral-500 dark:text-neutral-400">
+                      /o/{organization.slug}
+                    </p>
+                  </div>
                   <Badge color={organization.status === 'active' ? 'green' : 'red'}>
                     {t(`web:dashboard.status.${organization.status}`)}
                   </Badge>
                 </div>
-                <p className="mt-1 font-mono text-xs break-all text-neutral-500 dark:text-neutral-400">
-                  /o/{organization.slug}
-                </p>
                 <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">
                   {t(`web:dashboard.role.${membership.role}`)}
                 </p>
-                <Link
-                  href={`/dashboard/${organization.slug}/events`}
-                  className="mt-4 inline-block text-sm font-medium text-primary-600 underline dark:text-primary-400"
-                >
-                  {t('web:dashboard.manageEvents')}
-                </Link>
-                <Link
-                  href={`/dashboard/${organization.slug}/payouts`}
-
-                  className="mt-4 ml-4 inline-block text-sm font-medium text-primary-600 underline dark:text-primary-400"
-                >
-                  {t('web:dashboard.payouts')}
-                </Link>
-                <Link
-                  href={`/dashboard/${organization.slug}/team`}
-
-                  className="mt-4 ml-4 inline-block text-sm font-medium text-primary-600 underline dark:text-primary-400"
-                >
-                  {t('web:dashboard.team')}
-                </Link>
-                {(membership.role === 'owner' || membership.role === 'admin') && (
+                <div className="mt-auto flex flex-wrap gap-2 pt-4">
                   <Link
-                    href={`/dashboard/${organization.slug}/settings`}
-                    className="mt-4 ml-4 inline-block text-sm font-medium text-primary-600 underline dark:text-primary-400"
+                    href={`/dashboard/${organization.slug}/events`}
+                    className="rounded-full btn-brand px-4 py-2 text-sm font-semibold"
                   >
-                    {t('web:dashboard.settings')}
+                    {t('web:dashboard.manageEvents')}
                   </Link>
-                )}
+                  {[
+                    ['payouts', true],
+                    ['team', true],
+                    ['settings', membership.role === 'owner' || membership.role === 'admin'],
+                  ]
+                    .filter(([, show]) => show)
+                    .map(([key]) => (
+                      <Link
+                        key={key as string}
+                        href={`/dashboard/${organization.slug}/${key}`}
+                        className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-primary-300 hover:text-primary-700 dark:border-neutral-600 dark:text-neutral-200"
+                      >
+                        {t(`web:dashboard.${key}`)}
+                      </Link>
+                    ))}
+                </div>
               </li>
             ))}
           </ul>

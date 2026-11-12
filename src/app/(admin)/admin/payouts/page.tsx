@@ -83,7 +83,7 @@ export default async function AdminPayoutsPage() {
     <div className="space-y-10">
       <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:admin.payouts.intro')}</p>
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:admin.payouts.pending')}</h2>
+        <h2 className="section-title">{t('web:admin.payouts.pending')}</h2>
         {pending.length === 0 ? (
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:admin.payouts.none')}</p>
         ) : (
@@ -91,7 +91,7 @@ export default async function AdminPayoutsPage() {
         )}
       </section>
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:admin.payouts.settled')}</h2>
+        <h2 className="section-title">{t('web:admin.payouts.settled')}</h2>
         {settled.length === 0 ? (
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:admin.payouts.none')}</p>
         ) : (

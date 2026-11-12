@@ -69,9 +69,7 @@ export default async function OrganizationHomePage({ params }: Props) {
         <div className="mt-10 space-y-10">
           {sections.map((section) => (
             <section key={section.key}>
-              <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
-                {t(`web:orgHome.section.${section.key}`)}
-              </h2>
+              <h2 className="section-title">{t(`web:orgHome.section.${section.key}`)}</h2>
               <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {section.items.map((event) => (
                   <li key={event.$id}>

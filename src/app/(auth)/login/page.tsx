@@ -84,7 +84,10 @@ function LoginContent() {
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              <label
+                htmlFor="password"
+                className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+              >
                 {t('auth:field.password.label')}
               </label>
               <div className="relative">
@@ -109,7 +112,10 @@ function LoginContent() {
             </div>
 
             <div className="text-right">
-              <Link href="/forgot-password" className="text-sm text-neutral-500 underline hover:text-neutral-700 dark:text-neutral-400">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-neutral-500 underline hover:text-neutral-700 dark:text-neutral-400"
+              >
                 {t('auth:login.forgotPassword.cta', { defaultValue: 'Forgot password?' })}
               </Link>
             </div>
@@ -117,7 +123,7 @@ function LoginContent() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
             >
               {isSubmitting ? t('auth:login.submitting.cta') : t('auth:login.submit.cta')}
               {!isSubmitting && <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={1.5} />}

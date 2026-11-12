@@ -101,7 +101,7 @@ export default function Scanner({ orgId, eventId }: { orgId: string; eventId: st
           <button
             type="button"
             onClick={() => setCameraOn((v) => !v)}
-            className="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white"
+            className="w-full rounded-xl btn-brand px-4 py-3 text-sm font-medium"
           >
             {cameraOn ? t('web:scan.stopCamera') : t('web:scan.startCamera')}
           </button>

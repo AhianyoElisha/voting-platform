@@ -81,7 +81,7 @@ export default function TeamPanel({
   return (
     <div className="space-y-8">
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:team.members')}</h2>
+        <h2 className="section-title">{t('web:team.members')}</h2>
         <table className="w-full text-sm">
           <thead className="text-left text-xs text-neutral-500 uppercase dark:text-neutral-400">
             <tr>
@@ -151,7 +151,7 @@ export default function TeamPanel({
 
       {canManage && (
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:team.invite')}</h2>
+          <h2 className="section-title">{t('web:team.invite')}</h2>
           <p className="max-w-xl text-sm text-neutral-500 dark:text-neutral-400">{t('web:team.inviteHelper')}</p>
           <form onSubmit={invite} className="flex flex-wrap items-end gap-2">
             <input
@@ -175,11 +175,7 @@ export default function TeamPanel({
                 </option>
               ))}
             </select>
-            <button
-              type="submit"
-              disabled={busy}
-              className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
+            <button type="submit" disabled={busy} className="rounded-xl btn-brand px-4 py-2 text-sm font-medium">
               {t('web:team.send')}
             </button>
           </form>
@@ -207,7 +203,7 @@ export default function TeamPanel({
             </div>
           )}
           {invites.filter((i) => i.status === 'pending').length > 0 && (
-            <ul className="divide-y divide-neutral-200 rounded-2xl border border-neutral-200 text-sm dark:divide-neutral-700 dark:border-neutral-700">
+            <ul className="divide-y divide-neutral-200 overflow-hidden surface text-sm dark:divide-neutral-700">
               {invites
                 .filter((i) => i.status === 'pending')
                 .map((i) => (

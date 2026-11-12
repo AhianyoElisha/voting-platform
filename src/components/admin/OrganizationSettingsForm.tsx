@@ -90,10 +90,7 @@ export default function OrganizationSettingsForm({
   }
 
   return (
-    <form
-      onSubmit={saveSettings}
-      className="space-y-5 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700"
-    >
+    <form onSubmit={saveSettings} className="space-y-5 surface p-4">
       <h2 className="font-semibold text-neutral-900 dark:text-white">{t('web:admin.settings.title')}</h2>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {saved && <p className="text-sm text-green-700 dark:text-green-400">{t('web:admin.settings.saved')}</p>}

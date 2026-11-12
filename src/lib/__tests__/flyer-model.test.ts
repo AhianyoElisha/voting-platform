@@ -1,7 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import { SAMPLE_CONTEXT, resolveBinding, ussdInstruction } from '../flyer/bindings'
-import { coverCrop, fitText, wrapLines } from '../flyer/layout'
-import { EMPTY_MODEL, newPhotoSlot, newTextSlot, parseModel, validateModel, type SlotModel } from '../flyer/model'
+import { coverCrop, fitText, placePhoto, wrapLines } from '../flyer/layout'
+import {
+  EMPTY_MODEL,
+  newPhotoSlot,
+  newTextSlot,
+  parseModel,
+  photoFrameOf,
+  validateModel,
+  type SlotModel,
+} from '../flyer/model'
 
 const W = 1080
 const H = 1920
@@ -71,6 +79,30 @@ describe('bindings', () => {
   })
 })
 
+describe('photo fit on the slot', () => {
+  test('fit is optional, cover or contain, and anything else is refused', () => {
+    const withFit = (fit: unknown) => ({
+      version: 1,
+      slots: [{ ...newPhotoSlot(W, H), ...(fit === undefined ? {} : { fit }) }],
+    })
+    expect(validateModel(withFit(undefined), W, H)).toEqual([])
+    expect(validateModel(withFit('cover'), W, H)).toEqual([])
+    expect(validateModel(withFit('contain'), W, H)).toEqual([])
+    expect(validateModel(withFit('stretch'), W, H)).toEqual(['slot 0: fit must be cover or contain'])
+  })
+
+  test('photoFrameOf reads the frame shape and fit, defaulting to cover', () => {
+    const slot = { ...newPhotoSlot(W, H), w: 400, h: 500 }
+    expect(photoFrameOf(JSON.stringify({ version: 1, slots: [slot] }), W, H)).toEqual({ aspect: 0.8, fit: 'cover' })
+    expect(photoFrameOf(JSON.stringify({ version: 1, slots: [{ ...slot, fit: 'contain' }] }), W, H)).toEqual({
+      aspect: 0.8,
+      fit: 'contain',
+    })
+    expect(photoFrameOf(JSON.stringify(EMPTY_MODEL), W, H)).toBeNull()
+    expect(photoFrameOf(null, W, H)).toBeNull()
+  })
+})
+
 describe('layout', () => {
   test('coverCrop centres the largest matching-aspect region', () => {
     expect(coverCrop(2000, 1000, 500, 500)).toEqual({ x: 500, y: 0, w: 1000, h: 1000 })
@@ -87,6 +119,49 @@ describe('layout', () => {
     // Out-of-range or broken values never leave the photo.
     expect(coverCrop(2000, 1000, 500, 500, 7, -3)).toEqual({ x: 1000, y: 0, w: 1000, h: 1000 })
     expect(coverCrop(2000, 1000, 500, 500, NaN, 0.5)).toEqual({ x: 500, y: 0, w: 1000, h: 1000 })
+  })
+
+  test('placePhoto with the defaults is coverCrop filling the frame', () => {
+    expect(placePhoto(2000, 1000, 500, 500)).toEqual({
+      src: coverCrop(2000, 1000, 500, 500),
+      dst: { x: 0, y: 0, w: 500, h: 500 },
+    })
+    expect(placePhoto(1000, 2000, 500, 500, { focusX: 0.5, focusY: 0 }).src).toEqual(
+      coverCrop(1000, 2000, 500, 500, 0.5, 0)
+    )
+  })
+
+  test('placePhoto: zoom gives a same-shape photo room to move', () => {
+    // Square photo, square frame: at 100% the focus changes nothing.
+    expect(placePhoto(1000, 1000, 500, 500, { focusX: 0, focusY: 0 }).src).toEqual({ x: 0, y: 0, w: 1000, h: 1000 })
+    // At 200% half the photo is visible and the focus picks which half.
+    expect(placePhoto(1000, 1000, 500, 500, { zoom: 2, focusX: 0.5, focusY: 0 })).toEqual({
+      src: { x: 250, y: 0, w: 500, h: 500 },
+      dst: { x: 0, y: 0, w: 500, h: 500 },
+    })
+    expect(placePhoto(1000, 1000, 500, 500, { zoom: 2, focusX: 1, focusY: 1 }).src).toEqual({
+      x: 500,
+      y: 500,
+      w: 500,
+      h: 500,
+    })
+    // A zoom below 1 or a broken one never shrinks the photo.
+    expect(placePhoto(1000, 1000, 500, 500, { zoom: 0.2 }).src).toEqual({ x: 0, y: 0, w: 1000, h: 1000 })
+    expect(placePhoto(1000, 1000, 500, 500, { zoom: NaN }).src).toEqual({ x: 0, y: 0, w: 1000, h: 1000 })
+  })
+
+  test('placePhoto: contain shows the whole photo, centred, and crops only once zoom overflows', () => {
+    // Portrait photo in a square frame: full photo, bars left and right.
+    expect(placePhoto(1000, 2000, 500, 500, { fit: 'contain', focusY: 0 })).toEqual({
+      src: { x: 0, y: 0, w: 1000, h: 2000 },
+      dst: { x: 125, y: 0, w: 250, h: 500 },
+    })
+    // Zoomed 2x it fills the width exactly and overflows the height, cropped at the focus.
+    expect(placePhoto(1000, 2000, 500, 500, { fit: 'contain', zoom: 2, focusY: 0 })).toEqual({
+      src: { x: 0, y: 0, w: 1000, h: 1000 },
+      dst: { x: 0, y: 0, w: 500, h: 500 },
+    })
+    expect(placePhoto(0, 0, 10, 10).dst).toEqual({ x: 0, y: 0, w: 0, h: 0 })
   })
 
   // 0.6em per character: a predictable stand-in for a real font.

@@ -67,7 +67,7 @@ export default function TiersPanel({
       {tiers.length === 0 ? (
         <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:tickets.panel.empty')}</p>
       ) : (
-        <ul className="divide-y divide-neutral-200 rounded-2xl border border-neutral-200 dark:divide-neutral-700 dark:border-neutral-700">
+        <ul className="divide-y divide-neutral-200 overflow-hidden surface dark:divide-neutral-700">
           {tiers.map((tier) => (
             <li key={tier.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
               <div>
@@ -138,11 +138,7 @@ export default function TiersPanel({
               placeholder={t('web:tickets.panel.unlimited')}
             />
           </label>
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-          >
+          <button type="submit" disabled={busy} className="rounded-lg btn-brand px-3 py-1.5 text-xs font-medium">
             {t('web:tickets.panel.add')}
           </button>
           {error && <span className="text-red-600">{error}</span>}

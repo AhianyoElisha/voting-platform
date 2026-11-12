@@ -36,17 +36,13 @@ export default async function AdminOverviewPage() {
     <div className="space-y-8">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {cards.map((c) => (
-          <Link
-            key={c.href}
-            href={c.href}
-            className="rounded-2xl border border-neutral-200 p-4 hover:border-primary-300 dark:border-neutral-700"
-          >
+          <Link key={c.href} href={c.href} className="stat surface-hover">
             <p className="text-sm text-neutral-500 dark:text-neutral-400">{c.label}</p>
-            <p className="mt-1 text-2xl font-semibold text-neutral-900 dark:text-white">{c.value}</p>
+            <p className="mt-1 text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">{c.value}</p>
           </Link>
         ))}
       </div>
-      <section className="space-y-2 rounded-2xl border border-neutral-200 p-4 text-sm dark:border-neutral-700">
+      <section className="space-y-2 surface p-4 text-sm">
         <h2 className="font-semibold text-neutral-900 dark:text-white">{t('web:admin.overview.platform')}</h2>
         <p>
           {t('web:admin.overview.commission')}: <strong>{rate}</strong>

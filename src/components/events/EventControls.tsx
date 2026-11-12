@@ -16,7 +16,7 @@ const NEXT_STATUSES: Record<EventStatus, EventStatus[]> = {
 }
 
 const btn = 'rounded-xl px-4 py-2 text-sm font-medium transition disabled:opacity-50'
-const btnPrimary = `${btn} bg-primary-600 text-white hover:bg-primary-700`
+const btnPrimary = `${btn} btn-brand`
 const btnSecondary = `${btn} border border-neutral-300 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800`
 const btnDanger = `${btn} border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20`
 
@@ -229,7 +229,7 @@ export function RoundControls({
   const anyLive = rounds.some((r) => r.status === 'live')
   return (
     <div className="space-y-3">
-      <ul className="divide-y divide-neutral-200 rounded-2xl border border-neutral-200 dark:divide-neutral-700 dark:border-neutral-700">
+      <ul className="divide-y divide-neutral-200 overflow-hidden surface dark:divide-neutral-700">
         {rounds.map((round) => (
           <li key={round.$id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
             <div>

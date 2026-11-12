@@ -45,7 +45,7 @@ export default function ClaimForm({ token }: { token: string }) {
         </p>
         <Link
           href="/login?redirect=/portal"
-          className="inline-block rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+          className="inline-block rounded-xl btn-brand px-4 py-2 text-sm font-medium"
         >
           {t('web:portal.claim.done.cta')}
         </Link>
@@ -93,7 +93,7 @@ export default function ClaimForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={busy}
-        className="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+        className="w-full rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         {busy ? t('web:portal.claim.submitting') : t('web:portal.claim.submit')}
       </button>

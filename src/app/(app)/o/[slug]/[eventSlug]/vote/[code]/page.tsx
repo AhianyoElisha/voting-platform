@@ -1,4 +1,5 @@
 import BrandBand from '@/components/organization/BrandBand'
+import PhotoAvatar from '@/components/PhotoAvatar'
 import VoteForm from '@/components/vote/VoteForm'
 import { parseBrandColors } from '@/lib/branding'
 import { APPWRITE } from '@/lib/constants'
@@ -7,9 +8,9 @@ import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
 import { findNomineeByCode } from '@/lib/nominee-code'
 import { isMockProviderActive } from '@/lib/payments'
+import { focusOf } from '@/lib/photo-focus'
 import { isPublicEvent } from '@/lib/public-events'
 import type { CategoryDoc, EventDoc } from '@/lib/types'
-import { Heading } from '@/shared/Heading'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Query } from 'node-appwrite'
@@ -60,14 +61,25 @@ export default async function VotePage({ params }: Props) {
           </Link>
           {categories.documents[0] ? ` / ${categories.documents[0].name}` : ''}
         </p>
-        <div>
-          <Heading>{nominee.name}</Heading>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {t('web:publicEvent.code')}{' '}
-            <span className="font-mono text-neutral-900 dark:text-white">{nominee.code}</span> ·{' '}
-            {t('web:publicEvent.pricePerVote', { price: formatPesewas(event.votePrice) })}
-          </p>
-          {nominee.bio && <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">{nominee.bio}</p>}
+        <div className="overflow-hidden surface">
+          <PhotoAvatar
+            name={nominee.name}
+            photoUrl={nominee.photoUrl}
+            focus={focusOf(nominee)}
+            className="aspect-[4/3] w-full text-6xl"
+          />
+          <div className="p-5">
+            <h1 className="text-2xl font-bold tracking-tight text-neutral-950 dark:text-white">{nominee.name}</h1>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+              <span className="rounded-full bg-primary-50 px-3 py-1 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+                {t('web:publicEvent.code')} <span className="font-mono">{nominee.code}</span>
+              </span>
+              <span className="rounded-full bg-neutral-100 px-3 py-1 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200">
+                {t('web:publicEvent.pricePerVote', { price: formatPesewas(event.votePrice) })}
+              </span>
+            </div>
+            {nominee.bio && <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">{nominee.bio}</p>}
+          </div>
         </div>
         {live ? (
           <VoteForm

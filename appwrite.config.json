@@ -703,6 +703,15 @@
                     "max": 100
                 },
                 {
+                    "key": "photoZoom",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": 100,
+                    "max": 300
+                },
+                {
                     "key": "bio",
                     "type": "text",
                     "required": false,

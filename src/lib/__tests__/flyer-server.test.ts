@@ -259,9 +259,14 @@ describe('ensureFlyer', () => {
     await fake.updateDocument('voteapp', 'nominees', nominee.$id, { photoFocusX: 50, photoFocusY: 15 })
     expect((await ensureFlyer(nominee.$id, { render })).outcome).toBe('generated')
     expect((await ensureFlyer(nominee.$id, { render })).outcome).toBe('current')
+    // Zooming alone re-renders too.
+    await fake.updateDocument('voteapp', 'nominees', nominee.$id, { photoZoom: 180 })
+    expect((await ensureFlyer(nominee.$id, { render })).outcome).toBe('generated')
+    expect((await ensureFlyer(nominee.$id, { render })).outcome).toBe('current')
     expect(seen).toEqual([
-      { x: 50, y: 50 },
-      { x: 50, y: 15 },
+      { x: 50, y: 50, zoom: 100 },
+      { x: 50, y: 15, zoom: 100 },
+      { x: 50, y: 15, zoom: 180 },
     ])
   })
 

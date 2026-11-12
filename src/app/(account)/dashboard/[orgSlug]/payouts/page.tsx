@@ -37,7 +37,7 @@ export default async function PayoutsPage({ params }: Props) {
               ['available', formatPesewas(balance.available)],
             ] as const
           ).map(([key, value]) => (
-            <div key={key} className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
+            <div key={key} className="surface p-4">
               <dt className="text-xs text-neutral-500 uppercase dark:text-neutral-400">
                 {t(`web:payouts.balance.${key}`)}
               </dt>
@@ -49,14 +49,14 @@ export default async function PayoutsPage({ params }: Props) {
 
       {canManage(ctx.role) && (
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:payouts.request')}</h2>
+          <h2 className="section-title">{t('web:payouts.request')}</h2>
           <p className="max-w-xl text-sm text-neutral-500 dark:text-neutral-400">{t('web:payouts.howItWorks')}</p>
           <PayoutRequestForm orgId={organization.$id} availableLabel={formatPesewas(balance.available)} />
         </section>
       )}
 
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:payouts.history')}</h2>
+        <h2 className="section-title">{t('web:payouts.history')}</h2>
         {payouts.length === 0 ? (
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:payouts.empty')}</p>
         ) : (

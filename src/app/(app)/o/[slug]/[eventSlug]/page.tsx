@@ -1,18 +1,19 @@
 import BrandBand from '@/components/organization/BrandBand'
+import PhotoAvatar from '@/components/PhotoAvatar'
 import TicketBuyForm from '@/components/tickets/TicketBuyForm'
-import { parseBrandColors } from '@/lib/branding'
+import { parseBrandColors, textColorOn } from '@/lib/branding'
 import { APPWRITE } from '@/lib/constants'
 import { getOrganizationBySlug, listTenantDocuments, type TenantContext } from '@/lib/db'
 import { getTranslations } from '@/lib/i18n-server'
 import { formatPesewas } from '@/lib/money'
 import { isMockProviderActive } from '@/lib/payments'
+import { focusOf } from '@/lib/photo-focus'
 import { isPublicEvent } from '@/lib/public-events'
 import { shapeResults } from '@/lib/results'
 import { availableNow } from '@/lib/tickets/purchase-server'
 import { listPublicTiers } from '@/lib/tickets/tiers-server'
 import type { CategoryDoc, EventDoc, NomineeDoc, RoundDoc, RoundEntryDoc } from '@/lib/types'
 import { freeVotesByNominee } from '@/lib/votes-server'
-import { Heading } from '@/shared/Heading'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Query } from 'node-appwrite'
@@ -90,6 +91,7 @@ export default async function PublicEventPage({ params }: Props) {
     }))
   )
 
+  const brand = parseBrandColors(organization.brandColors)
   return (
     <main className="container py-16 lg:py-24">
       <BrandBand
@@ -97,22 +99,48 @@ export default async function PublicEventPage({ params }: Props) {
         name={organization.name}
         logoUrl={organization.logoUrl}
         colors={parseBrandColors(organization.brandColors)}
-        className="mb-4"
+        className="mb-6"
       />
-      <Heading>{event.title}</Heading>
-      {event.description && (
-        <p className="mt-3 max-w-2xl text-neutral-600 dark:text-neutral-300">{event.description}</p>
-      )}
-      <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">
-        {t('web:publicEvent.pricePerVote', { price: formatPesewas(event.votePrice) })}
-        {round && rounds.documents.length > 1 ? ` · ${round.name}` : ''}
-      </p>
+      <header
+        className={`relative overflow-hidden rounded-3xl px-6 py-10 shadow-xl sm:px-10 sm:py-12 ${brand ? '' : 'bg-linear-to-br from-primary-700 via-primary-600 to-secondary-600 text-white shadow-primary-600/20'}`}
+        style={
+          brand
+            ? {
+                // The organization's own colour, deepened toward one corner.
+                background: `linear-gradient(135deg, ${brand.primary}, color-mix(in srgb, ${brand.primary} 72%, black))`,
+                color: textColorOn(brand.primary),
+              }
+            : undefined
+        }
+      >
+        <span aria-hidden className="absolute -top-16 -right-10 size-56 rounded-full bg-white/10" />
+        <span aria-hidden className="absolute -bottom-24 left-1/3 size-64 rounded-full bg-white/10" />
+        <div className="relative">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+            {live && <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-green-300" />}
+            {t(`web:events.status.${event.status}`)}
+          </span>
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-balance sm:text-5xl">{event.title}</h1>
+          {event.description && <p className="mt-3 max-w-2xl opacity-90">{event.description}</p>}
+          <div className="mt-6 flex flex-wrap gap-2 text-sm font-medium">
+            <span className="rounded-full bg-white px-4 py-1.5 text-primary-700 shadow-sm">
+              {t('web:publicEvent.pricePerVote', { price: formatPesewas(event.votePrice) })}
+            </span>
+            <span className="rounded-full bg-white/15 px-4 py-1.5 backdrop-blur-sm">
+              {t('web:publicEvent.nominees', { count: nominees.documents.length })}
+            </span>
+            {round && rounds.documents.length > 1 && (
+              <span className="rounded-full bg-white/15 px-4 py-1.5 backdrop-blur-sm">{round.name}</span>
+            )}
+          </div>
+        </div>
+      </header>
 
-      <div className="mt-10 space-y-8">
+      <div className="mt-12 space-y-12">
         {categories.documents.map((category) => (
           <section key={category.$id}>
-            <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{category.name}</h2>
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <h2 className="section-title">{category.name}</h2>
+            <ul className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
               {nominees.documents
                 .filter((n) => n.categoryId === category.$id)
                 .sort(
@@ -122,39 +150,47 @@ export default async function PublicEventPage({ params }: Props) {
                 .map((n) => {
                   const r = resultFor(n.$id)
                   return (
-                    <li
-                      key={n.$id}
-                      className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="font-medium text-neutral-900 dark:text-white">{n.name}</p>
-                        {r && (
-                          <span className="shrink-0 text-sm font-semibold text-primary-700 dark:text-primary-300">
-                            {r.votes !== undefined
-                              ? t('web:publicEvent.votes', { count: r.votes })
-                              : r.percent !== undefined
-                                ? `${r.percent}%`
-                                : `#${r.rank}`}
-                            {r.free !== undefined && (
-                              <span
-                                className="ml-1 text-xs font-normal text-amber-700 dark:text-amber-300"
-                                title={t('web:publicEvent.freeHelper')}
-                              >
-                                · {t('web:publicEvent.free', { count: r.free })}
-                              </span>
-                            )}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                        {t('web:publicEvent.code')}{' '}
-                        <span className="font-mono text-neutral-900 dark:text-white">{n.code}</span>
-                      </p>
+                    <li key={n.$id}>
                       <Link
                         href={`/o/${slug}/${eventSlug}/vote/${n.code}`}
-                        className={`mt-3 inline-block rounded-xl px-4 py-2 text-sm font-medium ${live ? 'bg-primary-600 text-white hover:bg-primary-700' : 'bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400'}`}
+                        className="group flex h-full surface-hover flex-col overflow-hidden surface"
                       >
-                        {live ? t('web:publicEvent.vote') : t('web:publicEvent.view')}
+                        <div className="relative">
+                          <PhotoAvatar
+                            name={n.name}
+                            photoUrl={n.photoUrl}
+                            focus={focusOf(n)}
+                            className="aspect-square w-full text-4xl transition duration-300 group-hover:scale-105"
+                          />
+                          {r && (
+                            <span className="absolute top-2 left-2 rounded-full bg-neutral-900/80 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                              {r.votes !== undefined
+                                ? t('web:publicEvent.votes', { count: r.votes })
+                                : r.percent !== undefined
+                                  ? `${r.percent}%`
+                                  : `#${r.rank}`}
+                            </span>
+                          )}
+                          <span className="absolute right-2 bottom-2 rounded-full bg-white/95 px-2.5 py-1 font-mono text-xs font-bold text-primary-700 shadow-sm">
+                            {n.code}
+                          </span>
+                        </div>
+                        <div className="flex flex-1 flex-col justify-end p-3 sm:p-4">
+                          <p className="leading-snug font-semibold text-neutral-900 dark:text-white">{n.name}</p>
+                          {r?.free !== undefined && (
+                            <p
+                              className="mt-0.5 text-xs text-amber-700 dark:text-amber-300"
+                              title={t('web:publicEvent.freeHelper')}
+                            >
+                              {t('web:publicEvent.free', { count: r.free })}
+                            </p>
+                          )}
+                          <span
+                            className={`mt-3 block rounded-xl px-4 py-2 text-center text-sm font-semibold ${live ? 'btn-brand' : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300'}`}
+                          >
+                            {live ? t('web:publicEvent.vote') : t('web:publicEvent.view')}
+                          </span>
+                        </div>
                       </Link>
                     </li>
                   )
@@ -165,7 +201,7 @@ export default async function PublicEventPage({ params }: Props) {
       </div>
       {tierOptions.length > 0 && (
         <section className="mt-12 max-w-xl space-y-4">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:tickets.section.title')}</h2>
+          <h2 className="section-title">{t('web:tickets.section.title')}</h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:tickets.section.helper')}</p>
           <TicketBuyForm
             tiers={tierOptions}

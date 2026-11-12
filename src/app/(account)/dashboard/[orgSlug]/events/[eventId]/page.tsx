@@ -8,6 +8,7 @@ import { freeVotesEnabledOnPlatform } from '@/lib/constants'
 import { TenantMismatchError } from '@/lib/db'
 import { getEvent } from '@/lib/events-server'
 import { flyerUrl, flyersForEvent } from '@/lib/flyer/generate-server'
+import { photoFrameOf } from '@/lib/flyer/model'
 import { listTemplates } from '@/lib/flyer/templates-server'
 import { canGrantFreeVotes, listFreeVoteGrants } from '@/lib/free-votes-server'
 import { getTranslations } from '@/lib/i18n-server'
@@ -57,6 +58,12 @@ export default async function EventDetailPage({ params }: Props) {
     listTickets(ctx, eventId),
     ticketFigures(ctx, eventId),
   ])
+  // Same rule as `resolveTemplateForNominee`: the category's published template, else the event-wide one.
+  const published = templates.filter((tpl) => tpl.status === 'published')
+  const frameFor = (categoryId: string) => {
+    const tpl = published.find((x) => x.categoryId === categoryId) ?? published.find((x) => !x.categoryId)
+    return tpl ? photoFrameOf(tpl.canvasJson, tpl.width, tpl.height) : null
+  }
   const tierName = new Map(tiers.map((tier) => [tier.$id, tier.name]))
   const { report } = await loadCumulativeReport(ctx, eventId)
   const grants = await listFreeVoteGrants(ctx, eventId)
@@ -122,7 +129,7 @@ export default async function EventDetailPage({ params }: Props) {
       </div>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.results.title')}</h2>
+        <h2 className="section-title">{t('web:events.results.title')}</h2>
         <dl className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {(
             [
@@ -134,11 +141,11 @@ export default async function EventDetailPage({ params }: Props) {
               ['organizerShare', formatPesewas(figures.organizerShare)],
             ] as const
           ).map(([key, value]) => (
-            <div key={key} className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
-              <dt className="text-xs text-neutral-500 uppercase dark:text-neutral-400">
+            <div key={key} className="stat">
+              <dt className="text-xs font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
                 {t(`web:events.results.${key}`)}
               </dt>
-              <dd className="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">{value}</dd>
+              <dd className="mt-1 text-xl font-bold tracking-tight text-neutral-900 dark:text-white">{value}</dd>
             </div>
           ))}
         </dl>
@@ -157,10 +164,7 @@ export default async function EventDetailPage({ params }: Props) {
           <div className="space-y-4">
             <h3 className="font-medium text-neutral-900 dark:text-white">{t('web:report.cumulativeTitle')}</h3>
             {report.categories.map((category) => (
-              <div
-                key={category.categoryId}
-                className="overflow-x-auto rounded-2xl border border-neutral-200 dark:border-neutral-700"
-              >
+              <div key={category.categoryId} className="overflow-x-auto surface">
                 <div className="border-b border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-900 dark:border-neutral-700 dark:text-white">
                   {category.name}
                 </div>
@@ -223,7 +227,7 @@ export default async function EventDetailPage({ params }: Props) {
           </details>
         )}
         {tallies.map(({ round, rows }) => (
-          <div key={round.$id} className="rounded-2xl border border-neutral-200 dark:border-neutral-700">
+          <div key={round.$id} className="overflow-hidden surface">
             <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
               <h3 className="font-medium text-neutral-900 dark:text-white">{round.name}</h3>
               <span className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -263,17 +267,17 @@ export default async function EventDetailPage({ params }: Props) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.rounds.title')}</h2>
+        <h2 className="section-title">{t('web:events.rounds.title')}</h2>
         <RoundControls orgId={organization.$id} eventId={event.$id} rounds={rounds} canManage={manager && open} />
       </section>
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:tickets.panel.title')}</h2>
+          <h2 className="section-title">{t('web:tickets.panel.title')}</h2>
           {canScan(ctx.role) && (
             <Link
               href={`/dashboard/${orgSlug}/events/${eventId}/scan`}
-              className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="rounded-xl btn-brand px-4 py-2 text-sm font-medium"
             >
               {t('web:tickets.panel.scan')}
             </Link>
@@ -288,7 +292,7 @@ export default async function EventDetailPage({ params }: Props) {
               ['organizerShare', formatPesewas(tFigures.organizerShare)],
             ] as const
           ).map(([key, value]) => (
-            <div key={key} className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-700">
+            <div key={key} className="surface p-4">
               <dt className="text-xs text-neutral-500 uppercase dark:text-neutral-400">
                 {t(`web:tickets.panel.figures.${key}`)}
               </dt>
@@ -341,7 +345,7 @@ export default async function EventDetailPage({ params }: Props) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:flyer.panel.title')}</h2>
+        <h2 className="section-title">{t('web:flyer.panel.title')}</h2>
         <FlyerPanel
           orgId={organization.$id}
           orgSlug={orgSlug}
@@ -362,14 +366,14 @@ export default async function EventDetailPage({ params }: Props) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:events.categories.title')}</h2>
+        <h2 className="section-title">{t('web:events.categories.title')}</h2>
         {categories.length === 0 && (
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('web:events.categories.empty')}</p>
         )}
         {categories.map((category) => {
           const members = nominees.filter((n) => n.categoryId === category.$id)
           return (
-            <div key={category.$id} className="rounded-2xl border border-neutral-200 dark:border-neutral-700">
+            <div key={category.$id} className="overflow-hidden surface">
               <div className="border-b border-neutral-200 px-4 py-3 dark:border-neutral-700">
                 <h3 className="font-medium text-neutral-900 dark:text-white">{category.name}</h3>
               </div>
@@ -437,6 +441,7 @@ export default async function EventDetailPage({ params }: Props) {
                                   claimed: !!n.claimedAt,
                                   photoUrl: n.photoUrl,
                                   photoFocus: focusOf(n),
+                                  photoFrame: frameFor(n.categoryId),
                                 }}
                               />
                             </div>
@@ -465,9 +470,7 @@ export default async function EventDetailPage({ params }: Props) {
 
       {manager && open && (
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
-            {t('web:events.nominees.addTitle')}
-          </h2>
+          <h2 className="section-title">{t('web:events.nominees.addTitle')}</h2>
           <AddNomineeForm orgId={organization.$id} event={event} categories={categories} />
         </section>
       )}

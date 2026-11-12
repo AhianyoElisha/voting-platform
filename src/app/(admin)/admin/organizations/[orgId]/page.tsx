@@ -72,7 +72,7 @@ export default async function AdminOrganizationPage({ params }: Props) {
             freeVotesEnabled: o.freeVotesEnabled,
           }}
         />
-        <section className="space-y-2 rounded-2xl border border-neutral-200 p-4 text-sm dark:border-neutral-700">
+        <section className="space-y-2 surface p-4 text-sm">
           <h2 className="font-semibold text-neutral-900 dark:text-white">{t('web:admin.org.balance')}</h2>
           <p>
             {t('web:admin.org.credits')}: <strong>{formatPesewas(balance.credits)}</strong>
@@ -90,7 +90,7 @@ export default async function AdminOrganizationPage({ params }: Props) {
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:admin.org.events')}</h2>
+        <h2 className="section-title">{t('web:admin.org.events')}</h2>
         {detail.events.length === 0 ? (
           <Empty>{t('web:admin.payouts.none')}</Empty>
         ) : (
@@ -121,7 +121,7 @@ export default async function AdminOrganizationPage({ params }: Props) {
 
       <section className="space-y-3">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:admin.nav.transactions')}</h2>
+          <h2 className="section-title">{t('web:admin.nav.transactions')}</h2>
           <Link href={`/admin/transactions?org=${o.$id}`} className="text-sm underline">
             {t('web:admin.seeAll')}
           </Link>
@@ -135,7 +135,7 @@ export default async function AdminOrganizationPage({ params }: Props) {
 
       <section className="space-y-3">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:admin.nav.audit')}</h2>
+          <h2 className="section-title">{t('web:admin.nav.audit')}</h2>
           <Link href={`/admin/audit?org=${o.$id}`} className="text-sm underline">
             {t('web:admin.seeAll')}
           </Link>

@@ -7,7 +7,7 @@ export const td = 'px-3 py-2 align-top'
 
 export function TableWrap({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-neutral-200 dark:border-neutral-700">
+    <div className="overflow-x-auto surface">
       <table className="w-full text-sm">{children}</table>
     </div>
   )
@@ -44,5 +44,4 @@ export const selectClass =
   'rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white'
 export const fieldClass =
   'rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white'
-export const buttonClass =
-  'rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50'
+export const buttonClass = 'rounded-xl btn-brand px-4 py-2 text-sm font-medium disabled:opacity-50'

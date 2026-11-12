@@ -324,9 +324,17 @@ describe('portal access (own row only)', () => {
       NotOwnNomineeError
     )
 
+    // Moving without zooming never writes the zoom column.
+    expect(moved).not.toHaveProperty('photoZoom')
+    const zoomed = await updateOwnProfile(userId, nominee.$id, { photoFocus: { x: 40, y: 10, zoom: 150 } })
+    expect([zoomed.photoFocusX, zoomed.photoFocusY, zoomed.photoZoom]).toEqual([40, 10, 150])
+    await expect(updateOwnProfile(userId, nominee.$id, { photoFocus: { x: 40, y: 10, zoom: 900 } })).rejects.toThrow(
+      /focusInvalid/
+    )
+
     storage.createFile.mockResolvedValueOnce({ $id: 'file_2' })
     const replaced = await attachPhoto(userId, nominee.$id, new Uint8Array([2]))
-    expect([replaced.photoFocusX, replaced.photoFocusY]).toEqual([null, null])
+    expect([replaced.photoFocusX, replaced.photoFocusY, replaced.photoZoom]).toEqual([null, null, null])
   })
 })
 
@@ -363,6 +371,8 @@ describe('organizer edits (updateNominee, setNomineePhoto)', () => {
     const audit = fake.dump('audit_logs').filter((a) => a.action === 'nominee.update')
     expect(audit).toHaveLength(1)
     expect(JSON.parse(audit[0].metadata as string)).toEqual({ eventId: event.$id, fields: ['photoFocus'] })
+    const zoomed = await updateNominee(owner, event.$id, nominee.$id, { photoFocus: { x: 60, y: 20, zoom: 200 } })
+    expect(zoomed.photoZoom).toBe(200)
   })
 
   test('changing the email before claim drops the pending invite, so the old link dies', async () => {

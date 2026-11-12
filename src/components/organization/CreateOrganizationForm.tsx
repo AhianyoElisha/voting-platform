@@ -55,7 +55,7 @@ export default function CreateOrganizationForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         {isSubmitting ? t('web:dashboard.create.submitting') : t('web:dashboard.create.cta')}
         {!isSubmitting && <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={1.5} />}

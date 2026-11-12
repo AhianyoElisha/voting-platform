@@ -77,6 +77,48 @@
   @apply pl-4 sm:pl-[calc((100vw-40rem+2rem)/2)] md:pl-[calc((100vw-48rem+2rem)/2)] lg:pl-[calc((100vw-64rem+2rem)/2)] xl:pl-[calc((100vw-80rem+2rem)/2)] 2xl:pl-[calc((100vw-96rem+16rem)/2)];
 }
 
+/* ─── voteapp surfaces, buttons and titles ───────────────────────
+   One look for cards, buttons and section titles across the public site,
+   the organizer dashboard, the nominee portal and the admin console. */
+
+/* A card: soft border, a little depth, glassy over the page backdrop. */
+@utility surface {
+  @apply rounded-2xl border border-neutral-200/80 bg-white/90 shadow-sm shadow-neutral-900/5 backdrop-blur-sm dark:border-neutral-700/80 dark:bg-neutral-800/70 dark:shadow-black/20;
+}
+
+/* A card that is a link or a button: lifts and takes the brand colour on hover. */
+@utility surface-hover {
+  @apply transition duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-lg hover:shadow-primary-600/10 dark:hover:border-primary-500/60;
+}
+
+/* A figure tile: a card with a brand-coloured edge. */
+@utility stat {
+  @apply relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-white/90 p-4 shadow-sm shadow-neutral-900/5 dark:border-neutral-700/80 dark:bg-neutral-800/70;
+  &::before {
+    content: '';
+    @apply absolute inset-y-0 left-0 w-1 bg-linear-to-b from-primary-500 to-secondary-500;
+  }
+}
+
+/* Section title with a short brand-coloured bar in front. */
+@utility section-title {
+  @apply flex items-center gap-2.5 text-xl font-semibold tracking-tight text-neutral-900 dark:text-white;
+  &::before {
+    content: '';
+    @apply h-5 w-1 shrink-0 rounded-full bg-linear-to-b from-primary-500 to-secondary-500;
+  }
+}
+
+/* The main call to action: brand gradient with a soft glow. */
+@utility btn-brand {
+  @apply bg-linear-to-r from-primary-600 to-primary-500 text-white shadow-md shadow-primary-600/25 transition hover:from-primary-700 hover:to-primary-600 hover:shadow-lg hover:shadow-primary-600/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none;
+}
+
+/* Headline text in the brand gradient. */
+@utility text-brand {
+  @apply bg-linear-to-r from-primary-600 via-primary-500 to-secondary-500 bg-clip-text text-transparent dark:from-primary-300 dark:via-primary-400 dark:to-secondary-300;
+}
+
 /* embla carousel */
 @utility embla {
   overflow: hidden;

@@ -87,7 +87,7 @@ export default function FontUploadForm({ orgId }: { orgId: string }) {
       <button
         type="submit"
         disabled={busy || !file || !family}
-        className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="rounded-lg btn-brand px-3 py-1.5 text-xs font-medium"
       >
         {busy ? t('web:flyer.fonts.uploading') : t('web:flyer.fonts.upload')}
       </button>

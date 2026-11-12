@@ -121,7 +121,7 @@ export default function PayoutRequestForm({ orgId, availableLabel }: { orgId: st
       <button
         type="submit"
         disabled={busy}
-        className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+        className="rounded-xl btn-brand px-4 py-2 text-sm font-medium disabled:opacity-50"
       >
         {busy ? t('web:payouts.form.submitting') : t('web:payouts.form.submit')}
       </button>

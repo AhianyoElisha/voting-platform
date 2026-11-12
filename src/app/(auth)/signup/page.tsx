@@ -87,7 +87,7 @@ function SignupContent() {
 
       <div className="mx-auto max-w-md space-y-6">
         <div className="space-y-1 text-center">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{t('web:signup.title')}</h2>
+          <h2 className="section-title">{t('web:signup.title')}</h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             {joining ? t('web:signup.joinSubtitle') : t('web:signup.subtitle')}
           </p>
@@ -168,7 +168,7 @@ function SignupContent() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
           >
             {isSubmitting ? t('auth:signup.submitting.cta') : t('auth:signup.submit.cta')}
             {!isSubmitting && <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={1.5} />}

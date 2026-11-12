@@ -30,10 +30,7 @@ export default function ResetPasswordForm() {
         <HugeiconsIcon icon={Alert02Icon} size={40} className="mx-auto text-amber-600" />
         <p className="font-semibold text-neutral-900 dark:text-white">{t('web:resetPassword.invalid.title')}</p>
         <p className="text-sm text-neutral-600 dark:text-neutral-300">{t('web:resetPassword.invalid.body')}</p>
-        <Link
-          href="/forgot-password"
-          className="inline-block rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-        >
+        <Link href="/forgot-password" className="inline-block rounded-xl btn-brand px-4 py-2 text-sm font-medium">
           {t('web:resetPassword.invalid.cta')}
         </Link>
       </div>
@@ -46,10 +43,7 @@ export default function ResetPasswordForm() {
         <HugeiconsIcon icon={CheckmarkCircle02Icon} size={40} className="mx-auto text-green-600" />
         <p className="font-semibold text-neutral-900 dark:text-white">{t('web:resetPassword.done.title')}</p>
         <p className="text-sm text-neutral-600 dark:text-neutral-300">{t('web:resetPassword.done.body')}</p>
-        <Link
-          href="/login"
-          className="inline-block rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-        >
+        <Link href="/login" className="inline-block rounded-xl btn-brand px-4 py-2 text-sm font-medium">
           {t('web:resetPassword.done.cta')}
         </Link>
       </div>
@@ -131,7 +125,7 @@ export default function ResetPasswordForm() {
       <button
         type="submit"
         disabled={busy}
-        className="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+        className="w-full rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         {busy ? t('web:resetPassword.submitting') : t('web:resetPassword.submit')}
       </button>

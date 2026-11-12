@@ -109,7 +109,58 @@
       "title": "Paid voting for campus awards, with a flyer for every nominee.",
       "subtitle": "Voters pay by mobile money on the web or by dialling a USSD code. Organizers get finished, campaign-ready flyers the moment a nominee uploads a photo.",
       "primaryCta": "Create your event",
-      "secondaryCta": "Browse events"
+      "secondaryCta": "Browse events",
+      "eyebrow": "Built for campus awards and pageants",
+      "titleStart": "Paid voting, with",
+      "titleAccent": "a flyer for every nominee.",
+      "note": "Free to start. You only pay a commission on votes and tickets sold."
+    },
+    "features": {
+      "title": "Everything your event needs",
+      "subtitle": "The voting your audience expects, plus the flyers nobody else makes for you.",
+      "flyers": {
+        "title": "Automatic flyers",
+        "body": "Design one template. Every nominee gets a finished, campaign-ready flyer the moment their photo is in."
+      },
+      "ussd": {
+        "title": "Web and USSD voting",
+        "body": "Voters pay by mobile money on the website or by dialling a code. No smartphone or data needed."
+      },
+      "results": {
+        "title": "Results you control",
+        "body": "See the tally in your dashboard and choose what the public sees: nothing, rankings, percentages or counts."
+      },
+      "tickets": {
+        "title": "Tickets with QR codes",
+        "body": "Sell tickets alongside voting and check them in at the door from a phone."
+      },
+      "payouts": {
+        "title": "Clear payouts",
+        "body": "See every cedi earned and your share of it, then request a payout to mobile money or a bank account."
+      },
+      "rounds": {
+        "title": "Rounds and reports",
+        "body": "Run your event in rounds that each start from zero, and download a full report as a PDF."
+      }
+    },
+    "steps": {
+      "title": "From nominees to votes in three steps",
+      "create": {
+        "title": "Create your event",
+        "body": "Sign up, name your event, set the price per vote and add your categories."
+      },
+      "nominees": {
+        "title": "Add your nominees",
+        "body": "Each one gets a voting code, a portal to upload their photo, and their flyer."
+      },
+      "vote": {
+        "title": "Open voting",
+        "body": "Share the flyers. Votes count the moment each payment is confirmed."
+      }
+    },
+    "cta": {
+      "title": "Ready to run your event?",
+      "body": "Set up your workspace in a few minutes and have flyers out the same day."
     }
   },
   "login": {
@@ -355,7 +406,9 @@
     "notLive": "Voting is not open right now. Check back when the organizer opens it.",
     "free_one": "{{count}} free",
     "free_other": "{{count}} free",
-    "freeHelper": "Free votes are granted by the organizer and are shown separately from paid votes."
+    "freeHelper": "Free votes are granted by the organizer and are shown separately from paid votes.",
+    "nominees_one": "{{count}} nominee",
+    "nominees_other": "{{count}} nominees"
   },
   "vote": {
     "notLive": "Voting is not open for this event right now.",
@@ -514,7 +567,10 @@
       "maskShape": "Shape from the design",
       "overlayHint": "The design’s layers above the photo are drawn over it (shown see-through here).",
       "removeOverlay": "Remove overlay",
-      "overlayRemoved": "Overlay removed."
+      "overlayRemoved": "Overlay removed.",
+      "fit": "Photo fit",
+      "fitCover": "Fill the frame (crops the photo)",
+      "fitContain": "Show the whole photo"
     },
     "fonts": {
       "title": "Fonts",
@@ -947,11 +1003,13 @@
   },
   "photoFocus": {
     "title": "Position on the flyer",
-    "helper": "Tap the part of the photo that must stay in view, usually the face. The flyer keeps it in frame when the photo is cropped.",
+    "helper": "Tap the part of the photo that must stay in view, usually the face, and zoom in if you want it larger. The outlined area is what the flyer shows.",
     "save": "Save position",
     "saving": "Saving…",
     "saved": "Position saved. The flyer is being updated.",
-    "reset": "Centre",
-    "marker": "Chosen point"
+    "reset": "Reset",
+    "marker": "Chosen point",
+    "helperNoTemplate": "Tap the part of the photo that must stay in view, usually the face, and zoom in if you want it larger. It is applied when the flyer is made.",
+    "zoom": "Zoom: {{percent}}%"
   }
 }

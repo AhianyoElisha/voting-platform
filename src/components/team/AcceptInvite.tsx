@@ -26,7 +26,7 @@ export default function AcceptInvite({ token }: { token: string }) {
             setBusy(false)
           }
         }}
-        className="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+        className="w-full rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         {busy ? t('web:team.accept.joining') : t('web:team.accept.join')}
       </button>

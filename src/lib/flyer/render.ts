@@ -1,7 +1,7 @@
 import { GlobalFonts, createCanvas, loadImage, type SKRSContext2D } from '@napi-rs/canvas'
 import path from 'path'
 import { resolveBinding, type BindingContext } from './bindings'
-import { coverCrop, fitText } from './layout'
+import { coverCrop, fitText, placePhoto } from './layout'
 import { FALLBACK_FONT, type PhotoSlot, type SlotModel, type TextSlot } from './model'
 
 /**
@@ -26,8 +26,8 @@ export interface RenderInputs {
   height: number
   background: Uint8Array | null
   photo: Uint8Array | null
-  /** Percent point of the photo kept in the frame; centre when absent (`photo-focus.ts`). */
-  photoFocus?: { x: number; y: number }
+  /** Percent point of the photo kept in the frame and zoom in percent; centre at 100 when absent (`photo-focus.ts`). */
+  photoFocus?: { x: number; y: number; zoom?: number }
   /** Transparent PNG over the photo; stretched to the template size. */
   foreground?: Uint8Array | null
   /** Alpha mask for a photo slot with shape `mask`; stretched to the slot. Without it, `mask` is a rectangle. */
@@ -139,8 +139,13 @@ export async function renderFlyer(inputs: RenderInputs): Promise<Uint8Array> {
       const lctx = layer.getContext('2d')
       if (photo) {
         const focus = inputs.photoFocus ?? { x: 50, y: 50 }
-        const crop = coverCrop(photo.width, photo.height, slot.w, slot.h, focus.x / 100, focus.y / 100)
-        lctx.drawImage(photo, crop.x, crop.y, crop.w, crop.h, 0, 0, w, h)
+        const { src, dst } = placePhoto(photo.width, photo.height, w, h, {
+          fit: slot.fit,
+          zoom: (focus.zoom ?? 100) / 100,
+          focusX: focus.x / 100,
+          focusY: focus.y / 100,
+        })
+        lctx.drawImage(photo, src.x, src.y, src.w, src.h, dst.x, dst.y, dst.w, dst.h)
       } else {
         lctx.fillStyle = '#9ca3af'
         lctx.fillRect(0, 0, w, h)

@@ -239,7 +239,7 @@ export default function VoteForm({
       <button
         type="submit"
         disabled={busy || qty < 1}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         {busy ? t('web:vote.form.submitting') : t('web:vote.form.submit', { amount: formatPesewas(amount) })}
         {!busy && <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={1.5} />}

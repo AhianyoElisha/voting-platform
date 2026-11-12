@@ -2,8 +2,9 @@ import { ID, Permission, Query, Role } from 'node-appwrite'
 import { createAdminClient, withRetry } from './appwrite-server'
 import { APPWRITE, APPWRITE as TABLES } from './constants'
 import { databaseId } from './db'
+import { photoFrameOf, type PhotoFrame } from './flyer/model'
 import { normalizePhoto } from './photo'
-import { CENTRE, focusColumns, focusOf, isCentred, parsePhotoFocus } from './photo-focus'
+import { CENTRE, focusColumns, focusOf, isDefault, parsePhotoFocus, sameFocus } from './photo-focus'
 import type { CategoryDoc, EventDoc, GeneratedFlyerDoc, NomineeDoc, OrganizationDoc } from './types'
 
 /**
@@ -66,6 +67,8 @@ export interface PortalEntry {
   event: Pick<EventDoc, '$id' | 'title' | 'slug' | 'status'> | null
   category: Pick<CategoryDoc, '$id' | 'name'> | null
   organizationSlug: string | null
+  /** The photo frame of the template that applies, for the position picker; null without one. */
+  photoFrame: PhotoFrame | null
 }
 
 /** Everything the portal shows for one user: their nominee rows with event and category names. */
@@ -103,6 +106,14 @@ export async function portalEntries(userId: string): Promise<PortalEntry[]> {
     ])
   )
   const flyerByNominee = new Map(flyers.documents.map((f) => [f.nomineeId, f]))
+  const { resolveTemplateForNominee } = await import('./flyer/templates-server')
+  const frames = new Map<string, PhotoFrame | null>()
+  await Promise.all(
+    nominees.map(async (n) => {
+      const template = await resolveTemplateForNominee(n)
+      frames.set(n.$id, template ? photoFrameOf(template.canvasJson, template.width, template.height) : null)
+    })
+  )
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT ?? ''
   const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? ''
   const eventById = new Map(events.documents.map((e) => [e.$id, e]))
@@ -120,6 +131,7 @@ export async function portalEntries(userId: string): Promise<PortalEntry[]> {
       event: event ? { $id: event.$id, title: event.title, slug: event.slug, status: event.status } : null,
       category: category ? { $id: category.$id, name: category.name } : null,
       organizationSlug: orgById.get(nominee.organizationId)?.slug ?? null,
+      photoFrame: frames.get(nominee.$id) ?? null,
     }
   })
 }
@@ -145,8 +157,7 @@ export async function updateOwnProfile(
   if (input.photoFocus !== undefined) {
     const focus = parsePhotoFocus(input.photoFocus)
     if (!focus) throw new ProfileError('focusInvalid')
-    const current = focusOf(nominee)
-    if (focus.x !== current.x || focus.y !== current.y) Object.assign(data, focusColumns(focus))
+    if (!sameFocus(focus, focusOf(nominee))) Object.assign(data, focusColumns(focus, nominee))
   }
   if (Object.keys(data).length === 0) return nominee
   const { databases } = createAdminClient()
@@ -196,7 +207,7 @@ export async function storeNomineePhoto(
     databases.updateDocument<NomineeDoc>(db(), APPWRITE.TABLES.NOMINEES, nominee.$id, {
       photoUrl: photoViewUrl(file.$id),
       // A new photo starts centred again. Only written when a focus was set.
-      ...(isCentred(focusOf(nominee)) ? {} : focusColumns(CENTRE)),
+      ...(isDefault(focusOf(nominee)) ? {} : focusColumns(CENTRE, nominee)),
       ...extra,
     })
   )

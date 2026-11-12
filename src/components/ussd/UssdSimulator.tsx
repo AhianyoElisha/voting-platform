@@ -76,7 +76,7 @@ export default function UssdSimulator() {
           type="button"
           disabled={busy}
           onClick={() => void send('initiation', '')}
-          className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-xl btn-brand px-4 py-2 text-sm font-medium"
         >
           {ended ? 'Dial' : 'Hang up and dial again'}
         </button>

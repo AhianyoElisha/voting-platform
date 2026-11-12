@@ -49,7 +49,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 
 ### 5.2a Nominee portal
 - When a nominee is added, they receive an **email confirming the nomination** with their login credentials for the nominee portal. *Built 2026-10-14 as a one-time claim link: the nominee sets their own password on the claim page, so no password travels by email. The link is emailed through Resend (decided 2026-11-12, #32); if sending fails, the organizer gets it to share directly.*
-- In the portal the nominee completes their profile: photo upload, name as it should appear, bio and any other fields the organizer requires. *They can also mark the part of the photo the flyer must keep in view (built 2026-11-12).*
+- In the portal the nominee completes their profile: photo upload, name as it should appear, bio and any other fields the organizer requires. *They can also mark the part of the photo the flyer must keep in view and zoom in on it (built 2026-11-12).*
 - As soon as the photo is uploaded, the platform **generates the nominee's flyer immediately**, and the nominee can download it from the portal.
 - The nominee can see their own voting code and (if the organizer allows) their own vote count. *The voting code is shown; the vote count is not built and waits on #33.*
 

@@ -78,7 +78,7 @@ export default function ForgotPasswordForm() {
       <button
         type="submit"
         disabled={busy}
-        className="w-full rounded-xl bg-primary-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-primary-700 disabled:opacity-50"
+        className="w-full rounded-xl btn-brand px-4 py-3 text-sm font-medium disabled:opacity-50"
       >
         {busy ? t('web:forgotPassword.submitting') : t('web:forgotPassword.submit')}
       </button>

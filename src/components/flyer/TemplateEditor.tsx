@@ -46,7 +46,7 @@ export interface FontView {
 }
 
 const btn = 'rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:opacity-50'
-const btnPrimary = `${btn} bg-primary-600 text-white hover:bg-primary-700`
+const btnPrimary = `${btn} btn-brand`
 const btnSecondary = `${btn} border border-neutral-300 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-700`
 const field = `${inputClass} py-1.5 text-xs`
 
@@ -518,6 +518,17 @@ export default function TemplateEditor({
                     {(template.photoMaskUrl || selected.shape === 'mask') && (
                       <option value="mask">{t('web:flyer.editor.maskShape')}</option>
                     )}
+                  </select>
+                </label>
+                <label>
+                  {t('web:flyer.editor.fit')}
+                  <select
+                    value={selected.fit ?? 'cover'}
+                    onChange={(e) => update({ fit: e.target.value as 'cover' | 'contain' })}
+                    className={field}
+                  >
+                    <option value="cover">{t('web:flyer.editor.fitCover')}</option>
+                    <option value="contain">{t('web:flyer.editor.fitContain')}</option>
                   </select>
                 </label>
                 {selected.shape === 'rect' && (

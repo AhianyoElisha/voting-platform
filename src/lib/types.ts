@@ -115,6 +115,8 @@ export interface NomineeDoc extends TenantDoc {
    */
   photoFocusX?: number | null
   photoFocusY?: number | null
+  /** Zoom in percent, 100 to 300; null or absent = 100. */
+  photoZoom?: number | null
   bio: string | null
   status: NomineeStatus
   isMorale: boolean

@@ -11,7 +11,7 @@ import {
 } from './db'
 import { allocateNomineeCode, isNomineeCodeTaken } from './nominee-code'
 import { releaseInviteAccount } from './nominee-invite-server'
-import { focusColumns, focusOf, parsePhotoFocus } from './photo-focus'
+import { focusColumns, focusOf, parsePhotoFocus, sameFocus } from './photo-focus'
 import { storeNomineePhoto } from './portal-server'
 import { assertCanManage, canManage } from './tenant'
 import type { CategoryDoc, EventDoc, MembershipRole, NomineeDoc, RoundDoc, RoundEntryDoc } from './types'
@@ -277,8 +277,7 @@ export async function updateNominee(
   if (input.photoFocus !== undefined) {
     const focus = parsePhotoFocus(input.photoFocus)
     if (!focus) throw new NomineeError('focusInvalid')
-    const current = focusOf(nominee)
-    if (focus.x !== current.x || focus.y !== current.y) Object.assign(data, focusColumns(focus))
+    if (!sameFocus(focus, focusOf(nominee))) Object.assign(data, focusColumns(focus, nominee))
   }
   if (Object.keys(data).length === 0) return nominee
 
@@ -294,7 +293,7 @@ export async function updateNominee(
     metadata: {
       eventId,
       fields: Object.keys(data)
-        .filter((k) => ['name', 'bio', 'email', 'photoFocusX'].includes(k))
+        .filter((k) => ['name', 'bio', 'email', 'photoFocusX', 'photoZoom'].includes(k))
         .map((k) => (k === 'photoFocusX' ? 'photoFocus' : k)),
       ...(accountReleased ? { accountReleased } : {}),
     },

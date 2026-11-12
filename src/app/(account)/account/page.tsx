@@ -33,7 +33,7 @@ export default async function Page() {
     listOwnNominees(userId),
   ])
 
-  const card = 'rounded-2xl border border-neutral-200 p-5 dark:border-neutral-700'
+  const card = 'surface p-5'
   const h2 = 'text-lg font-semibold text-neutral-900 dark:text-white'
 
   return (

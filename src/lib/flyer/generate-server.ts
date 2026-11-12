@@ -111,7 +111,9 @@ export async function ensureFlyer(
     // Only when present, so flyers of templates without them keep their hashes.
     ...(template.foregroundFileId ? { foregroundFileId: template.foregroundFileId } : {}),
     ...(template.photoMaskFileId ? { photoMaskFileId: template.photoMaskFileId } : {}),
-    ...(isCentred(focus) ? {} : { photoFocus: focus }),
+    // Shapes kept stable so flyers made before zoom existed keep their hashes.
+    ...(isCentred(focus) ? {} : { photoFocus: { x: focus.x, y: focus.y } }),
+    ...(focus.zoom === 100 ? {} : { photoZoom: focus.zoom }),
     ...context,
   })
   if (!opts.force && existing && existing.sourceHash === hash && existing.templateId === template.$id) {

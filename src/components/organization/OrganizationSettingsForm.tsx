@@ -165,7 +165,7 @@ export default function OrganizationSettingsForm({
           )}
         </fieldset>
 
-        <button type="submit" disabled={busy} className={`${btn} bg-primary-600 text-white hover:bg-primary-700`}>
+        <button type="submit" disabled={busy} className={`${btn} btn-brand`}>
           {t('web:orgSettings.save')}
         </button>
       </form>

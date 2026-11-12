@@ -3,6 +3,7 @@
 import { apiErrorMessage, postJson } from '@/components/events/api'
 import PhotoFocusPicker from '@/components/flyer/PhotoFocusPicker'
 import { inputClass } from '@/components/organization/OrganizationFields'
+import type { PhotoFrame } from '@/lib/flyer/model'
 import type { PhotoFocus } from '@/lib/photo-focus'
 import { compressImage } from '@/utils/compressImage'
 import { useRouter } from 'next/navigation'
@@ -32,6 +33,7 @@ export default function NomineeEditControl({
     claimed: boolean
     photoUrl: string | null
     photoFocus: PhotoFocus
+    photoFrame: PhotoFrame | null
   }
 }) {
   const { t } = useTranslation()
@@ -142,7 +144,7 @@ export default function NomineeEditControl({
           placeholder={t('web:events.nominees.bioPlaceholder')}
         />
         <div className="flex gap-2">
-          <button type="submit" disabled={busy !== ''} className={`${small} bg-primary-600 text-white`}>
+          <button type="submit" disabled={busy !== ''} className={`${small} btn-brand`}>
             {busy === 'save' ? t('web:events.nominees.edit.saving') : t('web:events.nominees.edit.save')}
           </button>
           <button
@@ -185,6 +187,7 @@ export default function NomineeEditControl({
             key={nominee.photoUrl}
             photoUrl={nominee.photoUrl}
             initial={nominee.photoFocus}
+            frame={nominee.photoFrame}
             endpoint={base}
           />
         </div>

@@ -3,6 +3,7 @@
 import { apiErrorMessage, postJson } from '@/components/events/api'
 import PhotoFocusPicker from '@/components/flyer/PhotoFocusPicker'
 import { inputClass } from '@/components/organization/OrganizationFields'
+import type { PhotoFrame } from '@/lib/flyer/model'
 import type { PhotoFocus } from '@/lib/photo-focus'
 import { compressImage } from '@/utils/compressImage'
 import Link from 'next/link'
@@ -17,6 +18,7 @@ export interface PortalEntryView {
   bio: string | null
   photoUrl: string | null
   photoFocus: PhotoFocus
+  photoFrame: PhotoFrame | null
   profileCompletedAt: string | null
   flyerUrl: string | null
   event: { title: string; slug: string; status: string } | null
@@ -80,14 +82,14 @@ export default function NomineeCard({ entry }: { entry: PortalEntryView }) {
     entry.organizationSlug && entry.event ? `/o/${entry.organizationSlug}/${entry.event.slug}/vote/${entry.code}` : null
 
   return (
-    <article className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800">
+    <article className="space-y-6 surface p-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             {entry.event?.title ?? ''}
             {entry.category ? ` · ${entry.category.name}` : ''}
           </p>
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">{entry.name}</h2>
+          <h2 className="section-title">{entry.name}</h2>
         </div>
         <div className="rounded-xl bg-primary-50 px-4 py-2 text-center dark:bg-primary-900/20">
           <p className="text-xs text-neutral-500 uppercase dark:text-neutral-400">{t('web:portal.card.code')}</p>
@@ -125,11 +127,7 @@ export default function NomineeCard({ entry }: { entry: PortalEntryView }) {
               className="block w-full text-sm text-neutral-600 file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm dark:text-neutral-300 dark:file:bg-neutral-700"
               aria-label={t('web:portal.photo.choose')}
             />
-            <button
-              type="submit"
-              disabled={!file || uploading}
-              className={`${btn} bg-primary-600 text-white hover:bg-primary-700`}
-            >
+            <button type="submit" disabled={!file || uploading} className={`${btn} btn-brand`}>
               {uploading
                 ? t('web:portal.photo.uploading')
                 : entry.photoUrl
@@ -142,6 +140,7 @@ export default function NomineeCard({ entry }: { entry: PortalEntryView }) {
               key={entry.photoUrl}
               photoUrl={entry.photoUrl}
               initial={entry.photoFocus}
+              frame={entry.photoFrame}
               endpoint={`/api/portal/nominees/${entry.id}`}
             />
           )}
@@ -202,11 +201,7 @@ export default function NomineeCard({ entry }: { entry: PortalEntryView }) {
 
                 <img src={entry.flyerUrl} alt={t('web:portal.flyer.title')} className="w-full max-w-xs rounded-xl" />
 
-                <a
-                  href={entry.flyerUrl}
-                  download
-                  className={`${btn} inline-block bg-primary-600 text-white hover:bg-primary-700`}
-                >
+                <a href={entry.flyerUrl} download className={`${btn} inline-block btn-brand`}>
                   {t('web:portal.flyer.download')}
                 </a>
 

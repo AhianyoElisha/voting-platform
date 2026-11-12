@@ -30,7 +30,7 @@ export default async function EventsPage({ params }: Props) {
         {canManage(ctx.role) && (
           <Link
             href={`/dashboard/${orgSlug}/events/new`}
-            className="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-xl btn-brand px-4 py-2 text-sm font-medium"
           >
             {t('web:events.list.create')}
           </Link>
@@ -42,10 +42,7 @@ export default async function EventsPage({ params }: Props) {
       ) : (
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <li
-              key={event.$id}
-              className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-800"
-            >
+            <li key={event.$id} className="surface p-5">
               <div className="flex items-start justify-between gap-3">
                 <Link
                   href={`/dashboard/${orgSlug}/events/${event.$id}`}
