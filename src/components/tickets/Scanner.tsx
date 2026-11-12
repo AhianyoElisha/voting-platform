@@ -2,6 +2,7 @@
 
 import { apiErrorMessage, postJson } from '@/components/events/api'
 import { inputClass } from '@/components/organization/OrganizationFields'
+import { tokenFromScan } from '@/lib/tickets/scan-input'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -70,7 +71,7 @@ export default function Scanner({ orgId, eventId }: { orgId: string; eventId: st
           const value = codes[0]?.rawValue
           if (value && value !== lastTokenRef.current) {
             lastTokenRef.current = value
-            await send(value.includes('/t/') ? (value.split('/t/').pop() ?? value) : value)
+            await send(tokenFromScan(value))
           }
         } catch {
           /* frame not ready */
@@ -119,7 +120,7 @@ export default function Scanner({ orgId, eventId }: { orgId: string; eventId: st
       <form
         onSubmit={(e: FormEvent) => {
           e.preventDefault()
-          void send(manual)
+          void send(tokenFromScan(manual))
           setManual('')
         }}
         className="flex gap-2"
