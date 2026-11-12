@@ -1,8 +1,16 @@
 import { Query } from 'node-appwrite'
 import { writeAuditLog } from './audit'
 import { APPWRITE, moraleCandidatesEnabledOnPlatform } from './constants'
-import { createTenantDocument, getOrganization, getTenantDocument, listTenantDocuments, type TenantContext } from './db'
+import {
+  createTenantDocument,
+  getOrganization,
+  getTenantDocument,
+  listTenantDocuments,
+  updateTenantDocument,
+  type TenantContext,
+} from './db'
 import { allocateNomineeCode, isNomineeCodeTaken } from './nominee-code'
+import { storeNomineePhoto } from './portal-server'
 import { assertCanManage, canManage } from './tenant'
 import type { CategoryDoc, EventDoc, MembershipRole, NomineeDoc, RoundDoc, RoundEntryDoc } from './types'
 
@@ -19,6 +27,8 @@ export type NomineeProblem =
   | 'moraleDisabled'
   | 'codeExhausted'
   | 'emailInvalid'
+  | 'notInEvent'
+  | 'emailLocked'
 
 export class NomineeError extends Error {
   constructor(public readonly problem: NomineeProblem) {
@@ -199,4 +209,99 @@ export async function listRoundEntries(ctx: TenantContext, roundId: string): Pro
     Query.limit(500),
   ])
   return res.documents
+}
+
+// ─── Editing (organizer side) ─────────────────────────────────
+
+/**
+ * The nominee, checked against the organization (tenant scope), the event in
+ * the URL and the event being open. Managers only.
+ */
+async function editableNominee(ctx: TenantContext, eventId: string, nomineeId: string): Promise<NomineeDoc> {
+  assertCanManage(ctx)
+  const nominee = await getTenantDocument<NomineeDoc>(ctx, APPWRITE.TABLES.NOMINEES, nomineeId)
+  if (nominee.eventId !== eventId) throw new NomineeError('notInEvent')
+  const event = await getTenantDocument<EventDoc>(ctx, APPWRITE.TABLES.EVENTS, eventId)
+  if (event.status === 'closed') throw new NomineeError('eventClosed')
+  return nominee
+}
+
+export interface UpdateNomineeInput {
+  name?: string
+  bio?: string
+  /** Empty string clears it. */
+  email?: string
+}
+
+/**
+ * Organizer edits to name, bio and portal email. Category, code and the
+ * morale flag are not editable here: the code is printed on flyers, and
+ * moving or re-flagging a nominee touches tallies and disclosures.
+ *
+ * Email: once the nominee has claimed the portal it is their login and stays
+ * fixed. Before that, a change drops any pending invite (the old link and the
+ * account made for the old address are no longer used), so the next invite
+ * goes to the new address.
+ */
+export async function updateNominee(
+  ctx: TenantContext,
+  eventId: string,
+  nomineeId: string,
+  input: UpdateNomineeInput
+): Promise<NomineeDoc> {
+  const nominee = await editableNominee(ctx, eventId, nomineeId)
+  const data: Partial<NomineeDoc> = {}
+  if (input.name !== undefined) {
+    const name = input.name.trim().replace(/\s+/g, ' ')
+    if (name.length < 2) throw new NomineeError('nameTooShort')
+    if (name.length > 120) throw new NomineeError('nameTooLong')
+    if (name !== nominee.name) data.name = name
+  }
+  if (input.bio !== undefined) {
+    const bio = input.bio.trim() || null
+    if (bio && bio.length > 2000) throw new NomineeError('bioTooLong')
+    if (bio !== nominee.bio) data.bio = bio
+  }
+  if (input.email !== undefined) {
+    const email = normalizeEmail(input.email)
+    if (email !== nominee.email) {
+      if (nominee.claimedAt) throw new NomineeError('emailLocked')
+      Object.assign(data, { email, userId: null, inviteTokenHash: null, inviteExpiresAt: null, inviteSentAt: null })
+    }
+  }
+  if (Object.keys(data).length === 0) return nominee
+
+  const updated = await updateTenantDocument<NomineeDoc>(ctx, APPWRITE.TABLES.NOMINEES, nominee.$id, data)
+  await writeAuditLog({
+    actorId: ctx.userId,
+    organizationId: ctx.organizationId,
+    action: 'nominee.update',
+    target: `nominees/${nominee.$id}`,
+    // Field names only: the values are personal data and already on the row.
+    metadata: { eventId, fields: Object.keys(data).filter((k) => ['name', 'bio', 'email'].includes(k)) },
+  })
+  return updated
+}
+
+/**
+ * The organizer uploads the nominee's photo (FLYER_ENGINE.md "Generation"),
+ * for nominees who will not use the portal. It does not mark the nominee's
+ * own profile complete.
+ */
+export async function setNomineePhoto(
+  ctx: TenantContext,
+  eventId: string,
+  nomineeId: string,
+  input: Uint8Array
+): Promise<NomineeDoc> {
+  const nominee = await editableNominee(ctx, eventId, nomineeId)
+  const updated = await storeNomineePhoto(nominee, input)
+  await writeAuditLog({
+    actorId: ctx.userId,
+    organizationId: ctx.organizationId,
+    action: 'nominee.photo',
+    target: `nominees/${nominee.$id}`,
+    metadata: { eventId, replaced: !!nominee.photoUrl },
+  })
+  return updated
 }

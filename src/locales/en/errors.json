@@ -54,7 +54,9 @@
     "categoryNotInEvent": "That category belongs to a different event.",
     "moraleDisabled": "Morale candidates are not enabled for this workspace.",
     "codeExhausted": "Could not allocate a nominee code. Try again.",
-    "emailInvalid": "Enter a valid email address for the nominee."
+    "emailInvalid": "Enter a valid email address for the nominee.",
+    "notInEvent": "That nominee is not in this event.",
+    "emailLocked": "The nominee has already signed in to the portal with this email, so it can't be changed."
   },
   "vote": {
     "nomineeNotFound": "No nominee has that code.",

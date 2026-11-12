@@ -22,7 +22,7 @@ import { TenantMismatchError, type TenantContext } from '../db'
 import type { EmailProvider } from '../email'
 import { createEvent } from '../events-server'
 import { ClaimError, claimInvite, claimUrl, inviteNominee } from '../nominee-invite-server'
-import { createCategory, createNominee } from '../nominees-server'
+import { NomineeError, createCategory, createNominee, setNomineePhoto, updateNominee } from '../nominees-server'
 import {
   NotOwnNomineeError,
   attachPhoto,
@@ -305,6 +305,82 @@ describe('portal access (own row only)', () => {
     expect(storage.deleteFile).toHaveBeenCalledWith('nominee-photos', 'file_1')
     expect(photoFileId(replaced.photoUrl)).toBe('file_2')
     expect(photoFileId(null)).toBeNull()
+  })
+})
+
+describe('organizer edits (updateNominee, setNomineePhoto)', () => {
+  test('a nominee added without an email can be given one and then invited', async () => {
+    const { nominee, event } = await seed(null)
+    await expect(inviteNominee(owner, nominee.$id, { email: noEmail })).rejects.toThrow(/noEmail/)
+    const updated = await updateNominee(owner, event.$id, nominee.$id, { email: ' Ama@Example.com ' })
+    expect(updated.email).toBe('ama@example.com')
+    const out = await inviteNominee(owner, nominee.$id, { email: realEmail })
+    expect(out.mode).toBe('claim')
+    expect(sentEmails.map((e) => e.to)).toEqual(['ama@example.com'])
+  })
+
+  test('name and bio are validated and audited by field name only', async () => {
+    const { nominee, event } = await seed()
+    const updated = await updateNominee(owner, event.$id, nominee.$id, { name: '  Ama  Serwaa ', bio: ' Hi ' })
+    expect([updated.name, updated.bio]).toEqual(['Ama Serwaa', 'Hi'])
+    await expect(updateNominee(owner, event.$id, nominee.$id, { name: 'A' })).rejects.toThrow(/nameTooShort/)
+    await expect(updateNominee(owner, event.$id, nominee.$id, { email: 'nope' })).rejects.toThrow(/emailInvalid/)
+    const audit = fake.dump('audit_logs').filter((a) => a.action === 'nominee.update')
+    expect(audit).toHaveLength(1)
+    expect(JSON.parse(audit[0].metadata as string)).toEqual({ eventId: event.$id, fields: ['name', 'bio'] })
+  })
+
+  test('changing the email before claim drops the pending invite, so the old link dies', async () => {
+    const { nominee, event } = await seed()
+    const { claimUrl: oldUrl } = await inviteNominee(owner, nominee.$id, { email: noEmail })
+    const updated = await updateNominee(owner, event.$id, nominee.$id, { email: 'efua@example.com' })
+    expect(updated).toMatchObject({ email: 'efua@example.com', userId: null, inviteTokenHash: null })
+    await expect(claimInvite(oldUrl!.split('/').pop()!, 'password123')).rejects.toBeInstanceOf(ClaimError)
+  })
+
+  test('after claim the email is the login and cannot change; other fields still can', async () => {
+    const { nominee, event } = await seed()
+    const { claimUrl: url } = await inviteNominee(owner, nominee.$id, { email: noEmail })
+    await claimInvite(url!.split('/').pop()!, 'password123')
+    await expect(updateNominee(owner, event.$id, nominee.$id, { email: 'new@example.com' })).rejects.toThrow(
+      /emailLocked/
+    )
+    // Sending the same address back is not a change.
+    await expect(
+      updateNominee(owner, event.$id, nominee.$id, { email: 'ama@example.com', name: 'Ama S' })
+    ).resolves.toMatchObject({ name: 'Ama S', email: 'ama@example.com' })
+  })
+
+  test('refuses staff, other tenants, the wrong event and closed events', async () => {
+    const { nominee, event } = await seed()
+    const other = await seed()
+    await expect(updateNominee(staff, event.$id, nominee.$id, { name: 'X Y' })).rejects.toBeInstanceOf(ForbiddenError)
+    await expect(updateNominee(otherOrg, event.$id, nominee.$id, { name: 'X Y' })).rejects.toBeInstanceOf(
+      TenantMismatchError
+    )
+    const wrong = updateNominee(owner, other.event.$id, nominee.$id, { name: 'X Y' })
+    await expect(wrong).rejects.toBeInstanceOf(NomineeError)
+    await expect(wrong).rejects.toThrow(/notInEvent/)
+    await expect(setNomineePhoto(otherOrg, event.$id, nominee.$id, new Uint8Array([1]))).rejects.toBeInstanceOf(
+      TenantMismatchError
+    )
+    await fake.updateDocument('voteapp', 'events', event.$id, { status: 'closed' })
+    await expect(updateNominee(owner, event.$id, nominee.$id, { name: 'X Y' })).rejects.toThrow(/eventClosed/)
+    expect(storage.createFile).not.toHaveBeenCalled()
+  })
+
+  test('the organizer can upload the photo without marking the nominee profile complete', async () => {
+    const { nominee, event } = await seed(null)
+    const updated = await setNomineePhoto(owner, event.$id, nominee.$id, new TextEncoder().encode('raw'))
+    const [bucket, , file] = storage.createFile.mock.calls[0]
+    expect(bucket).toBe('nominee-photos')
+    expect(new TextDecoder().decode(file.b)).toBe('JPEG:raw')
+    expect(updated.photoUrl).toContain('/files/file_1/view')
+    expect(updated.profileCompletedAt).toBeNull()
+    expect(fake.dump('audit_logs').some((a) => a.action === 'nominee.photo')).toBe(true)
+    await expect(setNomineePhoto(staff, event.$id, nominee.$id, new Uint8Array([1]))).rejects.toBeInstanceOf(
+      ForbiddenError
+    )
   })
 })
 

@@ -1,6 +1,7 @@
 import { AddCategoryForm, AddNomineeForm, EventStatusControls, RoundControls } from '@/components/events/EventControls'
 import FreeVotesControl from '@/components/events/FreeVotesControl'
 import InviteButton from '@/components/events/InviteButton'
+import NomineeEditControl from '@/components/events/NomineeEditControl'
 import FlyerPanel from '@/components/flyer/FlyerPanel'
 import TiersPanel from '@/components/tickets/TiersPanel'
 import { freeVotesEnabledOnPlatform } from '@/lib/constants'
@@ -419,6 +420,22 @@ export default async function EventDetailPage({ params }: Props) {
                         </td>
                         <td className="px-4 py-2">
                           {n.isMorale && <Badge color="amber">{t('web:events.nominees.moraleBadge')}</Badge>}
+                          {manager && open && (
+                            <div className="mt-1">
+                              <NomineeEditControl
+                                orgId={organization.$id}
+                                eventId={event.$id}
+                                nominee={{
+                                  id: n.$id,
+                                  name: n.name,
+                                  email: n.email,
+                                  bio: n.bio,
+                                  claimed: !!n.claimedAt,
+                                  hasPhoto: !!n.photoUrl,
+                                }}
+                              />
+                            </div>
+                          )}
                           {freeVotesOn && open && (
                             <div className="mt-1">
                               <FreeVotesControl

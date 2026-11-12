@@ -10,7 +10,7 @@ import { photoFileId } from '../portal-server'
 import type { CategoryDoc, EventDoc, FlyerTemplateDoc, FontDoc, GeneratedFlyerDoc, NomineeDoc } from '../types'
 import type { BindingContext } from './bindings'
 import { parseModel } from './model'
-import { renderFlyer, type FontFile, type RenderInputs } from './render'
+import { RENDERER_VERSION, renderFlyer, type FontFile, type RenderInputs } from './render'
 import { fileViewUrl, listFonts, resolveTemplateForNominee } from './templates-server'
 
 /**
@@ -101,7 +101,13 @@ export async function ensureFlyer(
     eventTitle: event.title,
     ussdShortcode: process.env.USSD_SHORTCODE ?? null,
   }
-  const hash = sourceHash({ templateId: template.$id, version: template.version, photoId, ...context })
+  const hash = sourceHash({
+    renderer: RENDERER_VERSION,
+    templateId: template.$id,
+    version: template.version,
+    photoId,
+    ...context,
+  })
   if (!opts.force && existing && existing.sourceHash === hash && existing.templateId === template.$id) {
     return { outcome: 'current', flyer: existing }
   }

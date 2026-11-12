@@ -43,7 +43,8 @@ export function domainErrorResponse(err: unknown, t: (key: string) => string, ta
     return NextResponse.json({ error: t(`errors:round.${err.problem}`), code: err.problem }, { status: 400 })
   }
   if (err instanceof NomineeError) {
-    return NextResponse.json({ error: t(`errors:nominee.${err.problem}`), code: err.problem }, { status: 400 })
+    const status = err.problem === 'notInEvent' ? 404 : err.problem === 'emailLocked' ? 409 : 400
+    return NextResponse.json({ error: t(`errors:nominee.${err.problem}`), code: err.problem }, { status })
   }
   console.error(`[${tag}] Error:`, err)
   return NextResponse.json({ error: t('errors:auth.unknown') }, { status: 500 })

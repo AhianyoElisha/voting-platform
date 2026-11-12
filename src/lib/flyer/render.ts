@@ -29,6 +29,13 @@ export interface RenderInputs {
   fonts: FontFile[]
 }
 
+/**
+ * Bump when a change to the renderer or its built-in fonts would make an
+ * existing flyer look different. It is part of each flyer's source hash, so
+ * the next `ensureFlyer` re-renders flyers made by an older renderer.
+ */
+export const RENDERER_VERSION = 2
+
 const registered = new Set<string>()
 
 export function registerFonts(fonts: FontFile[]): void {

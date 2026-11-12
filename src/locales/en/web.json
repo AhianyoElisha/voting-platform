@@ -322,7 +322,20 @@
         "no": "No photo yet"
       },
       "portal": "Portal",
-      "flyer": "View flyer"
+      "flyer": "View flyer",
+      "edit": {
+        "open": "Edit",
+        "save": "Save",
+        "saving": "Saving…",
+        "close": "Close",
+        "saved": "Saved.",
+        "emailLocked": "portal login, can't be changed",
+        "photo": "Photo (for nominees not using the portal)",
+        "uploadPhoto": "Upload photo",
+        "replacePhoto": "Replace photo",
+        "uploading": "Uploading…",
+        "photoSaved": "Photo saved. The flyer will update shortly."
+      }
     },
     "results": {
       "title": "Results and revenue",

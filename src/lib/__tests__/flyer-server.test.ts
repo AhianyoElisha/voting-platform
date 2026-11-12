@@ -27,7 +27,7 @@ vi.mock('node-appwrite/file', () => ({ InputFile: { fromBuffer: (b: Uint8Array, 
 
 import { TenantMismatchError, type TenantContext } from '../db'
 import { createEvent } from '../events-server'
-import { ensureFlyer, flyerForNominee, flyersForEvent, generateForEvent } from '../flyer/generate-server'
+import { ensureFlyer, flyerForNominee, flyersForEvent, generateForEvent, sourceHash } from '../flyer/generate-server'
 import { newPhotoSlot, newTextSlot } from '../flyer/model'
 import { solidPng } from '../flyer/render'
 import {
@@ -229,6 +229,28 @@ describe('ensureFlyer', () => {
     expect(second.outcome).toBe('generated')
     expect(second.flyer!.templateVersion).toBe(2)
     expect(second.flyer!.fileId).not.toBe(first.flyer!.fileId)
+  })
+  test('a flyer made by an older renderer is re-rendered (the renderer version is in the hash)', async () => {
+    delete process.env.USSD_SHORTCODE
+    const { event, nominee } = await seed()
+    const t = await publishedTemplate(event.$id)
+    const photoId = await withPhoto(nominee.$id)
+    const first = await ensureFlyer(nominee.$id)
+    // The hash an older renderer stored: same inputs, no renderer version.
+    const legacy = sourceHash({
+      templateId: t.$id,
+      version: t.version,
+      photoId,
+      nomineeName: nominee.name,
+      nomineeCode: nominee.code,
+      categoryName: 'Most Influential',
+      eventTitle: event.title,
+      ussdShortcode: null,
+    })
+    expect(first.flyer!.sourceHash).not.toBe(legacy)
+    await fake.updateDocument('voteapp', 'generated_flyers', first.flyer!.$id, { sourceHash: legacy })
+    expect((await ensureFlyer(nominee.$id)).outcome).toBe('generated')
+    expect((await ensureFlyer(nominee.$id)).outcome).toBe('current')
   })
 })
 

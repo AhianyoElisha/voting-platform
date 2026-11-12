@@ -153,12 +153,27 @@ export function photoViewUrl(fileId: string): string {
 }
 
 /**
- * Stores the nominee's photo: resized and re-encoded, publicly readable (it
- * goes on a flyer and a public page), and linked to the row. Completing the
- * profile is what triggers flyer generation once the engine exists.
+ * Stores the nominee's own photo (portal upload) and marks their profile
+ * complete. Ownership is checked first; the storage work is shared with the
+ * organizer's upload in `nominees-server.ts`.
  */
 export async function attachPhoto(userId: string, nomineeId: string, input: Uint8Array): Promise<NomineeDoc> {
   const nominee = await requireOwnNominee(userId, nomineeId)
+  return storeNomineePhoto(nominee, input, {
+    profileCompletedAt: nominee.profileCompletedAt ?? new Date().toISOString(),
+  })
+}
+
+/**
+ * Resizes and re-encodes the photo, stores it publicly readable (it goes on a
+ * flyer and a public page), links it to the row and deletes the file it
+ * replaced. Callers must have authorized access to `nominee` already.
+ */
+export async function storeNomineePhoto(
+  nominee: NomineeDoc,
+  input: Uint8Array,
+  extra: Partial<Pick<NomineeDoc, 'profileCompletedAt'>> = {}
+): Promise<NomineeDoc> {
   const jpeg = await normalizePhoto(input)
   const { storage, databases } = createAdminClient()
   const { InputFile } = await import('node-appwrite/file')
@@ -173,7 +188,7 @@ export async function attachPhoto(userId: string, nomineeId: string, input: Uint
   const updated = await withRetry(() =>
     databases.updateDocument<NomineeDoc>(db(), APPWRITE.TABLES.NOMINEES, nominee.$id, {
       photoUrl: photoViewUrl(file.$id),
-      profileCompletedAt: nominee.profileCompletedAt ?? new Date().toISOString(),
+      ...extra,
     })
   )
   // Best effort: the replaced file is no longer referenced anywhere.
