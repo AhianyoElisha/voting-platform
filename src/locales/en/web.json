@@ -516,7 +516,8 @@
       "center": "Centre",
       "right": "Right",
       "maxLines": "Max lines",
-      "uppercase": "UPPERCASE"
+      "uppercase": "UPPERCASE",
+      "italic": "Italic"
     },
     "fonts": {
       "title": "Fonts",
@@ -527,6 +528,36 @@
       "file": "Font file",
       "upload": "Upload font",
       "uploading": "Uploading…"
+    },
+    "psd": {
+      "label": "Import a Photoshop file (PSD)",
+      "helper": "Name the layers {{tags}}. Hide those layers before saving for an exact background. The file is read in your browser and not uploaded.",
+      "replaceConfirm": "Importing replaces this template’s background and slots. Continue?",
+      "imported": "PSD imported. Check the preview, then publish.",
+      "readFailed": "Could not read this PSD. Save it again from Photoshop or Photopea with “Maximize compatibility” on, and try again.",
+      "status": {
+        "available": "Ready",
+        "fetched": "Added from Google Fonts",
+        "upload": "Upload needed"
+      },
+      "report": {
+        "title_one": "Found {{count}} slot",
+        "title_other": "Found {{count}} slots",
+        "close": "Dismiss",
+        "fonts": "Fonts for the slots",
+        "substituted": "closest weight Google Fonts has",
+        "uploadHelp": "Fonts marked “Upload needed” are not free on Google Fonts. Upload the TTF or OTF below with exactly the family, weight and style shown; it stays private to your organization. Until then those slots use Poppins.",
+        "googleDown": "Google Fonts could not be reached, so some of these may be free. Import again later, or upload the files below.",
+        "otherFonts": "Also in the design (already part of the background, nothing to install): {{fonts}}"
+      },
+      "warning": {
+        "noSlots": "No placeholder layers found. Name layers {{tags}}, or add slots by hand.",
+        "slotsVisible": "The placeholder layers were visible, so the background was redrawn from the other layers. Layer effects such as shadows and strokes may be missing. For an exact background, hide the placeholder layers in Photoshop and import again.",
+        "effects": "Some layers use effects (shadows, strokes, glows) that the redrawn background does not include.",
+        "noComposite": "This PSD has no flattened image (“Maximize compatibility” was off), so the background was redrawn from the layers.",
+        "duplicatePhoto": "More than one {{photoTag}} layer; only the first is used.",
+        "tooManySlots": "More than 20 placeholders; the rest were skipped."
+      }
     }
   },
   "tickets": {

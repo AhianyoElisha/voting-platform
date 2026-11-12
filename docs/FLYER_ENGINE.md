@@ -19,7 +19,7 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 
 ## MVP scope
 
-- Upload a template background (PNG/JPG). Optionally upload a layered file; see "PSD import" below.
+- Upload a template background (PNG/JPG). Or import a PSD; see "Built (2026-11-12)" below.
 - Add, move, resize and rotate photo and text slots on a canvas.
 - Bind each slot to a data field.
 - Upload custom fonts (TTF/OTF; WOFF later) at platform or organization level.
@@ -32,7 +32,6 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 
 ## Later / stretch
 
-- **PSD import:** read a PSD (e.g. with `ag-psd`), turn its layers into Fabric objects, and let layers with agreed names (e.g. `{{photo}}`, `{{name}}`) become slots automatically. Partial support is acceptable.
 - Size variants from one design: WhatsApp Status (1080×1920), square post (1080×1080) and print.
 - Leaderboard flyers generated from live results (proposed, not agreed).
 - Background removal for nominee photos.
@@ -43,7 +42,6 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 - Who builds templates: our in-house designers, the organizer's designer, or both? Is there a platform template library?
 - How much freedom do organizers get in the editor: slot positions only, or general editing too?
 - Is flyer generation free in all plans or a paid feature?
-- How far should PSD import go?
 
 ## Built (2026-10-14)
 
@@ -53,6 +51,11 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 - **Generation** (`generate-server.ts`): `ensureFlyer(nomineeId)` renders when the template version, photo, name, code, category, event title, USSD shortcode (`USSD_SHORTCODE`, so setting it re-renders every flyer the next time each is ensured or the organizer presses "Generate") or renderer version (`RENDERER_VERSION` in `render.ts`, bumped whenever a renderer or built-in font change would alter existing flyers) changed, and otherwise does nothing; it runs after a photo upload (the nominee's in the portal, or the organizer's from the event page), a profile or organizer edit and a template publish via Next's `after()`, and in batches of ten from the organizer's "Generate" button. Output goes to the `flyers` bucket, public read, and the nominee downloads it from the portal.
 - **Template assignment**: a published template with the nominee's `categoryId`, else the event-wide one. Nothing published means "flyer coming soon".
 - **Placeholders**: templates are organization-owned (#17); output is the template's native size (#21); edits regenerate automatically (#33); the USSD instruction reads `USSD_SHORTCODE`.
+
+## Built (2026-11-12): PSD import and the font library
+
+- **PSD import** (decided 2026-11-12, #19): "Import a Photoshop file" in the editor reads the PSD in the browser with `ag-psd` (the file is never uploaded). `src/lib/flyer/psd-plan.ts` finds placeholder layers, named or containing `{{name}}`, `{{code}}`, `{{category}}`, `{{event}}`, `{{ussd}}`, `{{photo}}` or `{{photo:round}}`, and turns them into slots: text slots take the layer's font, size (through its transform), colour, alignment and all-caps; paragraph text keeps its box; point text is widened around its anchor to fit longer names on one line. Every other layer is background (`src/components/flyer/psd-import.ts`): with the placeholder layers hidden it is Photoshop's flattened image, exact; with them visible it is redrawn from the layers (opacity, common blend modes, groups, layer and clipping masks, but no layer effects), and the importer warns. The background is uploaded like any other and the slots are scaled to it. Import replaces the template's slots.
+- **Font detection and the library** (decided 2026-11-12): the importer sends the slot fonts' PostScript names to `POST /api/orgs/{org}/fonts/resolve` (`font-resolve-server.ts`). Each is reported as ready (the organization's, a platform font, or the built-in Poppins), added from Google Fonts (`google-fonts.ts`: the family list from `fonts.google.com/metadata/fonts` cached a day, one static TTF per weight and style from the CSS API, stored once as a platform font every organization can use; the closest weight if the exact one does not exist), or upload needed (not on Google Fonts: someone with a licence uploads it under the family shown, and it stays private to the organization). Fonts used only by static text are listed for information; they are already in the background. Text slots can be italic.
 
 ## Technical notes
 

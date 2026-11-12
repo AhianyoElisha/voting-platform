@@ -65,7 +65,7 @@ export function builtinFonts(): FontFile[] {
 }
 
 function fontSpec(slot: TextSlot, size: number): string {
-  return `${slot.fontWeight} ${size}px "${slot.fontFamily}", sans-serif`
+  return `${slot.italic ? 'italic ' : ''}${slot.fontWeight} ${size}px "${slot.fontFamily}", sans-serif`
 }
 
 function clipPhoto(ctx: SKRSContext2D, slot: PhotoSlot): void {

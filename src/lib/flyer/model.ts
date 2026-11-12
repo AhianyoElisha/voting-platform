@@ -44,6 +44,8 @@ export interface TextSlot {
   /** Font family name; must match an uploaded Font or a fallback. */
   fontFamily: string
   fontWeight: number
+  /** Optional so templates saved before it existed stay valid; absent means upright. */
+  italic?: boolean
   fontSize: number
   /** Shrink-to-fit floor. */
   minFontSize: number
@@ -106,6 +108,7 @@ export function validateModel(input: unknown, width: number, height: number): Mo
       if (typeof t.fontFamily !== 'string' || !t.fontFamily) problems.push(`${tag}: fontFamily required`)
       if (!num(t.fontWeight) || (t.fontWeight as number) < 100 || (t.fontWeight as number) > 900)
         problems.push(`${tag}: fontWeight 100..900`)
+      if (t.italic !== undefined && typeof t.italic !== 'boolean') problems.push(`${tag}: italic must be boolean`)
       if (!num(t.fontSize) || (t.fontSize as number) < 4) problems.push(`${tag}: fontSize >= 4`)
       if (
         !num(t.minFontSize) ||

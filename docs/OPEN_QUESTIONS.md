@@ -23,9 +23,9 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 16. **Minimum and maximum votes per transaction.**
 
 ## Flyer engine
-17. **Who builds templates:** our designers, the organizer's designer, or both? Is there a platform template library?
+17. **Who builds templates:** our designers, the organizer's designer, or both? Is there a platform template library? *Fonts settled 2026-11-12: Google Fonts are a shared platform library, uploaded fonts stay with their organization. See DECISIONS. Templates still open.*
 18. **Organizer editing freedom** in the browser editor.
-19. **PSD import:** how far should it go, and is it in the MVP?
+19. ~~**PSD import:** how far should it go, and is it in the MVP?~~ Settled 2026-11-12: automatic slots from named layers. See DECISIONS.
 20. **Flyer generation:** free for everyone or a paid feature?
 21. **Output sizes:** WhatsApp Status, square post, print?
 22. **Leaderboard flyers:** yes or no?

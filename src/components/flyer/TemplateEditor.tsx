@@ -3,6 +3,7 @@
 import { apiErrorMessage, postJson } from '@/components/events/api'
 import { inputClass } from '@/components/organization/OrganizationFields'
 import { SAMPLE_CONTEXT, resolveBinding } from '@/lib/flyer/bindings'
+import type { FontResolution } from '@/lib/flyer/font-resolve-server'
 import {
   FALLBACK_FONT,
   TEXT_BINDINGS,
@@ -14,6 +15,7 @@ import {
   type TextBinding,
   type TextSlot,
 } from '@/lib/flyer/model'
+import { buildSlots, type PsdWarning } from '@/lib/flyer/psd-plan'
 import { Canvas, Ellipse, FabricImage, FabricObject, Rect, Textbox } from 'fabric'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -44,6 +46,20 @@ const btnPrimary = `${btn} bg-primary-600 text-white hover:bg-primary-700`
 const btnSecondary = `${btn} border border-neutral-300 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-700`
 const field = `${inputClass} py-1.5 text-xs`
 
+/** Shown in help text; passed as values because i18next would read `{{name}}` as a variable. */
+const PSD_TAGS = {
+  tags: '{{name}}, {{code}}, {{category}}, {{event}}, {{ussd}} and {{photo}} (or {{photo:round}})',
+  photoTag: '{{photo}}',
+}
+
+interface ImportReport {
+  slots: number
+  fonts: FontResolution[]
+  /** Fonts used only by static text, which is baked into the background. */
+  otherFonts: string[]
+  warnings: PsdWarning[]
+}
+
 /**
  * The template personalizer (FLYER_ENGINE.md, rule 7): place a photo frame
  * and bound text slots on a fixed background. Fabric.js draws the canvas and
@@ -73,6 +89,7 @@ export default function TemplateEditor({
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [dirty, setDirty] = useState(false)
+  const [report, setReport] = useState<ImportReport | null>(null)
 
   const scale = useMemo(
     () => Math.min(1, 420 / template.width, 640 / template.height),
@@ -218,6 +235,7 @@ export default function TemplateEditor({
           text,
           fontFamily: slot.fontFamily,
           fontWeight: slot.fontWeight,
+          fontStyle: slot.italic ? 'italic' : 'normal',
           fontSize: slot.fontSize * scale,
           fill: slot.color,
           textAlign: slot.align,
@@ -267,7 +285,9 @@ export default function TemplateEditor({
       await fn()
       setMessage(label)
     } catch (err) {
-      setError(apiErrorMessage(err, t('errors:auth.unknown')))
+      setError(
+        err instanceof Error && !('status' in err) ? err.message : apiErrorMessage(err, t('errors:auth.unknown'))
+      )
     } finally {
       setBusy(false)
     }
@@ -294,13 +314,54 @@ export default function TemplateEditor({
       if (!res.ok) throw new Error(data?.error ?? 'upload failed')
       router.refresh()
     })
+  const importPsd = async (file: File) => {
+    if (model.slots.length > 0 && !window.confirm(t('web:flyer.psd.replaceConfirm'))) return
+    await run(t('web:flyer.psd.imported'), async () => {
+      let parsed: Awaited<ReturnType<typeof import('./psd-import').readPsdForImport>>
+      try {
+        const { readPsdForImport } = await import('./psd-import')
+        parsed = await readPsdForImport(file)
+      } catch (err) {
+        console.warn('[flyer] PSD read failed', err)
+        throw new Error(t('web:flyer.psd.readFailed'))
+      }
+      const { plan, background } = parsed
+      // Detect and fetch the slot fonts first, so the slots can name the right family.
+      const fonts = plan.slotFonts.length
+        ? (await postJson<{ fonts: FontResolution[] }>(`/api/orgs/${orgId}/fonts/resolve`, { names: plan.slotFonts }))
+            .fonts
+        : []
+      const form = new FormData()
+      const ext = background.type === 'image/jpeg' ? 'jpg' : 'png'
+      form.append('background', new File([background], `background.${ext}`, { type: background.type }))
+      const res = await fetch(`${base}/background`, { method: 'POST', body: form })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(data?.error ?? 'upload failed')
+      // The server shrinks large backgrounds; scale the PSD's coordinates the same way.
+      const scale = (data.template.width as number) / plan.width
+      const next: SlotModel = { version: 1, slots: buildSlots(plan, fonts, scale) }
+      await postJson(base, { model: next, name }, 'PUT')
+      setModel(next)
+      setSelectedId(null)
+      setDirty(false)
+      setReport({
+        slots: next.slots.length,
+        fonts,
+        otherFonts: plan.designFonts.filter((f) => !plan.slotFonts.includes(f)),
+        warnings: plan.warnings,
+      })
+      router.refresh()
+    })
+  }
+
   // No cache-buster: the route answers `no-store`, and a Date.now() here made the server
   // and client render different hrefs (hydration mismatch).
   const previewUrl = `${base}/preview?model=${encodeURIComponent(JSON.stringify(model))}`
 
   return (
     <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
-      <div className="space-y-3">
+      {/* Help text must not widen the auto column past the canvas (420 px plus padding). */}
+      <div className="space-y-3 lg:max-w-[440px]">
         <div className="rounded-xl border border-neutral-300 bg-neutral-100 p-2 dark:border-neutral-700 dark:bg-neutral-800">
           <canvas ref={canvasEl} />
         </div>
@@ -316,6 +377,23 @@ export default function TemplateEditor({
             onChange={(e) => e.target.files?.[0] && void uploadBackground(e.target.files[0])}
             className="mt-1 block w-full text-xs"
           />
+        </label>
+        <label className="block text-xs">
+          <span className="font-medium text-neutral-700 dark:text-neutral-300">{t('web:flyer.psd.label')}</span>
+          <input
+            type="file"
+            accept=".psd,image/vnd.adobe.photoshop"
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              e.target.value = ''
+              if (f) void importPsd(f)
+            }}
+            className="mt-1 block w-full text-xs"
+          />
+          <span className="mt-1 block text-neutral-500 dark:text-neutral-400">
+            {t('web:flyer.psd.helper', PSD_TAGS)}
+          </span>
         </label>
       </div>
 
@@ -376,6 +454,8 @@ export default function TemplateEditor({
         {(message || error) && (
           <p className={`text-xs ${error ? 'text-red-600' : 'text-green-600'}`}>{error || message}</p>
         )}
+
+        {report && <PsdReport report={report} onClose={() => setReport(null)} />}
 
         {selected ? (
           <div className="grid gap-3 rounded-xl border border-neutral-200 p-4 text-xs sm:grid-cols-2 dark:border-neutral-700">
@@ -518,6 +598,14 @@ export default function TemplateEditor({
                   />
                   {t('web:flyer.editor.uppercase')}
                 </label>
+                <label className="flex items-center gap-2 pt-4">
+                  <input
+                    type="checkbox"
+                    checked={selected.italic === true}
+                    onChange={(e) => update({ italic: e.target.checked })}
+                  />
+                  {t('web:flyer.editor.italic')}
+                </label>
               </>
             )}
           </div>
@@ -525,6 +613,67 @@ export default function TemplateEditor({
           <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('web:flyer.editor.selectHint')}</p>
         )}
       </div>
+    </div>
+  )
+}
+
+const statusStyle: Record<FontResolution['status'], string> = {
+  available: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  fetched: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  upload: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+}
+
+/** What the PSD import found: slots, the fonts they need and where each comes from, and caveats. */
+function PsdReport({ report, onClose }: { report: ImportReport; onClose: () => void }) {
+  const { t } = useTranslation()
+  const needUpload = report.fonts.filter((f) => f.status === 'upload')
+  return (
+    <div className="space-y-3 rounded-xl border border-neutral-200 p-4 text-xs dark:border-neutral-700">
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-semibold text-neutral-900 dark:text-white">
+          {t('web:flyer.psd.report.title', { count: report.slots })}
+        </p>
+        <button type="button" onClick={onClose} className="text-neutral-500 underline">
+          {t('web:flyer.psd.report.close')}
+        </button>
+      </div>
+      {report.warnings.map((w) => (
+        <p key={w} className="text-amber-700 dark:text-amber-400">
+          {t(`web:flyer.psd.warning.${w}`, PSD_TAGS)}
+        </p>
+      ))}
+      {report.fonts.length > 0 && (
+        <div className="space-y-1">
+          <p className="font-medium text-neutral-800 dark:text-neutral-200">{t('web:flyer.psd.report.fonts')}</p>
+          <ul className="space-y-1">
+            {report.fonts.map((f) => (
+              <li key={f.postScriptName} className="flex flex-wrap items-center gap-2">
+                <span className={`rounded px-1.5 py-0.5 font-medium ${statusStyle[f.status]}`}>
+                  {t(`web:flyer.psd.status.${f.status}`)}
+                </span>
+                <span className="text-neutral-800 dark:text-neutral-200">
+                  {f.family} · {f.weight}
+                  {f.italic ? ` · ${t('web:flyer.editor.italic')}` : ''}
+                </span>
+                <span className="text-neutral-500">({f.postScriptName})</span>
+                {f.substituted && <span className="text-neutral-500">{t('web:flyer.psd.report.substituted')}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {needUpload.length > 0 && (
+        <p className="text-neutral-600 dark:text-neutral-300">
+          {needUpload.some((f) => f.googleUnavailable)
+            ? t('web:flyer.psd.report.googleDown')
+            : t('web:flyer.psd.report.uploadHelp')}
+        </p>
+      )}
+      {report.otherFonts.length > 0 && (
+        <p className="text-neutral-500 dark:text-neutral-400">
+          {t('web:flyer.psd.report.otherFonts', { fonts: report.otherFonts.join(', ') })}
+        </p>
+      )}
     </div>
   )
 }
