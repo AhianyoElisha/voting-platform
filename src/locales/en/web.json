@@ -32,6 +32,10 @@
     },
     "claim": {
       "title": "Set up your nominee login"
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Choose a new voteapp password."
     }
   },
   "notFound": {
@@ -721,5 +725,36 @@
       "joining": "Joining…"
     },
     "linkWarning": "This link is the credential: anyone who opens it and signs up with that email joins. Send it to the person directly, not to a group."
+  },
+  "forgotPassword": {
+    "title": "Forgot your password?",
+    "helper": "Enter the email on your account and we'll send you a link to choose a new password.",
+    "submit": "Send reset link",
+    "submitting": "Sending…",
+    "sent": {
+      "title": "Check your email",
+      "body": "If an account exists for {{email}}, a reset link is on its way. The link works for one hour. Check your spam folder if it does not arrive.",
+      "again": "Use a different email"
+    },
+    "backToLogin": "Back to sign in"
+  },
+  "resetPassword": {
+    "title": "Choose a new password",
+    "helper": "Use at least 8 characters.",
+    "password": "New password",
+    "confirm": "Confirm new password",
+    "mismatch": "The two passwords do not match.",
+    "submit": "Save new password",
+    "submitting": "Saving…",
+    "done": {
+      "title": "Password changed",
+      "body": "Sign in with your new password.",
+      "cta": "Sign in"
+    },
+    "invalid": {
+      "title": "This link does not work",
+      "body": "The reset link is incomplete or has expired. Links work for one hour and only once.",
+      "cta": "Send a new link"
+    }
   }
 }

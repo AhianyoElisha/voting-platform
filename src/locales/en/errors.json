@@ -7,7 +7,9 @@
     "passwordTooShort": "Password must be at least 8 characters.",
     "rateLimited": "Too many attempts. Please wait a moment and try again.",
     "unknown": "Something went wrong. Please try again.",
-    "unauthorized": "Please sign in to continue."
+    "unauthorized": "Please sign in to continue.",
+    "recoveryLinkInvalid": "This reset link is invalid, already used or expired. Ask for a new one.",
+    "passwordRejected": "That password was not accepted. Use at least 8 characters and try another."
   },
   "organization": {
     "nameTooShort": "Organization name is too short.",

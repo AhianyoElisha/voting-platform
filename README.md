@@ -45,6 +45,13 @@ Everything is documented in `.env.example`. Beyond the Appwrite keys and `SESSIO
 | `EMAIL_PROVIDER` | `resend` (with `RESEND_API_KEY` and `EMAIL_FROM`), or `log` in development |
 | `CRON_SECRET` | Set by Vercel for the reconciliation cron in `vercel.json` |
 
+## Password reset
+
+`/forgot-password` asks Appwrite to email a reset link (`account.createRecovery`), and the link opens `/reset-password`, which sets the new password (`src/lib/password-recovery.ts`). Appwrite sends this email itself, not Resend through `EMAIL_PROVIDER`. In the Appwrite console:
+
+- Add each production and preview hostname as a Web platform. Appwrite refuses a reset link that points anywhere else.
+- Optionally, under project Settings → SMTP, send through Resend (`smtp.resend.com`, port 465, user `resend`, the Resend API key as password) so the email comes from your domain, and edit the wording under Auth → Templates → Reset password.
+
 ## What is built
 
 Organizer signup and workspaces; events with rounds, categories and nominees; paid voting on the web and by USSD through one pipeline with the Paystack adapter (USSD sessions on Hubtel); the nominee portal with claim links and photos; the flyer engine (Fabric.js editor, `@napi-rs/canvas` renderer); tickets with signed QR codes and an entrance scanner; the cumulative round report as PDF. See `docs/OPEN_QUESTIONS.md` for what each placeholder waits on.
