@@ -690,6 +690,7 @@ async function sendTicketEmail(payment: Doc<PaymentDoc>, tier: Doc<TicketTierDoc
     organizationName: organization?.name ?? '',
     tierName: tier.name,
     ticketUrls: tickets.documents.map((t) => `${base}/t/${t.qrToken}`),
+    idempotencyKey: `tickets-${payment.$id}`,
   })
   if (sent.sent) {
     const at = new Date().toISOString()

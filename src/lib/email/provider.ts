@@ -1,6 +1,6 @@
 /**
- * Transactional email boundary. The provider is OPEN_QUESTIONS #32; until it
- * is settled only the `log` adapter exists, and callers must cope with
+ * Transactional email boundary. Resend is the provider (decided 2026-11-12,
+ * #32); `log` prints emails in development. Callers must still cope with
  * `sent: false` by offering another way to deliver the content.
  */
 export interface NomineeInviteEmail {
@@ -29,6 +29,8 @@ export interface TicketEmail {
   tierName: string
   /** One public link per ticket, each showing its QR code. */
   ticketUrls: string[]
+  /** Lets the provider drop a repeat send for the same purchase. */
+  idempotencyKey?: string
 }
 
 export interface TeamInviteEmail {

@@ -231,9 +231,10 @@ export async function findInviteByToken(token: string): Promise<TeamInviteDoc | 
  * Creates the Membership for the signed-in user. The token proves the
  * invite, the session proves the person, and the email on the account must
  * match the email that was invited, so a forwarded link admits nobody who
- * already has an account on another address. Until an email provider exists
- * (#32) nothing verifies ownership of a brand-new account's address, so the
- * link itself is the credential and must be sent to the person directly.
+ * already has an account on another address. For a brand-new account nothing
+ * else verifies the address: an emailed link (Resend, #32) proves inbox
+ * access, and a link shared by hand is itself the credential, so it must go
+ * to the person directly.
  */
 export async function acceptInvite(
   userId: string,

@@ -36,7 +36,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ### 5.1 Organizer workspace
 - Sign up and create an organization. Self-serve: the workspace is active immediately, with no super-admin approval step (decided 2026-10-14, see DECISIONS). The super admin can suspend an organization later.
 - Branded public page (logo, colours). Custom subdomain is an open question (#25). *Not built: `logoUrl` and `brandColors` exist on the organization, but no settings UI sets them yet; only the round report reads the logo.*
-- Invite team members. *Built 2026-10-14: owners and admins invite by email as admin, staff, designer or scanner; the invitee accepts a one-time link with an account whose email matches; roles can be changed and members removed, never the last owner. Email delivery waits on #32; the organizer gets the link to share. Until then the link is the credential for a brand-new account, since nothing verifies email ownership; once a provider exists, acceptance should require a verified email for accounts created after the invite.*
+- Invite team members. *Built 2026-10-14: owners and admins invite by email as admin, staff, designer or scanner; the invitee accepts a one-time link with an account whose email matches; roles can be changed and members removed, never the last owner. Invites are emailed through Resend (#32, decided 2026-11-12); if sending fails, the organizer gets the link to share. Until then the link is the credential for a brand-new account, since nothing verifies email ownership; once a provider exists, acceptance should require a verified email for accounts created after the invite.*
 
 ### 5.2 Events, categories and nominees
 - Create an event (voting campaign) with start and end times and a price per vote.
@@ -47,7 +47,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - The organizer admin can nominate contestants directly (no public nomination needed).
 
 ### 5.2a Nominee portal
-- When a nominee is added, they receive an **email confirming the nomination** with their login credentials for the nominee portal. *Built 2026-10-14 as a one-time claim link: the nominee sets their own password on the claim page, so no password travels by email. Until an email provider is chosen (#32) the organizer gets the link to share directly.*
+- When a nominee is added, they receive an **email confirming the nomination** with their login credentials for the nominee portal. *Built 2026-10-14 as a one-time claim link: the nominee sets their own password on the claim page, so no password travels by email. The link is emailed through Resend (decided 2026-11-12, #32); if sending fails, the organizer gets it to share directly.*
 - In the portal the nominee completes their profile: photo upload, name as it should appear, bio and any other fields the organizer requires.
 - As soon as the photo is uploaded, the platform **generates the nominee's flyer immediately**, and the nominee can download it from the portal.
 - The nominee can see their own voting code and (if the organizer allows) their own vote count.
@@ -92,7 +92,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - On confirmed payment the buyer receives an **email with a QR code**. Staff scan the QR code at the entrance; no serial number or ID check is needed.
 - Scanning marks the ticket as used so it cannot be reused.
 - Ticket revenue is split like vote revenue (platform share and organizer share).
-- *Built 2026-10-14 for the web path. The QR code encodes the ticket's own page URL; staff scan it with the browser's built-in detector or paste the code or link, on a dashboard web page that needs a connection (decided 2026-11-12, #34). USSD purchase waits on #31; email delivery on #32.*
+- *Built 2026-10-14 for the web path. The QR code encodes the ticket's own page URL; staff scan it with the browser's built-in detector or paste the code or link, on a dashboard web page that needs a connection (decided 2026-11-12, #34). USSD purchase waits on #31. Tickets are emailed through Resend with the QR codes attached (decided 2026-11-12, #32).*
 
 ### 5.5 Flyer engine (differentiator)
 - Upload a template (designed in Photoshop or Photopea and exported).
@@ -124,7 +124,7 @@ These came up in discussion and still need a yes or no (see OPEN_QUESTIONS):
 ## 7. Non-functional requirements
 
 - **Integrity:** no paid vote without a confirmed payment, idempotent callback handling, and audit logs. Free votes are admin-only and always audited.
-- **Email delivery:** nominee credentials and ticket QR codes go out by email, so a reliable transactional email provider is required (TBD, #32).
+- **Email delivery:** nominee credentials and ticket QR codes go out by email, through Resend (decided 2026-11-12, #32).
 - **Tenant isolation:** organizers can never see each other's data.
 - **Performance:** public pages stay fast on 3G and low-end Android phones. The system handles voting spikes near deadlines.
 - **Availability:** USSD and payment callbacks must be highly reliable, because a missed callback means a paid vote is lost.

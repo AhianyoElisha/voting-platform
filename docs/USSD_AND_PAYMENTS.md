@@ -69,7 +69,7 @@ Menu as built: `Vote / 1. Vote 2. Buy ticket 3. Help` → `Enter nominee code:` 
 
 ## Built (2026-10-14): tickets on the web
 
-`src/lib/tickets/`: tiers, purchase initiation (same shape as a vote: pending Payment with `purpose = ticket` before the debit, availability counts recent pending payments as soft reservations), confirmation inside `confirmPayment`'s transaction (Payment success, one Ticket per seat with a signed QR token, tier counter, `ticket_credit` ledger row), and the atomic entrance scan. An oversell by in-flight payments issues the paid tickets and writes a `ticket.oversold` audit row rather than stranding a buyer. Tickets by USSD stay "coming soon" until delivery is decided (#31). Email delivery follows #32; the buyer always has the ticket links on the confirmation page and at `/t/<token>`.
+`src/lib/tickets/`: tiers, purchase initiation (same shape as a vote: pending Payment with `purpose = ticket` before the debit, availability counts recent pending payments as soft reservations), confirmation inside `confirmPayment`'s transaction (Payment success, one Ticket per seat with a signed QR token, tier counter, `ticket_credit` ledger row), and the atomic entrance scan. An oversell by in-flight payments issues the paid tickets and writes a `ticket.oversold` audit row rather than stranding a buyer. Tickets by USSD stay "coming soon" until delivery is decided (#31). When the buyer gives an email, the tickets go out through Resend (#32, decided 2026-11-12) with one QR PNG attached per ticket, once per purchase (an idempotency key per payment); the buyer always has the ticket links on the confirmation page and at `/t/<token>`.
 
 ## Payment rules (non-negotiable)
 

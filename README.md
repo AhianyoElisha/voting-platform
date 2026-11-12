@@ -42,7 +42,7 @@ Everything is documented in `.env.example`. Beyond the Appwrite keys and `SESSIO
 | `TICKET_SECRET` | Signs ticket QR tokens |
 | `USSD_SHORTCODE` | Printed on flyers once Hubtel assigns it |
 | `USSD_WEBHOOK_SECRET` / `USSD_CALLBACK_IPS` | At least one is required in production for the USSD webhook |
-| `EMAIL_PROVIDER` | `log` until a provider is chosen (#32) |
+| `EMAIL_PROVIDER` | `resend` (with `RESEND_API_KEY` and `EMAIL_FROM`), or `log` in development |
 | `CRON_SECRET` | Set by Vercel for the reconciliation cron in `vercel.json` |
 
 ## What is built

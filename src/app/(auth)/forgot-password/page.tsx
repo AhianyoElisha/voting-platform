@@ -15,8 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // Same page as pickLT. The form is not wired yet: password recovery goes
-// through Appwrite's `account.createRecovery()` once the email provider (#32)
-// is decided.
+// through Appwrite's `account.createRecovery()`, whose email Appwrite sends
+// itself (or through Resend's SMTP if configured in the Appwrite console).
 const Page = async () => {
   const { t } = await getTranslations()
 

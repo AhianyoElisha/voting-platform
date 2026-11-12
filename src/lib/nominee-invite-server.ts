@@ -11,8 +11,8 @@ import type { EventDoc, NomineeDoc } from './types'
 /**
  * Nominee invites (PRD 5.2a). The organizer invites a nominee; the nominee
  * receives a one-time claim link, sets a password, and signs in to the portal.
- * No password is ever emailed. While no email provider is configured (#32),
- * the route hands the link back so the organizer can share it directly.
+ * No password is ever emailed. The link goes out through Resend (#32); when
+ * it could not be sent, the route hands the link back so the organizer can share it directly.
  *
  * An email that already has an account is only linked, never password-reset:
  * the organizer holding an invite link must not be able to take over someone

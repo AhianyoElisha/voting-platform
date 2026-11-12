@@ -7,7 +7,7 @@ type Params = { params: Promise<{ orgId: string; eventId: string; nomineeId: str
 /**
  * POST: invite (or re-invite) the nominee to the portal. Managers only. The
  * nominee must belong to the event in the URL, checked before any work. When
- * no email provider is configured (#32) the claim link comes back in the
+ * the email was not sent (Resend unconfigured or failing, #32) the claim link comes back in the
  * response so the organizer can deliver it by hand.
  */
 export async function POST(req: Request, { params }: Params) {

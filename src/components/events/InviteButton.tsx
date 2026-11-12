@@ -6,8 +6,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 /**
- * Invite a nominee to the portal. When email is not configured (#32) the
- * route returns the claim link and it is shown here for the organizer to
+ * Invite a nominee to the portal. When the email could not be sent (Resend
+ * unconfigured or failing, #32) the route returns the claim link and it is shown here for the organizer to
  * copy and send another way.
  */
 export default function InviteButton({

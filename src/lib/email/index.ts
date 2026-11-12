@@ -1,8 +1,9 @@
 import type { EmailProvider, NomineeInviteEmail, SendResult, TeamInviteEmail, TicketEmail } from './provider'
+import { RESEND_PROVIDER_NAME, ResendConfigError, ResendEmailProvider } from './resend'
 
 export type { EmailProvider, NomineeInviteEmail, SendResult, TeamInviteEmail, TicketEmail } from './provider'
 
-/** PLACEHOLDER (#32): prints the email to the server log. Never counts as sent. */
+/** Development: prints the email to the server log. Never counts as sent. */
 class LogEmailProvider implements EmailProvider {
   readonly name = 'log'
   async sendNomineeInvite(email: NomineeInviteEmail): Promise<SendResult> {
@@ -25,9 +26,9 @@ class LogEmailProvider implements EmailProvider {
   }
 }
 
-/** No provider at all: same outcome, nothing printed. */
+/** No provider at all, or a misconfigured one: same outcome, nothing printed. */
 class NullEmailProvider implements EmailProvider {
-  readonly name = 'none'
+  constructor(readonly name = 'none') {}
   async sendNomineeInvite(): Promise<SendResult> {
     return { sent: false, provider: this.name, reason: 'not_configured' }
   }
@@ -39,7 +40,21 @@ class NullEmailProvider implements EmailProvider {
   }
 }
 
+/**
+ * `EMAIL_PROVIDER`: `resend` (decision #32), `log` for development, or unset
+ * (log in development, nothing in production). A misconfigured Resend logs
+ * the reason and sends nothing, so callers fall back as if unconfigured.
+ */
 export function getEmailProvider(name = process.env.EMAIL_PROVIDER): EmailProvider {
+  if (name === RESEND_PROVIDER_NAME) {
+    try {
+      return new ResendEmailProvider()
+    } catch (err) {
+      if (!(err instanceof ResendConfigError)) throw err
+      console.error(`[email] Resend is not configured: ${err.message}`)
+      return new NullEmailProvider('resend-unconfigured')
+    }
+  }
   if (name === 'log') return new LogEmailProvider()
   if (!name && process.env.NODE_ENV !== 'production') return new LogEmailProvider()
   return new NullEmailProvider()
