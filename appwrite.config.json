@@ -2610,6 +2610,20 @@
             "compression": "none",
             "encryption": false,
             "antivirus": true
+        },
+        {
+            "$id": "org-logos",
+            "$permissions": [],
+            "fileSecurity": true,
+            "name": "org-logos",
+            "enabled": true,
+            "maximumFileSize": 5000000,
+            "allowedFileExtensions": [
+                "png"
+            ],
+            "compression": "none",
+            "encryption": false,
+            "antivirus": true
         }
     ]
 }

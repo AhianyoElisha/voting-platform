@@ -184,5 +184,11 @@
     "notFound": "Organization not found.",
     "invalid": "Check the values. A suspension needs a reason.",
     "noChange": "Nothing changed."
+  },
+  "orgSettings": {
+    "nameInvalid": "The name must be 2 to 120 characters.",
+    "colorInvalid": "Choose valid colours.",
+    "badImage": "Upload a PNG, JPEG or WebP image of at most 5 MB.",
+    "noChange": "Nothing changed."
   }
 }

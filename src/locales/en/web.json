@@ -191,7 +191,8 @@
     },
     "manageEvents": "Manage events",
     "payouts": "Payouts",
-    "team": "Team"
+    "team": "Team",
+    "settings": "Settings"
   },
   "events": {
     "list": {
@@ -899,5 +900,26 @@
       "body": "The reset link is incomplete or has expired. Links work for one hour and only once.",
       "cta": "Send a new link"
     }
+  },
+  "orgSettings": {
+    "title": "Organization settings",
+    "preview": "How it looks",
+    "previewHelper": "This header appears on your public event and voting pages. The logo is also on the PDF report.",
+    "logo": "Logo",
+    "uploadLogo": "Upload logo",
+    "replaceLogo": "Replace logo",
+    "removeLogo": "Remove logo",
+    "logoHelper": "PNG, JPEG or WebP, up to 5 MB. A transparent PNG looks best.",
+    "logoSaved": "Logo saved.",
+    "logoRemoved": "Logo removed.",
+    "details": "Name and colours",
+    "name": "Name",
+    "address": "Public address",
+    "addressHelper": "The address cannot change: it is printed on flyers and in links people have shared.",
+    "useColors": "Use brand colours",
+    "primary": "Main colour",
+    "accent": "Accent stripe",
+    "save": "Save",
+    "saved": "Saved."
   }
 }

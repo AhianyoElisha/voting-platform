@@ -104,6 +104,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
                 >
                   {t('web:dashboard.team')}
                 </Link>
+                {(membership.role === 'owner' || membership.role === 'admin') && (
+                  <Link
+                    href={`/dashboard/${organization.slug}/settings`}
+                    className="mt-4 ml-4 inline-block text-sm font-medium text-primary-600 underline dark:text-primary-400"
+                  >
+                    {t('web:dashboard.settings')}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

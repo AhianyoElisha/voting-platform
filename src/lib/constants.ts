@@ -37,6 +37,7 @@ export const APPWRITE = {
     FLYER_TEMPLATES: 'flyer-templates',
     FONTS: 'fonts',
     FLYERS: 'flyers',
+    ORG_LOGOS: 'org-logos',
   },
 } as const
 

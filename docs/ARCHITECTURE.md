@@ -33,7 +33,7 @@ Added for this product (not in pickLT): Fabric.js for the flyer editor and rende
 ```
 src/app/(app)       public site: organizer pages, events, nominees, vote, tickets
 src/app/(auth)      login, signup, forgot-password, reset-password (Appwrite recovery)
-src/app/(account)   organizer dashboard (events, nominees, flyers, tickets, report, team, payouts); settings not built
+src/app/(account)   organizer dashboard (events, nominees, flyers, tickets, report, team, payouts, settings)
 src/app/(nominee)   nominee portal (new route group)
 src/app/(admin)     super admin console (new route group): overview, organizations, transactions, payouts, audit
 src/app/api         route handlers: reads, auth, webhooks (ussd, payments)

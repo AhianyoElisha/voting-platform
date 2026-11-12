@@ -1,4 +1,6 @@
+import BrandBand from '@/components/organization/BrandBand'
 import VoteForm from '@/components/vote/VoteForm'
+import { parseBrandColors } from '@/lib/branding'
 import { APPWRITE } from '@/lib/constants'
 import { getOrganizationBySlug, listTenantDocuments, type TenantContext } from '@/lib/db'
 import { getTranslations } from '@/lib/i18n-server'
@@ -45,6 +47,11 @@ export default async function VotePage({ params }: Props) {
   return (
     <main className="container py-16 lg:py-24">
       <div className="mx-auto max-w-md space-y-6">
+        <BrandBand
+          name={organization.name}
+          logoUrl={organization.logoUrl}
+          colors={parseBrandColors(organization.brandColors)}
+        />
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           <Link href={`/o/${slug}/${eventSlug}`} className="underline">
             {event.title}

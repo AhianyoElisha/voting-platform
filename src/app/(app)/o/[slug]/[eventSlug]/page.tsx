@@ -1,4 +1,6 @@
+import BrandBand from '@/components/organization/BrandBand'
 import TicketBuyForm from '@/components/tickets/TicketBuyForm'
+import { parseBrandColors } from '@/lib/branding'
 import { APPWRITE } from '@/lib/constants'
 import { getOrganizationBySlug, listTenantDocuments, type TenantContext } from '@/lib/db'
 import { getTranslations } from '@/lib/i18n-server'
@@ -92,7 +94,12 @@ export default async function PublicEventPage({ params }: Props) {
 
   return (
     <main className="container py-16 lg:py-24">
-      <p className="text-sm text-neutral-500 dark:text-neutral-400">{organization.name}</p>
+      <BrandBand
+        name={organization.name}
+        logoUrl={organization.logoUrl}
+        colors={parseBrandColors(organization.brandColors)}
+        className="mb-4"
+      />
       <Heading>{event.title}</Heading>
       {event.description && (
         <p className="mt-3 max-w-2xl text-neutral-600 dark:text-neutral-300">{event.description}</p>
@@ -121,9 +128,7 @@ export default async function PublicEventPage({ params }: Props) {
                       className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <p className="font-medium text-neutral-900 dark:text-white">
-                          {n.name}
-                        </p>
+                        <p className="font-medium text-neutral-900 dark:text-white">{n.name}</p>
                         {r && (
                           <span className="shrink-0 text-sm font-semibold text-primary-700 dark:text-primary-300">
                             {r.votes !== undefined

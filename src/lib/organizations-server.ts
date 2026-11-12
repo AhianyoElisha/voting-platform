@@ -1,8 +1,11 @@
-import { ID } from 'node-appwrite'
+import { ID, Permission, Role } from 'node-appwrite'
 import { createAdminClient, withRetry } from './appwrite-server'
+import { writeAuditLog } from './audit'
+import { isHexColor, parseBrandColors, serializeBrandColors } from './branding'
 import { APPWRITE } from './constants'
-import { databaseId, getOrganizationBySlug } from './db'
+import { databaseId, getOrganization, getOrganizationBySlug, type TenantContext } from './db'
 import { slugify, validateSlug, type SlugProblem } from './slug'
+import { assertCanManage } from './tenant'
 import type { MembershipDoc, OrganizationDoc } from './types'
 
 /**
@@ -92,4 +95,119 @@ export async function createOrganizationWithOwner(
     await databases.deleteDocument(db, APPWRITE.TABLES.ORGANIZATIONS, organization.$id).catch(() => {})
     throw err
   }
+}
+
+// ─── Settings (PRD 5.1: name and branding) ─────────────────────
+
+export class OrganizationSettingsError extends Error {
+  constructor(public readonly problem: 'nameInvalid' | 'colorInvalid' | 'badImage' | 'noChange') {
+    super(problem)
+    this.name = 'OrganizationSettingsError'
+  }
+}
+
+export const LOGO_MAX_BYTES = 5 * 1024 * 1024
+const LOGO_MAX_DIMENSION = 800
+
+/**
+ * Owner or admin: rename the organization or set its brand colours. The slug
+ * does not change here: it is printed on flyers and in every shared link.
+ * Audited (`organization.profile`).
+ */
+export async function updateOrganizationProfile(
+  ctx: TenantContext,
+  input: { name?: unknown; brandColors?: unknown }
+): Promise<OrganizationDoc> {
+  assertCanManage(ctx)
+  const current = await getOrganization(ctx.organizationId)
+  if (!current) throw new OrganizationSettingsError('nameInvalid')
+  const changes: Partial<Pick<OrganizationDoc, 'name' | 'brandColors'>> = {}
+  if (input.name !== undefined) {
+    const name = typeof input.name === 'string' ? input.name.trim().replace(/\s+/g, ' ') : ''
+    if (name.length < 2 || name.length > 120) throw new OrganizationSettingsError('nameInvalid')
+    if (name !== current.name) changes.name = name
+  }
+  if (input.brandColors !== undefined) {
+    let next: string | null = null
+    if (input.brandColors !== null) {
+      const c = input.brandColors as { primary?: unknown; accent?: unknown }
+      if (!isHexColor(c?.primary) || (c.accent != null && !isHexColor(c.accent))) {
+        throw new OrganizationSettingsError('colorInvalid')
+      }
+      next = serializeBrandColors({ primary: c.primary, accent: (c.accent as string | null | undefined) ?? null })
+    }
+    if (next !== (serializeBrandColors(parseBrandColors(current.brandColors)) ?? null)) changes.brandColors = next
+  }
+  if (Object.keys(changes).length === 0) throw new OrganizationSettingsError('noChange')
+  const { databases } = createAdminClient()
+  const updated = await withRetry(() =>
+    databases.updateDocument<OrganizationDoc>(databaseId(), APPWRITE.TABLES.ORGANIZATIONS, ctx.organizationId, changes)
+  )
+  await writeAuditLog({
+    actorId: ctx.userId,
+    organizationId: ctx.organizationId,
+    action: 'organization.profile',
+    target: `organizations/${ctx.organizationId}`,
+    metadata: { fields: Object.keys(changes), ...(changes.name ? { from: current.name, to: changes.name } : {}) },
+  })
+  return updated
+}
+
+/** The file id inside a logo URL this module wrote, so the old file can be deleted. */
+export function logoFileId(logoUrl: string | null | undefined): string | null {
+  const m = logoUrl?.match(/\/buckets\/org-logos\/files\/([^/]+)\/view/)
+  return m ? m[1] : null
+}
+
+/**
+ * Owner or admin: set (PNG, JPEG or WebP; stored as PNG up to 800 px so
+ * transparency survives) or remove (`image` null) the logo. `logoUrl` is the
+ * file's public view URL, which the public pages and the PDF report use.
+ */
+export async function setOrganizationLogo(ctx: TenantContext, image: Uint8Array | null): Promise<OrganizationDoc> {
+  assertCanManage(ctx)
+  const current = await getOrganization(ctx.organizationId)
+  if (!current) throw new OrganizationSettingsError('badImage')
+  const { storage, databases } = createAdminClient()
+  let logoUrl: string | null = null
+  if (image) {
+    if (image.length > LOGO_MAX_BYTES) throw new OrganizationSettingsError('badImage')
+    const sharp = (await import('sharp')).default
+    let png: Uint8Array
+    try {
+      png = new Uint8Array(
+        await sharp(image)
+          .rotate()
+          .resize(LOGO_MAX_DIMENSION, LOGO_MAX_DIMENSION, { fit: 'inside', withoutEnlargement: true })
+          .png()
+          .toBuffer()
+      )
+    } catch {
+      throw new OrganizationSettingsError('badImage')
+    }
+    const { InputFile } = await import('node-appwrite/file')
+    const file = await withRetry(() =>
+      storage.createFile(APPWRITE.BUCKETS.ORG_LOGOS, ID.unique(), InputFile.fromBuffer(png, 'logo.png'), [
+        Permission.read(Role.any()),
+      ])
+    )
+    const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT ?? ''
+    const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID ?? ''
+    logoUrl = `${endpoint}/storage/buckets/${APPWRITE.BUCKETS.ORG_LOGOS}/files/${file.$id}/view?project=${project}`
+  }
+  const updated = await withRetry(() =>
+    databases.updateDocument<OrganizationDoc>(databaseId(), APPWRITE.TABLES.ORGANIZATIONS, ctx.organizationId, {
+      logoUrl,
+    })
+  )
+  const old = logoFileId(current.logoUrl)
+  if (old) await storage.deleteFile(APPWRITE.BUCKETS.ORG_LOGOS, old).catch(() => {})
+  await writeAuditLog({
+    actorId: ctx.userId,
+    organizationId: ctx.organizationId,
+    action: 'organization.profile',
+    target: `organizations/${ctx.organizationId}`,
+    metadata: { fields: ['logo'], removed: !image },
+  })
+  return updated
 }
