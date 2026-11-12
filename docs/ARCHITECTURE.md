@@ -87,7 +87,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 
 ## Real-time results
 
-Not built. Every page renders on request; the organizer refreshes to see new votes and the public page shows the tally as of the request. Appwrite Realtime for organizer dashboards and short-interval polling for public pages remain the plan once #26 is settled.
+Not built. Every page renders on request; the organizer refreshes to see new votes and the public page shows the tally as of the request. Appwrite Realtime for organizer dashboards and short-interval polling for public pages remain the plan once the real-time half of #26 is settled (its visibility defaults were decided 2026-11-12).
 
 ## Reliability notes
 

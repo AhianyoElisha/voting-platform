@@ -56,7 +56,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - An organizer can run an event in **rounds** (e.g. round 1, round 2, final).
 - When a round closes, its votes are **frozen and saved to that round**. The next round starts every nominee at **zero**.
 - The organizer controls which nominees advance to the next round.
-- After the final round, the organizer can generate a **cumulative report**: total votes per nominee across all rounds, per category, exportable as **PDF**. *Built 2026-10-14 as the superset of the formats in #35: per category and per nominee, one column per round, paid and free split, morale flag, organizer name and logo, and a "provisional" note while any round is open. Available at any time from the event page.*
+- After the final round, the organizer can generate a **cumulative report**: total votes per nominee across all rounds, per category, exportable as **PDF**. *Built 2026-10-14 and decided 2026-11-12 (#35): per category and per nominee, one column per round, paid and free split, morale flag, organizer name and logo, and a "provisional" note while any round is open. Available at any time from the event page.*
 - Events without rounds behave as a single round.
 
 ### 5.3 Voting: two independent paths, one tally
@@ -92,7 +92,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - On confirmed payment the buyer receives an **email with a QR code**. Staff scan the QR code at the entrance; no serial number or ID check is needed.
 - Scanning marks the ticket as used so it cannot be reused.
 - Ticket revenue is split like vote revenue (platform share and organizer share).
-- *Built 2026-10-14 for the web path. The QR code encodes the ticket's own page URL; staff scan it with the browser's built-in detector or paste the code (#34). USSD purchase waits on #31; email delivery on #32.*
+- *Built 2026-10-14 for the web path. The QR code encodes the ticket's own page URL; staff scan it with the browser's built-in detector or paste the code or link, on a dashboard web page that needs a connection (decided 2026-11-12, #34). USSD purchase waits on #31; email delivery on #32.*
 
 ### 5.5 Flyer engine (differentiator)
 - Upload a template (designed in Photoshop or Photopea and exported).
@@ -105,7 +105,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ### 5.6 Payments and payouts
 - Votes are paid with mobile money via Hubtel (decided 2026-10-14, see DECISIONS). Hubtel also provides the USSD shortcode.
 - The platform takes a 10% commission on the gross paid amount; 90% goes to the organizer's balance. Commission only, no subscription or per-event fee (decided 2026-10-14, see DECISIONS). The super admin can set a different rate for an organization.
-- Organizers request payouts; the super admin approves them (flow TBD, #3). *Built 2026-10-14 as the conservative reading of #3: manual approval, the money is transferred outside the platform, and marking it paid is what debits the ledger. A request reserves its amount; money out can never exceed settled credits. Minimum from `PAYOUT_MIN_PESEWAS`, none until set. Destination: MoMo or bank.*
+- Organizers request payouts; the super admin approves them (decided 2026-11-12, #3): manual approval, the money is transferred outside the platform, and marking it paid is what debits the ledger. A request reserves its amount; money out can never exceed settled credits. Minimum from `PAYOUT_MIN_PESEWAS`, none until set. Destination: MoMo or bank.
 
 ### 5.7 Super admin console
 *Partly built 2026-10-14: `/admin` handles payouts for a user whose `users.isSuperAdmin` is set (in the Appwrite console). Organization management, fee overrides and the per-organization switches are still columns without a UI.*
