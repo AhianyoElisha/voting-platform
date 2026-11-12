@@ -63,15 +63,12 @@ export function buildInitOptions(locale: Locale, resources: Resource): InitOptio
     // the only format i18next >= 24 supports (the old `compatibilityJSON` option
     // no longer exists). That is what gives `pl` its 4 CLDR plural categories.
     interpolation: {
-      // Left at i18next's default (true): interpolated values are HTML-escaped
-      // before they reach React.
-      //
-      // NOTE for whoever wires up interpolation of free text (names, addresses):
-      // React already escapes everything it renders, so escaping twice makes an
-      // apostrophe or ampersand surface literally as `&#39;` / `&amp;`. If that
-      // shows up, the fix is `escapeValue: false` here — the setting
-      // react-i18next itself recommends for React DOM — not a per-call-site hack.
-      escapeValue: true,
+      // Off, as react-i18next recommends for React DOM: React escapes everything
+      // it renders, so escaping here too made URLs show as `http:&#x2F;&#x2F;…`
+      // and apostrophes as `&#39;`. Translated strings must therefore never go
+      // into raw HTML (`dangerouslySetInnerHTML`, HTML email bodies) without
+      // escaping the interpolated values at that sink.
+      escapeValue: false,
     },
 
     returnNull: false,
