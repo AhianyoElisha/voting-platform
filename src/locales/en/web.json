@@ -375,6 +375,11 @@
       "body": "A mobile money prompt has been sent. Enter your PIN to approve it.",
       "waiting": "Waiting for confirmation… this page updates by itself."
     },
+    "otp": {
+      "label": "Code from the SMS",
+      "submit": "Continue",
+      "sending": "Sending…"
+    },
     "success": {
       "title_one": "{{count}} vote for {{name}} counted. Thank you!",
       "title_other": "{{count}} votes for {{name}} counted. Thank you!",

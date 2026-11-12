@@ -49,6 +49,8 @@ export const MESSAGES = {
   invalidQuantity: `Enter a whole number of votes (${VOTE_QUANTITY_MIN} to ${VOTE_QUANTITY_MAX_PLACEHOLDER}):`,
   cancelled: 'Cancelled. Dial again to vote.',
   sent: 'A MoMo prompt has been sent to your phone. Approve it with your PIN to complete your vote.',
+  otpUnsupported:
+    'Your network needs an SMS code for this payment, which cannot be entered here. You have not been charged. Please vote on the website instead.',
   unavailable: 'Voting is temporarily unavailable. Please try again later.',
   paymentFailed: 'The payment could not be started. Please try again.',
   phoneInvalid: 'This number cannot be used for mobile money.',
@@ -139,6 +141,15 @@ export function quoteFailed(problem: VoteProblem | 'unknown'): MenuResult {
 /** After a successful `initiate` action. */
 export function initiated(): MenuResult {
   return { reply: MESSAGES.sent, state: { step: 'done' }, end: true }
+}
+
+/**
+ * The provider wants a one-time code before the prompt (Paystack `send_otp`),
+ * which a USSD session cannot collect. The payment stays pending and
+ * reconciliation marks it failed once the provider reports it abandoned.
+ */
+export function initiatedNeedsOtp(): MenuResult {
+  return { reply: MESSAGES.otpUnsupported, state: { step: 'done' }, end: true }
 }
 
 /** After a failed `initiate` action. The session always ends; nothing is pending. */

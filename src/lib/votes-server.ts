@@ -54,6 +54,9 @@ export type VoteProblem =
   | 'providerNotConfigured'
   | 'providerFailed'
   | 'rateLimited'
+  | 'otpInvalid'
+  | 'otpRejected'
+  | 'paymentNotPending'
 
 export class VoteError extends Error {
   constructor(public readonly problem: VoteProblem) {
@@ -86,6 +89,7 @@ export interface InitiateVoteResult {
   nominee: Doc<NomineeDoc>
   event: Doc<EventDoc>
   instructions?: string
+  nextAction?: 'otp'
 }
 
 /**
@@ -226,7 +230,13 @@ export async function initiateVotePayment(
     provider,
     `${quantity} vote${quantity === 1 ? '' : 's'} for ${nominee.name} (${nominee.code})`
   )
-  return { payment: started.payment, nominee, event, instructions: started.instructions }
+  return {
+    payment: started.payment,
+    nominee,
+    event,
+    instructions: started.instructions,
+    nextAction: started.nextAction,
+  }
 }
 
 /**
@@ -242,7 +252,7 @@ export async function startProviderDebit(
   payment: Doc<PaymentDoc>,
   provider: PaymentProvider,
   description: string
-): Promise<{ payment: Doc<PaymentDoc>; instructions?: string }> {
+): Promise<{ payment: Doc<PaymentDoc>; instructions?: string; nextAction?: 'otp' }> {
   const { databases } = createAdminClient()
   let initiated: Awaited<ReturnType<PaymentProvider['initiate']>>
   try {
@@ -270,10 +280,46 @@ export async function startProviderDebit(
         providerReference: initiated.providerReference,
       })
     )
-    return { payment: updated, instructions: initiated.instructions }
+    return { payment: updated, instructions: initiated.instructions, nextAction: initiated.nextAction }
   } catch (err) {
     console.error(`[payments] ${payment.$id}: provider reference ${initiated.providerReference} not stored`, err)
-    return { payment, instructions: initiated.instructions }
+    return { payment, instructions: initiated.instructions, nextAction: initiated.nextAction }
+  }
+}
+
+/** How long after initiation a one-time code is still accepted. */
+export const OTP_WINDOW_MS = 15 * 60 * 1000
+
+/**
+ * The payer's one-time code for a charge that asked for one (`nextAction:
+ * 'otp'`). It only continues the provider's charge: the payment stays
+ * `pending` and is confirmed, as always, by the verified callback or
+ * reconciliation (rule 2). A rejected code leaves it pending, and
+ * reconciliation settles it.
+ */
+export async function submitPaymentOtp(
+  paymentId: string,
+  otpInput: unknown,
+  opts: { provider?: PaymentProvider; now?: Date } = {}
+): Promise<{ instructions?: string; nextAction?: 'otp' }> {
+  const otp = typeof otpInput === 'string' ? otpInput.trim() : ''
+  if (!/^\d{4,8}$/.test(otp)) throw new VoteError('otpInvalid')
+  const payment = await getPayment(paymentId)
+  const age = (opts.now ?? new Date()).getTime() - new Date(payment?.$createdAt ?? 0).getTime()
+  if (!payment || payment.status !== 'pending' || age > OTP_WINDOW_MS) throw new VoteError('paymentNotPending')
+  let provider: PaymentProvider
+  try {
+    provider = opts.provider ?? getPaymentProvider(payment.provider)
+  } catch (err) {
+    if (err instanceof PaymentProviderNotConfiguredError) throw new VoteError('providerNotConfigured')
+    throw err
+  }
+  if (!provider.submitOtp) throw new VoteError('paymentNotPending')
+  try {
+    return await provider.submitOtp({ providerReference: payment.providerReference, otp })
+  } catch (err) {
+    console.warn(`[payments] ${payment.$id}: one-time code not accepted:`, err instanceof Error ? err.message : err)
+    throw new VoteError('otpRejected')
   }
 }
 
@@ -669,6 +715,8 @@ export async function reconcilePendingPayments(
   const stale = await withRetry(() =>
     databases.listDocuments<Doc<PaymentDoc>>(db(), APPWRITE.TABLES.PAYMENTS, [
       Query.equal('status', ['pending']),
+      // Only this provider's payments: another provider's ids mean nothing to its status API.
+      Query.equal('provider', [provider.name]),
       Query.lessThan('$createdAt', cutoff),
       Query.limit(opts.limit ?? 100),
     ])

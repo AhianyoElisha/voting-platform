@@ -145,6 +145,33 @@ describe('handleUssd', () => {
     expect(fake.dump('payments').map((p) => p.status)).toEqual(['failed'])
   })
 
+  test('a network that wants an SMS code sends the voter to the website; the payment is left for reconciliation', async () => {
+    const { nominee } = await seedLiveEvent()
+    const wantsOtp: PaymentProvider = {
+      name: 'otp',
+      async initiate(input) {
+        return { providerReference: input.paymentId, nextAction: 'otp' }
+      },
+      async verifyCallback() {
+        return null
+      },
+      async checkStatus() {
+        return 'unknown'
+      },
+    }
+    await dial('s5b')
+    await reply('s5b', '1')
+    await reply('s5b', nominee.code)
+    await reply('s5b', '2')
+    const out = await handleUssd(
+      { sessionId: 's5b', phone: '0201234567', text: '1', type: 'response' },
+      { now: NOW, provider: wantsOtp }
+    )
+    expect(out).toEqual({ message: MESSAGES.otpUnsupported, end: true })
+    expect(fake.dump('payments').map((p) => p.status)).toEqual(['pending'])
+    expect(fake.dump('votes')).toHaveLength(0)
+  })
+
   test('the phone always comes from the aggregator, and an unusable number is refused at confirmation', async () => {
     const { nominee } = await seedLiveEvent()
     await dial('s6', '+1 555 0100')

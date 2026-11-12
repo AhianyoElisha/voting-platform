@@ -35,8 +35,9 @@ Everything is documented in `.env.example`. Beyond the Appwrite keys and `SESSIO
 
 | Variable | What it does |
 |---|---|
-| `PAYMENT_PROVIDER` | `hubtel` for real money, `mock` for development (refuses to run in production) |
-| `HUBTEL_*` | Merchant credentials, payload shape and endpoints; see `docs/HUBTEL_SMOKE_TEST.md` |
+| `PAYMENT_PROVIDER` | `paystack` for real money, `mock` for development (refuses to run in production) |
+| `PAYSTACK_*` | Secret key and customer email domain for payments; see `docs/SMOKE_TEST.md` |
+| `HUBTEL_*` | Only if payments run on Hubtel instead (not in use); see `docs/SMOKE_TEST.md` |
 | `PLATFORM_COMMISSION_BPS` | Overrides the 10% default |
 | `TICKET_SECRET` | Signs ticket QR tokens |
 | `USSD_SHORTCODE` | Printed on flyers once Hubtel assigns it |
@@ -46,6 +47,6 @@ Everything is documented in `.env.example`. Beyond the Appwrite keys and `SESSIO
 
 ## What is built
 
-Organizer signup and workspaces; events with rounds, categories and nominees; paid voting on the web and by USSD through one pipeline with the Hubtel adapter; the nominee portal with claim links and photos; the flyer engine (Fabric.js editor, `@napi-rs/canvas` renderer); tickets with signed QR codes and an entrance scanner; the cumulative round report as PDF. See `docs/OPEN_QUESTIONS.md` for what each placeholder waits on.
+Organizer signup and workspaces; events with rounds, categories and nominees; paid voting on the web and by USSD through one pipeline with the Paystack adapter (USSD sessions on Hubtel); the nominee portal with claim links and photos; the flyer engine (Fabric.js editor, `@napi-rs/canvas` renderer); tickets with signed QR codes and an entrance scanner; the cumulative round report as PDF. See `docs/OPEN_QUESTIONS.md` for what each placeholder waits on.
 
 Added beyond pickLT: `@napi-rs/canvas`, `fabric`, `fflate`, `pdfkit`, `qrcode`. The canvas and `sharp` are server externals in `next.config.mjs`.

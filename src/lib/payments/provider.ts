@@ -1,6 +1,7 @@
 /**
  * The payment aggregator boundary (USSD_AND_PAYMENTS.md). Hubtel is the
- * provider (decision #11); everything above this interface is provider-agnostic.
+ * USSD aggregator and Paystack the payment provider (decided 2026-11-12,
+ * amending #11); everything above this interface is provider-agnostic.
  *
  * Rules the pipeline enforces around it:
  * - A Payment exists as `pending` before `initiate` is called (rule 1).
@@ -21,6 +22,13 @@ export interface InitiateResult {
   providerReference: string
   /** Optional text to show the payer, e.g. "Approve the prompt on your phone". */
   instructions?: string
+  /** `otp`: the payer must enter a one-time code (sent by their network) before the prompt; see `submitOtp`. */
+  nextAction?: 'otp'
+}
+
+export interface OtpResult {
+  instructions?: string
+  nextAction?: 'otp'
 }
 
 export type CallbackStatus = 'success' | 'failed'
@@ -45,8 +53,14 @@ export type ProviderStatus = 'success' | 'failed' | 'pending' | 'unknown'
 export interface PaymentProvider {
   readonly name: string
   initiate(input: InitiateInput): Promise<InitiateResult>
-  /** Returns null when the callback is not authentic. Never throws on bad input. */
-  verifyCallback(headers: Headers, rawBody: string): Promise<CallbackResult | null>
+  /**
+   * Returns null when the callback is not authentic. `ignored`: authentic but
+   * not a payment result (e.g. a transfer event), to be acknowledged and
+   * dropped. Never throws on bad input.
+   */
+  verifyCallback(headers: Headers, rawBody: string): Promise<CallbackResult | 'ignored' | null>
+  /** Optional: continues a charge that asked for a one-time code. Never confirms a payment. */
+  submitOtp?(ref: { providerReference: string; otp: string }): Promise<OtpResult>
   /**
    * For reconciliation of stale pending payments (rule 5). `providerReference`
    * may still be our `local_<id>` placeholder when storing the provider's

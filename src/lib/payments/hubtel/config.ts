@@ -8,7 +8,7 @@
  *   Receive Money API) or `flat` (top-level Status/ClientReference).
  * - the receive and status URLs, templated on `{merchant}`.
  *
- * See docs/HUBTEL_SMOKE_TEST.md for how to confirm them.
+ * See docs/SMOKE_TEST.md for how to confirm them.
  */
 export type HubtelPayloadShape = 'nested' | 'flat'
 

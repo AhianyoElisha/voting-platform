@@ -15,7 +15,7 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 10. **Partner arrangement** with the sales partner (revenue share, access level in the system).
 
 ## USSD and payments
-11. ~~**Aggregator:** Hubtel, Nsano, Arkesel or another? Costs, setup time, dedicated or shared shortcode.~~ Settled 2026-10-14: Hubtel, for payments and USSD. Costs and shortcode type are confirmed during onboarding. See DECISIONS.
+11. ~~**Aggregator:** Hubtel, Nsano, Arkesel or another? Costs, setup time, dedicated or shared shortcode.~~ Settled 2026-10-14: Hubtel, for payments and USSD. Costs and shortcode type are confirmed during onboarding. Amended 2026-11-12: payments on Paystack, Hubtel for USSD only. See DECISIONS.
 12. ~~**Nominee code scheme:** platform-wide unique codes, or event code plus nominee code?~~ Settled 2026-10-14: platform-wide unique codes. See DECISIONS.
 13. **Late payments** after an event closes: honour them or refund?
 14. **SMS receipts** to voters: yes or no? Which provider?
@@ -32,7 +32,7 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 
 ## Technical
 23. ~~**Tech stack confirmation** (Next.js + Postgres + Prisma proposed). Alternatives include Appwrite as the backend.~~ Settled 2026-10-14: mirror pickLT (Next.js 15 + Appwrite). See DECISIONS and ARCHITECTURE.
-24. ~~**Hosting.** Object storage is settled (Appwrite Storage, with #23). Still open: where the Next.js app runs (pickLT uses Vercel) and which Appwrite Cloud region or self-hosted instance.~~ Settled 2026-10-14: Vercel and Appwrite Cloud Frankfurt. See DECISIONS. Note: Vercel functions have no fixed outbound IP by default, which Hubtel's status API allowlist needs; see `docs/HUBTEL_SMOKE_TEST.md`.
+24. ~~**Hosting.** Object storage is settled (Appwrite Storage, with #23). Still open: where the Next.js app runs (pickLT uses Vercel) and which Appwrite Cloud region or self-hosted instance.~~ Settled 2026-10-14: Vercel and Appwrite Cloud Frankfurt. See DECISIONS. Note: Vercel functions have no fixed outbound IP by default, which Hubtel's status API allowlist needed; payments moved to Paystack on 2026-11-12, which needs none.
 25. **Subdomains per organizer**, or slug paths only at first?
 26. **Results visibility defaults** and the real-time approach. *Defaults settled 2026-11-12: no default, the organizer chooses at creation. See DECISIONS. Still open: the real-time approach.*
 27. **Fraud controls** beyond payment (rate limits, flagging unusual spikes).
@@ -46,4 +46,4 @@ Claude Code: **do not settle these on your own.** Ask, or build behind a placeho
 33. **Nominee portal scope:** can nominees edit their profile after the flyer is generated (triggering a regeneration)? Can they see their live vote count?
 34. ~~**Ticket scanning:** a web page for scanner staff on their phones, or a small PWA with camera access? Offline tolerance?~~ Settled 2026-11-12: a web page, camera or paste, online only. See DECISIONS.
 35. ~~**Cumulative report format:** per nominee, per category, both? Include paid/free split? Branded with organizer logo?~~ Settled 2026-11-12: all of them. See DECISIONS.
-36. **Who absorbs Hubtel's and the MoMo networks' charges:** out of the platform's 10%, or deducted from the gross before the 90/10 split? (Raised when #2 was settled; the code currently splits the gross, so the platform absorbs them.)
+36. **Who absorbs the payment provider's (Paystack's) and the MoMo networks' charges:** out of the platform's 10%, or deducted from the gross before the 90/10 split? (Raised when #2 was settled; the code currently splits the gross, so the platform absorbs them.)

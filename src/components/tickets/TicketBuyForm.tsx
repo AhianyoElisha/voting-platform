@@ -2,6 +2,7 @@
 
 import { apiErrorMessage, postJson } from '@/components/events/api'
 import { inputClass } from '@/components/organization/OrganizationFields'
+import OtpEntry from '@/components/vote/OtpEntry'
 import { formatPesewas } from '@/lib/money'
 import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -18,7 +19,14 @@ export interface TierOption {
 
 type Stage =
   | { kind: 'form' }
-  | { kind: 'pending'; paymentId: string; accessKey: string; amount: number; instructions: string | null }
+  | {
+      kind: 'pending'
+      paymentId: string
+      accessKey: string
+      amount: number
+      instructions: string | null
+      needsOtp: boolean
+    }
   | { kind: 'success'; tierName: string; tickets: { id: string; url: string }[] }
   | { kind: 'failed' }
 
@@ -73,6 +81,7 @@ export default function TicketBuyForm({ tiers, mockProvider }: { tiers: TierOpti
       const data = await postJson<{
         payment: { id: string; accessKey: string; amount: number }
         instructions: string | null
+        nextAction: 'otp' | null
       }>('/api/public/tickets/initiate', {
         tierId,
         quantity: qty,
@@ -86,6 +95,7 @@ export default function TicketBuyForm({ tiers, mockProvider }: { tiers: TierOpti
         accessKey: data.payment.accessKey,
         amount: data.payment.amount,
         instructions: data.instructions,
+        needsOtp: data.nextAction === 'otp',
       })
     } catch (err) {
       setError(apiErrorMessage(err, t('errors:auth.unknown')))
@@ -157,6 +167,14 @@ export default function TicketBuyForm({ tiers, mockProvider }: { tiers: TierOpti
         <p className="text-sm text-neutral-600 dark:text-neutral-300">
           {stage.instructions ?? t('web:vote.pending.body')}
         </p>
+        {stage.needsOtp && (
+          <OtpEntry
+            paymentId={stage.paymentId}
+            onSubmitted={(next) =>
+              setStage({ ...stage, instructions: next.instructions, needsOtp: next.nextAction === 'otp' })
+            }
+          />
+        )}
         <p className="text-xs text-neutral-500">{t('web:vote.pending.waiting')}</p>
         {mockProvider && (
           <div className="flex justify-center gap-2 rounded-xl border border-dashed border-amber-400 p-3">

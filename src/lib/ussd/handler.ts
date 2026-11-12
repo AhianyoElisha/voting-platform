@@ -1,7 +1,16 @@
 import type { PaymentProvider } from '../payments'
 import { normalizeGhanaPhone } from '../phone'
 import { VoteError, initiateVotePayment, quoteVote } from '../votes-server'
-import { applyQuote, initiateFailed, initiated, quoteFailed, start, step, type MenuResult } from './menu'
+import {
+  applyQuote,
+  initiateFailed,
+  initiated,
+  initiatedNeedsOtp,
+  quoteFailed,
+  start,
+  step,
+  type MenuResult,
+} from './menu'
 import { findSession, isLive, releaseSession, saveSession, sessionState, startSession } from './session'
 
 /**
@@ -67,11 +76,11 @@ export async function handleUssd(
     }
   } else if (result.action?.type === 'initiate') {
     try {
-      await initiateVotePayment(
+      const started = await initiateVotePayment(
         { code: result.action.code, quantity: result.action.quantity, phone: session.phone, channel: 'ussd' },
         { provider: opts.provider, now }
       )
-      result = initiated()
+      result = started.nextAction === 'otp' ? initiatedNeedsOtp() : initiated()
     } catch (err) {
       result = initiateFailed(err instanceof VoteError ? err.problem : 'unknown')
       if (!(err instanceof VoteError)) console.error('[ussd] initiate failed', err)

@@ -8,7 +8,7 @@ import type { PaymentProvider } from './provider'
  */
 export type CallbackHandling =
   | { ok: false; status: 400; reason: 'unverified' }
-  | { ok: true; status: 200; outcome: ConfirmOutcome; paymentId: string | null }
+  | { ok: true; status: 200; outcome: ConfirmOutcome | 'ignored'; paymentId: string | null }
 
 export async function handleProviderCallback(
   provider: PaymentProvider,
@@ -17,6 +17,7 @@ export async function handleProviderCallback(
 ): Promise<CallbackHandling> {
   const result = await provider.verifyCallback(headers, rawBody)
   if (!result) return { ok: false, status: 400, reason: 'unverified' }
+  if (result === 'ignored') return { ok: true, status: 200, outcome: 'ignored', paymentId: null }
   const { outcome, payment } = await confirmPayment(result)
   return { ok: true, status: 200, outcome, paymentId: payment?.$id ?? null }
 }

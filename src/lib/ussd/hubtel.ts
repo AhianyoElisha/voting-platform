@@ -4,7 +4,7 @@ import type { UssdInput, UssdOutput } from './handler'
  * Hubtel USSD transport (decision #11). Hubtel POSTs one JSON object per
  * step and expects one back. Field names follow Hubtel's programmable
  * services API; like the payment shapes, confirm against the sandbox
- * (docs/HUBTEL_SMOKE_TEST.md, USSD section). Only this file knows the shape.
+ * (docs/SMOKE_TEST.md, USSD section). Only this file knows the shape.
  *
  * Request:  { Type, Mobile, SessionId, ServiceCode, Message, Operator, Sequence, ClientState }
  *           Type is "Initiation" | "Response" | "Timeout" | "Release".

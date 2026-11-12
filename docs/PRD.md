@@ -103,7 +103,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - Full detail in `FLYER_ENGINE.md`.
 
 ### 5.6 Payments and payouts
-- Votes are paid with mobile money via Hubtel (decided 2026-10-14, see DECISIONS). Hubtel also provides the USSD shortcode.
+- Votes are paid with mobile money via Paystack; Hubtel provides the USSD shortcode (decided 2026-10-14, amended 2026-11-12; see DECISIONS).
 - The platform takes a 10% commission on the gross paid amount; 90% goes to the organizer's balance. Commission only, no subscription or per-event fee (decided 2026-10-14, see DECISIONS). The super admin can set a different rate for an organization.
 - Organizers request payouts; the super admin approves them (decided 2026-11-12, #3): manual approval, the money is transferred outside the platform, and marking it paid is what debits the ledger. A request reserves its amount; money out can never exceed settled credits. Minimum from `PAYOUT_MIN_PESEWAS`, none until set. Destination: MoMo or bank.
 

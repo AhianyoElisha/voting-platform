@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     )
   }
   try {
-    const { payment, tier, event, instructions } = await initiateTicketPayment({
+    const { payment, tier, event, instructions, nextAction } = await initiateTicketPayment({
       tierId: typeof body?.tierId === 'string' ? body.tierId : '',
       quantity: body?.quantity,
       phone: typeof body?.phone === 'string' ? body.phone : '',
@@ -37,6 +37,7 @@ export async function POST(req: Request) {
         tier: { name: tier.name },
         event: { title: event.title },
         instructions: instructions ?? null,
+        nextAction: nextAction ?? null,
       },
       { status: 201 }
     )

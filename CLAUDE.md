@@ -26,7 +26,7 @@ Product name: **TBD** (placeholder in code: `voteapp`, so it's easy to rename).
 | `docs/COMPETITIVE_ANALYSIS.md` | Competitors and how we beat them |
 | `docs/OPEN_QUESTIONS.md` | **Decisions not yet made. Check before building anything they touch.** |
 | `docs/DECISIONS.md` | Log of decisions already made |
-| `docs/HUBTEL_SMOKE_TEST.md` | Runbook for the first real payment and USSD session on Hubtel |
+| `docs/SMOKE_TEST.md` | Runbook for the first real payment (Paystack) and USSD session (Hubtel) |
 
 ## Project skills
 

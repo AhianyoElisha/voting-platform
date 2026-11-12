@@ -71,7 +71,10 @@
     "feesNotConfigured": "Payments are not configured yet. Please try again later.",
     "providerNotConfigured": "Payments are not configured yet. Please try again later.",
     "providerFailed": "The payment could not be started. Please try again.",
-    "rateLimited": "Too many attempts. Please wait a minute and try again."
+    "rateLimited": "Too many attempts. Please wait a minute and try again.",
+    "otpInvalid": "Enter the code from the SMS, digits only.",
+    "otpRejected": "That code was not accepted. Check the SMS and try again.",
+    "paymentNotPending": "This payment can no longer take a code. Start again if you were not charged."
   },
   "invite": {
     "noEmail": "Add an email address to the nominee before inviting them.",

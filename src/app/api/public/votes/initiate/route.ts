@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { payment, instructions, nominee, event } = await initiateVotePayment({
+    const { payment, instructions, nextAction, nominee, event } = await initiateVotePayment({
       code,
       quantity,
       phone,
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
         nominee: { name: nominee.name, code: nominee.code },
         event: { title: event.title },
         instructions: instructions ?? null,
+        nextAction: nextAction ?? null,
       },
       { status: 201 }
     )

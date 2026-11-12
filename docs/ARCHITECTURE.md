@@ -22,11 +22,11 @@ pickLT is a Next.js 15 booking and rental app on Appwrite, grown from the Chisfi
 | Monitoring | Sentry (`@sentry/nextjs`) with the `/monitoring` tunnel route. |
 | Tests | Vitest, node environment, `src/**/__tests__/**/*.test.ts`. |
 | Tooling | Prettier (no semicolons, single quotes, width 120, organize-imports and tailwind plugins), ESLint `next/core-web-vitals`, `.npmrc` with `legacy-peer-deps=true`. Development-only aids: the `mock` payment provider with its confirm panel on the vote and ticket pages, and the USSD simulator at `/dev/ussd`; both refuse to run in production. |
-| Hosting | Same as pickLT (decided 2026-10-14, #24): the Next.js app on Vercel, Appwrite Cloud in Frankfurt (`fra.cloud.appwrite.io`, already the default in `appwrite.config.json` and `.env.example`). Scheduled jobs (payment reconciliation) run as Vercel cron jobs declared in `vercel.json`, authenticated with Vercel's `CRON_SECRET`. Vercel functions have no fixed egress IP by default; Hubtel's status API allowlist needs one (a Vercel static-IP add-on or a small relay), see `docs/HUBTEL_SMOKE_TEST.md`. |
+| Hosting | Same as pickLT (decided 2026-10-14, #24): the Next.js app on Vercel, Appwrite Cloud in Frankfurt (`fra.cloud.appwrite.io`, already the default in `appwrite.config.json` and `.env.example`). Scheduled jobs (payment reconciliation) run as Vercel cron jobs declared in `vercel.json`, authenticated with Vercel's `CRON_SECRET`. Vercel functions have no fixed egress IP by default; that only matters if payments go back to Hubtel, whose status API allowlist needs one (see `docs/SMOKE_TEST.md`). Paystack, the payment provider since 2026-11-12, does not. |
 
 Not carried over: Mapbox and Google Maps, LiveKit calls, Stripe, the moving and vehicle domain, the blog and listing demo pages.
 
-Added for this product (not in pickLT): Fabric.js for the flyer editor and renderer, a PDF generator for the cumulative round report, USSD and mobile-money webhooks, QR tickets. Built so far: the flyer engine with Fabric.js in the editor and `@napi-rs/canvas` as the server renderer plus `fflate` for ZIP downloads and the bundled Poppins TTFs for the default slot font, traced into the serverless bundle by `outputFileTracingIncludes` in `next.config.mjs` (`src/lib/flyer/`), `qrcode` for ticket QR codes (`src/lib/tickets/`), `pdfkit` for the cumulative round report (`src/lib/report/`), the `PaymentProvider` interface with the Hubtel adapter and a mock adapter (`src/lib/payments/`), Appwrite database transactions via `runInTransaction` in `src/lib/db.ts`, `toPlain`/`plainResults` in `src/lib/plain.ts` (a change to pickLT's `appwrite-server.ts` pattern: the admin client's results are converted to plain objects so server components can pass them to client components), the `EmailProvider` boundary in `src/lib/email/` (a log-only placeholder until #32 picks a provider), and an in-memory Appwrite fake for tests (`src/lib/__tests__/fake-appwrite.ts`).
+Added for this product (not in pickLT): Fabric.js for the flyer editor and renderer, a PDF generator for the cumulative round report, USSD and mobile-money webhooks, QR tickets. Built so far: the flyer engine with Fabric.js in the editor and `@napi-rs/canvas` as the server renderer plus `fflate` for ZIP downloads and the bundled Poppins TTFs for the default slot font, traced into the serverless bundle by `outputFileTracingIncludes` in `next.config.mjs` (`src/lib/flyer/`), `qrcode` for ticket QR codes (`src/lib/tickets/`), `pdfkit` for the cumulative round report (`src/lib/report/`), the `PaymentProvider` interface with the Paystack adapter (in use), the Hubtel adapter (kept, not selected) and a mock adapter (`src/lib/payments/`), Appwrite database transactions via `runInTransaction` in `src/lib/db.ts`, `toPlain`/`plainResults` in `src/lib/plain.ts` (a change to pickLT's `appwrite-server.ts` pattern: the admin client's results are converted to plain objects so server components can pass them to client components), the `EmailProvider` boundary in `src/lib/email/` (a log-only placeholder until #32 picks a provider), and an in-memory Appwrite fake for tests (`src/lib/__tests__/fake-appwrite.ts`).
 
 ## Folder layout (same as pickLT)
 
@@ -69,7 +69,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
                        ▲           fonts,      Vercel cron; Functions
                        │           templates,  later, see functions/)
    Hubtel (USSD) ──────┤           flyers)
-   Hubtel (MoMo) ──────┘  webhooks → Next.js route handlers
+   Paystack (MoMo) ────┘  webhooks → Next.js route handlers
 ```
 
 ## Multi-tenancy
@@ -82,7 +82,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 ## Key flows
 
 1. **Web vote:** voter picks nominee and quantity → server creates a `Payment` document (`pending`) → provider sends MoMo prompt → provider callback (verified) → in one Appwrite database transaction: mark payment `success`, create the `Vote`, bump the `RoundEntry` tally, credit the ledger → live tally updates.
-2. **USSD vote:** Hubtel posts each session step to a route handler → server returns menu text → on confirmation, server starts a MoMo debit → the payment callback follows the same path as step 1. See `USSD_AND_PAYMENTS.md`.
+2. **USSD vote:** Hubtel posts each session step to a route handler → server returns menu text → on confirmation, server starts a MoMo debit through Paystack → the payment callback follows the same path as step 1. See `USSD_AND_PAYMENTS.md`.
 3. **Flyer generation:** nominee photo uploaded → `ensureFlyer` runs after the response (Next's `after()`) → loads template, fills slots, exports PNG/JPG → stored in Appwrite Storage and linked to the nominee. See `FLYER_ENGINE.md`.
 
 ## Real-time results

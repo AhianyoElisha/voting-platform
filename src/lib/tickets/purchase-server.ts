@@ -74,7 +74,7 @@ export function parseTicketQuantity(input: unknown): number {
 export async function initiateTicketPayment(
   input: InitiateTicketInput,
   opts: { provider?: PaymentProvider; now?: Date } = {}
-): Promise<{ payment: PaymentDoc; tier: TicketTierDoc; event: EventDoc; instructions?: string }> {
+): Promise<{ payment: PaymentDoc; tier: TicketTierDoc; event: EventDoc; instructions?: string; nextAction?: 'otp' }> {
   const now = opts.now ?? new Date()
   // The QR token is signed at confirmation; refuse now rather than strand a paid buyer later.
   if (!process.env.TICKET_SECRET) throw new TicketError('ticketsNotConfigured')
@@ -164,7 +164,13 @@ export async function initiateTicketPayment(
   )
   try {
     const started = await startProviderDebit(payment, provider, `${quantity} × ${tier.name}, ${event.title}`)
-    return { payment: started.payment, tier, event, instructions: started.instructions }
+    return {
+      payment: started.payment,
+      tier,
+      event,
+      instructions: started.instructions,
+      nextAction: started.nextAction,
+    }
   } catch (err) {
     if (err instanceof VoteError) throw new TicketError(err.problem)
     throw err
