@@ -80,7 +80,7 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 - A data-access layer in `src/lib` takes a tenant context and adds the `organizationId` filter, so route handlers never write raw unscoped queries.
 - Tenant isolation is enforced server-side with the admin client plus membership checks from the session (`src/lib/tenant.ts` builds the `TenantContext` from the caller's Membership). Tables have row security off and no table-level grants: the browser SDK is used for Auth only, and all reads and writes go through route handlers or Functions with the admin key. Document permissions can be added later as a second line of defence, not the boundary.
 - `/events` is the one public page that reads across tenants (`src/lib/public-events-server.ts`): it lists only what each active organization already publishes at `/o/{slug}`.
-- Public pages resolve tenants by slug: `/o/{slug}` is the organization's page (its public events), `/o/{slug}/{eventSlug}` an event, `/o/{slug}/{eventSlug}/vote/{code}` a nominee's vote page. Which event statuses are public is defined once, in `src/lib/public-events.ts`. Subdomains are optional and can come later (#25).
+- Public pages resolve tenants by slug: `/o/{slug}` is the organization's page (its public events), `/o/{slug}/{eventSlug}` an event, `/o/{slug}/{eventSlug}/vote/{code}` a nominee's vote page. Which event statuses are public is defined once, in `src/lib/public-events.ts`. Subdomains come later and the paths will keep working (decided 2026-11-13, #25).
 
 ## Key flows
 
@@ -90,10 +90,10 @@ functions/<name>    Appwrite Functions (writes, scheduled jobs)
 
 ## Real-time results
 
-Not built. Every page renders on request; the organizer refreshes to see new votes and the public page shows the tally as of the request. Appwrite Realtime for organizer dashboards and short-interval polling for public pages remain the plan once the real-time half of #26 is settled (its visibility defaults were decided 2026-11-12).
+Decided 2026-11-13 (#26): the public event page and the organizer dashboard re-fetch results about every 30 seconds while open; no Appwrite Realtime. *Not built yet: today every page renders on request and shows the tally as of that request.*
 
 ## Reliability notes
 
 - Webhook handlers must be fast and idempotent. Acknowledge quickly, process inside a transaction.
 - A scheduled job reconciles stale `pending` payments against the provider's status API, so votes are never lost to missed callbacks. It runs as a Vercel cron (`vercel.json`) calling `/api/internal/payments/reconcile`, not as an Appwrite Function (see `functions/README.md`).
-- Public vote, ticket, OTP, USSD and claim endpoints are rate-limited across instances (`src/lib/rate-limit.ts`): a fixed-window counter per hashed key in the `rate_limits` table, raised with Appwrite's atomic increment-with-max, behind a per-instance counter that turns away a client already over the limit without a database call. It fails open if Appwrite is unreachable. Expired windows are deleted by the reconciliation cron. The limit values are placeholders (#27).
+- Public vote, ticket, OTP, USSD and claim endpoints are rate-limited across instances (`src/lib/rate-limit.ts`): a fixed-window counter per hashed key in the `rate_limits` table, raised with Appwrite's atomic increment-with-max, behind a per-instance counter that turns away a client already over the limit without a database call. It fails open if Appwrite is unreachable. Expired windows are deleted by the reconciliation cron. The limit values are final (decided 2026-11-13, #27); there is no spike flagging.

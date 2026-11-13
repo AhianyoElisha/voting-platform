@@ -32,16 +32,16 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 
 ## Later / stretch
 
-- Size variants from one design: WhatsApp Status (1080×1920), square post (1080×1080) and print.
-- Leaderboard flyers generated from live results (proposed, not agreed).
+- Leaderboard flyers generated from live results (agreed 2026-11-13 as a later feature, #22).
 - Background removal for nominee photos.
 - QR code slot linking to the nominee's voting page.
 
-## Open questions (also in OPEN_QUESTIONS.md)
+## Decided (2026-11-13)
 
-- Who builds templates: our in-house designers, the organizer's designer, or both? Is there a platform template library?
-- How much freedom do organizers get in the editor: slot positions only, or general editing too?
-- Is flyer generation free in all plans or a paid feature?
+- **Who builds templates (#17):** each organization builds and owns its templates. The platform also offers a library of ready-made templates that any organization can copy and adapt, maintained by the super admin. *The library is not built yet.*
+- **Editing freedom (#18):** the editor stays a slot placer, as built. No drawing tools, shapes or image editing.
+- **Price (#20):** flyer generation is free for every organization.
+- **Sizes (#21):** one flyer per nominee, at the template's own size.
 
 ## Built (2026-10-14)
 
@@ -50,7 +50,7 @@ Photopea shows that a full PSD editor can run in the browser. **We are not build
 - **Renderer** (`src/lib/flyer/render.ts`): `@napi-rs/canvas` on the server, not Fabric. Prebuilt binaries, no native build, custom fonts registered from files. The default slot font, Poppins (the app font), ships with the renderer in seven weights under the SIL Open Font License (`src/lib/flyer/fonts/poppins/`), so a template with no uploaded fonts still renders as it looks in the editor. The browser preview and the server share the same slot geometry and the same text-fitting code (`layout.ts`), which is the "same JSON, same output" goal of the technical notes below achieved without running Fabric on the server.
 - **Generation** (`generate-server.ts`): `ensureFlyer(nomineeId)` renders when the template version, photo, name, code, category, event title, USSD shortcode (`USSD_SHORTCODE`, so setting it re-renders every flyer the next time each is ensured or the organizer presses "Generate") or renderer version (`RENDERER_VERSION` in `render.ts`, bumped whenever a renderer or built-in font change would alter existing flyers) changed, and otherwise does nothing; it runs after a photo upload (the nominee's in the portal, or the organizer's from the event page), a profile or organizer edit and a template publish via Next's `after()`, and in batches of ten from the organizer's "Generate" button. Output goes to the `flyers` bucket, public read, and the nominee downloads it from the portal.
 - **Template assignment**: a published template with the nominee's `categoryId`, else the event-wide one. Nothing published means "flyer coming soon".
-- **Placeholders**: templates are organization-owned (#17); output is the template's native size (#21); edits regenerate automatically (#33); the USSD instruction reads `USSD_SHORTCODE`.
+- **As decided**: templates are organization-owned (#17; the platform library is not built); output is the template's native size (#21); edits regenerate automatically (decided 2026-11-13, #33); the USSD instruction reads `USSD_SHORTCODE`.
 
 ## Built (2026-11-12): PSD import and the font library
 

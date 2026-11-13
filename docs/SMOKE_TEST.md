@@ -60,7 +60,7 @@ key alone, so Vercel's lack of a fixed egress IP does not matter.
 
 - Which networks asked for a one-time code, in `docs/USSD_AND_PAYMENTS.md`.
 - Paystack's fee on the test payment (Paystack deducts it from settlement),
-  as input to OPEN_QUESTIONS #36.
+  to check the off-the-top split decided for #36.
 
 ## USSD (Hubtel)
 

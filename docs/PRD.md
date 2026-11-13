@@ -1,8 +1,8 @@
 # Product Requirements Document
 
-Status: **Draft v0.3**, 12 Nov 2026. Several areas are still open; see `OPEN_QUESTIONS.md`.
+Status: **Draft v0.4**, 13 Nov 2026. One question is still open (the product name, #1); see `OPEN_QUESTIONS.md`.
 
-Changelog: v0.3 (12 Nov 2026) records decisions #3, #34, #35 and the defaults half of #26 as built, the amendment to #29 (free-vote counts in every results mode, no public morale labels), and organizer editing of nominees. v0.2 adds requirements from the sales partner's voice note of 14 Oct 2026 (nominee portal, voting rounds, ticketing, dashboard figures, morale candidates, admin nominations).
+Changelog: v0.4 (13 Nov 2026) records the decisions of 12 and 13 Nov that settle every open question except the product name: rounds (#30), late payments and refunds (#13, #15), USSD tickets by SMS through Hubtel (#31), no SMS receipts (#14), charges off the top (#36), the vote payment cap (#16), nominee portal scope (#33), auto-refreshing results (#26), fraud controls (#27), the flyer questions (#17, #18, #20, #21, #22), data retention and consent (#28), subdomains later (#25), mobile money only (#8), public nominations for launch (#5), no chat voting (#6), no free public voting (#7) and the partner's access (#10). v0.3 (12 Nov 2026) records decisions #3, #34, #35 and the defaults half of #26 as built, the amendment to #29 (free-vote counts in every results mode, no public morale labels), and organizer editing of nominees. v0.2 adds requirements from the sales partner's voice note of 14 Oct 2026 (nominee portal, voting rounds, ticketing, dashboard figures, morale candidates, admin nominations).
 
 ## 1. Problem
 
@@ -15,7 +15,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ## 3. Market and go-to-market
 
 - **Beachhead:** KNUST, covering faculties, departments, halls, associations and student groups running pageants and awards.
-- **Distribution:** a partner who recently finished a term as an executive of the Faculty of Social Sciences has relationships across faculties and departments. He will be the main sales contact.
+- **Distribution:** a partner who recently finished a term as an executive of the Faculty of Social Sciences has relationships across faculties and departments. He will be the main sales contact. He has no special access in the system (decided 2026-11-13, #10).
 - **Pitch:** "The same voting everyone else offers, plus professional flyers for every nominee, generated instantly and at no extra cost."
 - Later: other universities and general events in Ghana.
 
@@ -26,37 +26,40 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 | **Super admin** | The platform owner. Manages organizers, fees, payouts, templates and disputes. Sees everything. |
 | **Organizer admin** | Owns an organization workspace. Creates events, categories and nominees, and manages team members, flyers, results and payouts. |
 | **Organizer staff** | Optional team members. Roles (decided 2026-10-14, see DECISIONS): `admin` manages everything like the owner; `designer` edits flyer templates and fonts and generates flyers; `scanner` scans tickets; `staff` reads everything and can scan. |
-| **Designer** | Creates and maintains flyer templates. Could be in-house or belong to an organizer (open question #17; built as organization-owned for now). |
+| **Designer** | Creates and maintains flyer templates. Belongs to an organizer; the platform's own designers supply the template library (decided 2026-11-13, #17). |
 | **Nominee** | A contestant. Receives an email with login details once nominated, logs into a nominee portal, uploads their photo and details, and downloads their generated flyer. |
-| **Voter** | Member of the public. No account needed. Votes on the web or over USSD and pays with mobile money (and possibly card). |
+| **Voter** | Member of the public. No account needed. Votes on the web or over USSD and pays with mobile money (cards later; decided 2026-11-13, #8). |
 | **Ticket buyer** | Member of the public. Buys an event ticket on the web or over USSD and receives a QR code by email. |
 
 ## 5. Core features (MVP candidates)
 
 ### 5.1 Organizer workspace
 - Sign up and create an organization. Self-serve: the workspace is active immediately, with no super-admin approval step (decided 2026-10-14, see DECISIONS). The super admin can suspend an organization later.
-- Branded public page (logo, colours). Custom subdomain is an open question (#25). *Built 2026-11-12: owners and admins set the name, a logo (stored in the `org-logos` bucket) and two brand colours at `/dashboard/{org}/settings`; the public event and vote pages show a header band in the main colour with the logo and name (text colour chosen for contrast), and the round report uses the logo. The public address (slug) does not change, because flyers and shared links carry it. The organization's public page at `/o/{slug}` lists its scheduled, live and paused events (voting now, coming up, paused) under the same header; drafts and closed events are not listed, and a suspended organization's page is not found. The header on the event and vote pages links back to it.*
+- Branded public page (logo, colours). Subdomains come later; `/o/{slug}` paths for launch (decided 2026-11-13, #25). *Built 2026-11-12: owners and admins set the name, a logo (stored in the `org-logos` bucket) and two brand colours at `/dashboard/{org}/settings`; the public event and vote pages show a header band in the main colour with the logo and name (text colour chosen for contrast), and the round report uses the logo. The public address (slug) does not change, because flyers and shared links carry it. The organization's public page at `/o/{slug}` lists its scheduled, live and paused events (voting now, coming up, paused) under the same header; drafts and closed events are not listed, and a suspended organization's page is not found. The header on the event and vote pages links back to it.*
 - *Built 2026-11-12: `/account` shows the signed-in user's name (editable), sign-in email and phone, a link to reset the password, their workspaces with roles, and the way into the nominee portal if they are a nominee.*
 - Invite team members. *Built 2026-10-14: owners and admins invite by email as admin, staff, designer or scanner; the invitee accepts a one-time link with an account whose email matches; roles can be changed and members removed, never the last owner. Invites are emailed through Resend (#32, decided 2026-11-12); if sending fails, the organizer gets the link to share. Until then the link is the credential for a brand-new account, since nothing verifies email ownership; once a provider exists, acceptance should require a verified email for accounts created after the invite.*
 
 ### 5.2 Events, categories and nominees
-- Create an event (voting campaign) with start and end times and a price per vote.
+- Create an event (voting campaign) with start and end times and a price per vote (a round can override it, see 5.2b).
 - Add categories (e.g. "Miss Social Science", "Most Influential").
 - Add nominees with a photo, name, category and optional bio.
 - Each nominee gets a **short code that is unique across the whole platform**, used on both the web and USSD. A USSD voter enters only this code (decided 2026-10-14, see DECISIONS).
 - Open, close, pause and publish events.
 - The organizer admin can nominate contestants directly (no public nomination needed).
+- **Public nominations** (decided 2026-11-13, #5): an event can take nominations from the public through a form, and the organizer approves which nominations become nominees. The form asks for the nominee's name, the category and a short reason, plus the nominator's own name and phone number. The organizer opens and closes nominations per event by hand, before voting starts; repeated nominations of the same name in a category are grouped with a count. After approving, the organizer adds the nominee's email and photo as for any nominee. *Not built yet.*
 
 ### 5.2a Nominee portal
 - When a nominee is added, they receive an **email confirming the nomination** with their login credentials for the nominee portal. *Built 2026-10-14 as a one-time claim link: the nominee sets their own password on the claim page, so no password travels by email. The link is emailed through Resend (decided 2026-11-12, #32); if sending fails, the organizer gets it to share directly.*
 - In the portal the nominee completes their profile: photo upload, name as it should appear, bio and any other fields the organizer requires. *They can also mark the part of the photo the flyer must keep in view and zoom in on it (built 2026-11-12).*
 - As soon as the photo is uploaded, the platform **generates the nominee's flyer immediately**, and the nominee can download it from the portal.
-- The nominee can see their own voting code and (if the organizer allows) their own vote count. *The voting code is shown; the vote count is not built and waits on #33.*
+- The nominee can see their own voting code, and their own result in whatever form the event's public results currently take: nothing, rank, percentage or count, never more than the public sees (decided 2026-11-13, #33). *The voting code is shown; the result is not built yet.*
+- The nominee can keep editing name, bio and photo until the event closes; each edit regenerates the flyer (decided 2026-11-13, #33; built).
 
 ### 5.2b Voting rounds (optional per event)
 - An organizer can run an event in **rounds** (e.g. round 1, round 2, final).
 - When a round closes, its votes are **frozen and saved to that round**. The next round starts every nominee at **zero**.
-- The organizer controls which nominees advance to the next round.
+- The organizer controls which nominees advance to the next round: a manual pick, with the closed round's ranking shown beside each name; no automatic top-N or threshold (decided 2026-11-12, #30). A new nominee can also be added between rounds and starts the next round at zero. *Not built yet.*
+- Each round can set its own price per vote; the event's price is the default (decided 2026-11-12, #30). *Not built yet: every round uses the event's price.*
 - After the final round, the organizer can generate a **cumulative report**: total votes per nominee across all rounds, per category, exportable as **PDF**. *Built 2026-10-14 and decided 2026-11-12 (#35): per category and per nominee, one column per round, paid and free split, morale flag, organizer name and logo, and a "provisional" note while any round is open. Available at any time from the event page.*
 - Events without rounds behave as a single round.
 
@@ -101,7 +104,9 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - Lightweight browser editor to define **slots**: photo frame, name, category, nominee code, USSD string, and event name or date.
 - Upload **custom fonts** so text matches the original design.
 - Generate flyers automatically for every nominee, individually or in bulk.
-- Download or share flyers (sized for WhatsApp Status and social media).
+- Download or share flyers. Each flyer is the size of its template; the designer chooses the shape, for example a WhatsApp Status portrait (decided 2026-11-13, #21).
+- Flyers are free for every organization (decided 2026-11-13, #20).
+- A platform library of ready-made templates that organizations can copy and adapt, maintained by the super admin (decided 2026-11-13, #17). *Not built yet.*
 - Full detail in `FLYER_ENGINE.md`.
 
 ### 5.6 Payments and payouts
@@ -110,18 +115,18 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 - Organizers request payouts; the super admin approves them (decided 2026-11-12, #3): manual approval, the money is transferred outside the platform, and marking it paid is what debits the ledger. A request reserves its amount; money out can never exceed settled credits. Minimum from `PAYOUT_MIN_PESEWAS`, none until set. Destination: MoMo or bank.
 
 ### 5.7 Super admin console
-*Built 2026-11-12 for a user whose `users.isSuperAdmin` is set (in the Appwrite console): an overview, organizations (search, suspend and reactivate with a reason, commission override, the morale-candidate and free-vote switches, wallet, events, recent payments and audit), platform-wide transactions with lookup by payment id or provider reference (payer numbers masked, #28), payouts, and the audit log. Every change is audited. Suspension hides the public pages and stops new votes and ticket sales; payments already started still complete. Not built: disputes and refunds (no refund policy yet, see #13), and platform-level templates (#17).*
+*Built 2026-11-12 for a user whose `users.isSuperAdmin` is set (in the Appwrite console): an overview, organizations (search, suspend and reactivate with a reason, commission override, the morale-candidate and free-vote switches, wallet, events, recent payments and audit), platform-wide transactions with lookup by payment id or provider reference (payer numbers masked, #28), payouts, and the audit log. Every change is audited. Suspension hides the public pages and stops new votes and ticket sales; payments already started still complete. Not built: disputes and refunds (decided 2026-11-12, #15: manual, the super admin refunds outside the platform and marks the payment refunded, which reverses the votes or tickets and debits the wallet), and platform-level templates (#17).*
 - Manage organizations, events, fees, templates and payouts.
 - View transactions and audit logs, and handle disputes and refunds.
 
 ## 6. Ideas proposed, not yet agreed
 
 These came up in discussion and still need a yes or no (see OPEN_QUESTIONS):
-- WhatsApp Status-sized flyers with the voting code and USSD string included.
-- Auto-generated "leaderboard flyers" (e.g. "Top 3 in Miss Social Science") to keep campaigns going.
+- ~~WhatsApp Status-sized flyers with the voting code and USSD string included.~~ Settled 2026-11-13 (#21): flyers carry the code and USSD string and take the size of their template.
+- Auto-generated "leaderboard flyers" (e.g. "Top 3 in Miss Social Science") to keep campaigns going. Agreed 2026-11-13 (#22) as a later feature, not for launch.
 - ~~Commission-only pricing with no monthly subscription, to suit student groups.~~ Agreed 2026-10-14 (#2): commission only, 10%.
 - Campus-native setup: KNUST faculties, departments and halls preloaded.
-- Public nominations, and WhatsApp or Telegram voting (competitors offer these). Ticketing moved to core features in v0.2.
+- ~~Public nominations, and WhatsApp or Telegram voting (competitors offer these).~~ Settled 2026-11-13: public nominations are built for launch (#5, see 5.2); WhatsApp and Telegram voting are not offered (#6). Ticketing moved to core features in v0.2.
 
 ## 7. Non-functional requirements
 
@@ -130,13 +135,14 @@ These came up in discussion and still need a yes or no (see OPEN_QUESTIONS):
 - **Tenant isolation:** organizers can never see each other's data.
 - **Performance:** public pages stay fast on 3G and low-end Android phones. The system handles voting spikes near deadlines.
 - **Availability:** USSD and payment callbacks must be highly reliable, because a missed callback means a paid vote is lost.
-- **Compliance:** Ghana Data Protection Act (Act 843) for voter phone numbers. Possibly also aggregator and telecom rules for USSD.
+- **Compliance:** Ghana Data Protection Act (Act 843) for voter phone numbers: masked outside an organization's managers, and erased with other personal details 90 days after the event closes (decided 2026-11-13, #28; erasure not built yet). Consent is a notice at payment with a link to a privacy policy page, no checkbox (decided 2026-11-13, #28; not built yet). Possibly also aggregator and telecom rules for USSD.
 - **Security:** callback signature verification, rate limiting, and role-based access.
 
 ## 8. Out of scope (for now)
 
 - A full Photoshop or Photopea clone inside the platform.
 - Free or anonymous identity-verified elections (e.g. SRC elections). These are a different product.
+- Free public voting (decided 2026-11-13, #7) and voting over WhatsApp or Telegram (decided 2026-11-13, #6).
 - Native mobile apps.
 
 ## 9. Success metrics (draft)
