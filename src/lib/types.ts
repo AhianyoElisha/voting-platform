@@ -78,6 +78,10 @@ export interface EventDoc extends TenantDoc {
   moraleCandidatesEnabled: boolean
   /** The organizer's per-event opt-in for free votes (PRD 5.4a, #29). */
   freeVotesEnabled: boolean
+  /** When the event was closed; recorded from 2026-11-19 (older closed events have none). */
+  closedAt?: string | null
+  /** When the 90-day erasure of payers' and buyers' details ran (decision #28, `retention-server.ts`). */
+  personalDataErasedAt?: string | null
 }
 
 export const ROUND_STATUSES = ['pending', 'live', 'closed'] as const

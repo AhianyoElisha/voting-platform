@@ -224,7 +224,11 @@ export async function setEventStatus(ctx: TenantContext, eventId: string, to: Ev
     if (live) await closeRound(ctx, live.$id)
   }
 
-  const updated = await updateTenantDocument<EventDoc>(ctx, APPWRITE.TABLES.EVENTS, eventId, { status: to })
+  // closedAt starts the 90-day retention clock (decision #28, `retention-server.ts`).
+  const updated = await updateTenantDocument<EventDoc>(ctx, APPWRITE.TABLES.EVENTS, eventId, {
+    status: to,
+    ...(to === 'closed' ? { closedAt: new Date().toISOString() } : {}),
+  })
   await writeAuditLog({
     actorId: ctx.userId,
     organizationId: ctx.organizationId,

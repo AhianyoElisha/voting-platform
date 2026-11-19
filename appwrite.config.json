@@ -403,6 +403,22 @@
                     "required": false,
                     "array": false,
                     "default": false
+                },
+                {
+                    "key": "closedAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "personalDataErasedAt",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "format": "",
+                    "default": null
                 }
             ],
             "indexes": [

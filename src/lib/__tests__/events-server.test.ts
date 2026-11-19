@@ -122,6 +122,10 @@ describe('event status machine', () => {
     const closed = await fake.getDocument('voteapp', 'rounds', round.$id)
     expect(closed.status).toBe('closed')
     expect(closed.closedAt).toBeTruthy()
+    // The event records when it closed too: the 90-day retention clock (decision #28).
+    const closedEvent = await fake.getDocument('voteapp', 'events', event.$id)
+    expect(Date.parse(String(closedEvent.closedAt))).not.toBeNaN()
+    expect(closedEvent.personalDataErasedAt ?? null).toBeNull()
 
     const actions = fake.dump('audit_logs').map((r) => r.action)
     expect(actions).toEqual(['round.open', 'event.live', 'event.paused', 'round.close', 'event.closed'])

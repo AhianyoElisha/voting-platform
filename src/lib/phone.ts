@@ -19,7 +19,14 @@ export function normalizeGhanaPhone(input: string): string | null {
  * only needs to tell buyers apart: the ticket page (meant to be forwarded),
  * the door scanner and staff. Only managers see full numbers (#28).
  */
+/**
+ * What an erased phone column holds after the 90-day retention period
+ * (decision #28, `retention-server.ts`): the columns are required, so they
+ * cannot be emptied.
+ */
+export const ERASED_PHONE = 'erased'
+
 export function maskPhone(phone: string | null | undefined): string {
-  if (!phone) return ''
+  if (!phone || phone === ERASED_PHONE) return ''
   return phone.length > 3 ? `${'•'.repeat(phone.length - 3)}${phone.slice(-3)}` : phone
 }
