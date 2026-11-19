@@ -134,6 +134,7 @@ export class PaystackPaymentProvider implements PaymentProvider {
       clientReference: tx.reference,
       status: verdict === 'success' ? 'success' : 'failed',
       amountPesewas: tx.amount ?? undefined,
+      feePesewas: tx.fees ?? undefined,
       network: tx.network ?? undefined,
       raw,
     }

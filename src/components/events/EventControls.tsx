@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { apiErrorMessage, postJson } from './api'
+import RoundSetup, { type RoundCandidate } from './RoundSetup'
 
 const NEXT_STATUSES: Record<EventStatus, EventStatus[]> = {
   draft: ['scheduled', 'live'],
@@ -217,11 +218,22 @@ export function RoundControls({
   eventId,
   rounds,
   canManage,
+  setup,
 }: {
   orgId: string
   eventId: string
   rounds: RoundDoc[]
   canManage: boolean
+  /** What the pending rounds' setup panels need; see `RoundSetup`. */
+  setup: {
+    candidates: RoundCandidate[]
+    categories: { id: string; name: string }[]
+    entrantsByRound: Record<string, string[]>
+    eventPrice: string
+    previousRoundName: string | null
+    /** Each round's own price, formatted; absent when it uses the event's. */
+    priceByRound: Record<string, string>
+  }
 }) {
   const { error, busy, run, t } = useAction()
   const [name, setName] = useState('')
@@ -236,6 +248,10 @@ export function RoundControls({
               <p className="text-sm font-medium text-neutral-900 dark:text-white">{round.name}</p>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 {t(`web:events.rounds.status.${round.status}`)}
+                {' · '}
+                {t('web:events.rounds.entrants', { count: (setup.entrantsByRound[round.$id] ?? []).length })}
+                {' · '}
+                {t('web:publicEvent.pricePerVote', { price: setup.priceByRound[round.$id] ?? setup.eventPrice })}
               </p>
             </div>
             {canManage && round.status === 'pending' && (
@@ -260,6 +276,18 @@ export function RoundControls({
               >
                 {t('web:events.rounds.close')}
               </button>
+            )}
+            {canManage && round.status === 'pending' && (
+              <RoundSetup
+                key={`${round.$id}:${(setup.entrantsByRound[round.$id] ?? []).join(',')}:${round.votePrice ?? ''}`}
+                base={`${base}/${round.$id}`}
+                entrantIds={setup.entrantsByRound[round.$id] ?? []}
+                candidates={setup.candidates}
+                categories={setup.categories}
+                priceCedis={typeof round.votePrice === 'number' ? (round.votePrice / 100).toFixed(2) : ''}
+                eventPrice={setup.eventPrice}
+                previousRoundName={setup.previousRoundName}
+              />
             )}
           </li>
         ))}

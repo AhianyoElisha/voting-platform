@@ -326,7 +326,27 @@
       "closeConfirm": "Close this round? Its tally is frozen and cannot change.",
       "add": "Add round",
       "namePlaceholder": "Round name (optional)",
-      "advanceNote": "Nominees are placed in round 1 automatically. Who goes through to later rounds is still being decided."
+      "advanceNote": "New nominees join the next round that has not closed. For each round after the first, choose who goes through before you open it.",
+      "entrants_one": "{{count}} nominee",
+      "entrants_other": "{{count}} nominees",
+      "setup": {
+        "price": "Price per vote in this round (GHS)",
+        "pricePlaceholder": "{{price}} (the event's price)",
+        "priceHelper": "Leave empty to use the event's price, {{price}}. The price cannot change once the round is open.",
+        "savePrice": "Save price",
+        "priceSaved": "Price saved.",
+        "saving": "Saving…",
+        "pick": "Nominees in this round: {{count}} of {{total}}",
+        "all": "Select all",
+        "none": "Clear",
+        "previousHelper": "Shown beside each name: their place and votes in {{round}}, within their category.",
+        "previous_one": "#{{rank}} · {{count}} vote",
+        "previous_other": "#{{rank}} · {{count}} votes",
+        "notInPrevious": "Not in that round",
+        "noNominees": "Add nominees first.",
+        "saveEntrants": "Save nominees",
+        "entrantsSaved": "Nominees saved."
+      }
     },
     "categories": {
       "title": "Categories and nominees",
@@ -393,7 +413,8 @@
       "gross": "Gross",
       "platformShare": "Platform share",
       "organizerShare": "Your share",
-      "noEntries": "No nominees in this round."
+      "noEntries": "No nominees in this round.",
+      "charges": "Payment charges"
     }
   },
   "publicEvent": {
@@ -418,7 +439,9 @@
       "phoneHelper": "The MoMo prompt is sent to this number.",
       "total": "Total",
       "submit": "Pay {{amount}}",
-      "submitting": "Starting payment…"
+      "submitting": "Starting payment…",
+      "maxHelper_one": "One payment can buy {{count}} vote. Pay again to buy more.",
+      "maxHelper_other": "One payment can buy up to {{count}} votes. Pay again to buy more."
     },
     "pending": {
       "title": "Approve {{amount}} on your phone",
@@ -854,7 +877,7 @@
       "anyStatus": "Any status",
       "anyPurpose": "Votes and tickets",
       "forOrg": "For {{name}}",
-      "fee": "Fee",
+      "fee": "Platform",
       "purpose": {
         "vote_one": "{{count}} vote",
         "vote_other": "{{count}} votes",
@@ -878,7 +901,8 @@
         "payer": "Payer",
         "status": "Status",
         "reference": "Reference"
-      }
+      },
+      "charge": "Provider charge"
     },
     "audit": {
       "col": {

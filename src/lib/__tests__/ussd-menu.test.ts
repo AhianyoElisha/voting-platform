@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import {
-  MESSAGES,
   applyQuote,
-  initiateFailed,
   initiated,
+  initiateFailed,
+  invalidQuantity,
+  MESSAGES,
   parseState,
   quoteFailed,
   serializeState,
@@ -67,19 +68,27 @@ describe('USSD menu machine', () => {
 
   test('quantity step computes the amount and asks for confirmation', () => {
     const q: MenuState = { step: 'quantity', code: '4321', nomineeName: 'Ama Owusu', categoryName: 'C', votePrice: 150 }
-    expect(step(q, '0')).toMatchObject({ reply: MESSAGES.invalidQuantity, state: q })
-    expect(step(q, '1.5')).toMatchObject({ reply: MESSAGES.invalidQuantity })
-    expect(step(q, 'ten')).toMatchObject({ reply: MESSAGES.invalidQuantity })
-    expect(step(q, '10001')).toMatchObject({ reply: MESSAGES.invalidQuantity })
+    expect(step(q, '0')).toMatchObject({ reply: invalidQuantity(1333), state: q })
+    expect(step(q, '1.5')).toMatchObject({ reply: invalidQuantity(1333) })
+    expect(step(q, 'ten')).toMatchObject({ reply: invalidQuantity(1333) })
+    expect(step(q, '10001')).toMatchObject({ reply: invalidQuantity(1333) })
+    // Decision #16: GHS 2,000 per payment at GHS 1.50 a vote is 1,333 votes.
+    expect(step(q, '1334')).toMatchObject({ reply: 'Enter a whole number of votes (1 to 1333):', state: q })
+    expect(step(q, '1333').state).toMatchObject({ step: 'confirm', quantity: 1333, amount: 199950 })
     const r = step(q, '10')
     expect(r.reply).toBe('Pay GHS 15.00 for 10 votes for Ama Owusu?\n1. Confirm\n2. Cancel')
     expect(r.state).toEqual({ step: 'confirm', code: '4321', nomineeName: 'Ama Owusu', quantity: 10, amount: 1500 })
     expect(step(q, '1').reply).toContain('for 1 vote for')
   })
 
+  test('a price that changed between the quote and the confirmation ends the session without a charge', () => {
+    expect(initiateFailed('priceChanged')).toEqual({ reply: MESSAGES.priceChanged, state: { step: 'done' }, end: true })
+  })
+
   test('confirm is the only way to initiate; cancel ends; anything else re-asks', () => {
     const c: MenuState = { step: 'confirm', code: '4321', nomineeName: 'Ama Owusu', quantity: 3, amount: 450 }
-    expect(step(c, '1').action).toEqual({ type: 'initiate', code: '4321', quantity: 3 })
+    // The amount the voter confirmed travels with the action, so a changed price is refused.
+    expect(step(c, '1').action).toEqual({ type: 'initiate', code: '4321', quantity: 3, amount: 450 })
     expect(step(c, '2')).toMatchObject({ reply: MESSAGES.cancelled, end: true })
     expect(step(c, 'x')).toMatchObject({ state: c, end: false })
     expect(step(c, 'x').reply).toContain('1. Confirm')

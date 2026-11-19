@@ -42,6 +42,8 @@ export interface CallbackResult {
   status: CallbackStatus
   /** The amount the provider says was paid, in pesewas. When present it must equal the Payment's amount. */
   amountPesewas?: number
+  /** The provider's own charge on this payment, in pesewas, when it reports one (decision #36). */
+  feePesewas?: number
   /** The raw payload, stored on the Payment for audits (rule 7). */
   raw: unknown
   /** Mobile network when the provider reports it. */

@@ -14,6 +14,7 @@ import { MockPaymentProvider, signMockPayload } from '../payments/mock'
 import type { CallbackResult, PaymentProvider } from '../payments/provider'
 import { resetRateLimits } from '../rate-limit'
 import { closeRound } from '../rounds-server'
+import { VOTE_QUANTITY_SANITY_MAX, maxVotesFor, votePaymentMaxPesewas } from '../vote-limits'
 import {
   INITIATIONS_PER_PHONE_PER_MINUTE,
   VoteError,
@@ -22,6 +23,7 @@ import {
   initiateVotePayment,
   paidVoteId,
   parseQuantity,
+  quoteVote,
   reconcilePendingPayments,
   recountRoundEntry,
   tallyForRound,
@@ -83,14 +85,51 @@ afterEach(() => {
   delete process.env.MOCK_PAYMENT_SECRET
 })
 
-describe('parseQuantity (#16 placeholder)', () => {
-  test('accepts positive integers within the ceiling', () => {
+describe('vote quantity (decision #16)', () => {
+  afterEach(() => {
+    delete process.env.VOTE_PAYMENT_MAX_PESEWAS
+  })
+
+  test('a whole number of votes, at least 1', () => {
     expect(parseQuantity(1)).toBe(1)
     expect(parseQuantity('25')).toBe(25)
+    expect(parseQuantity(10_001)).toBe(10_001)
     expect(() => parseQuantity(0)).toThrow(VoteError)
+    expect(() => parseQuantity(-3)).toThrow(VoteError)
     expect(() => parseQuantity(1.5)).toThrow(VoteError)
     expect(() => parseQuantity('abc')).toThrow(VoteError)
-    expect(() => parseQuantity(10_001)).toThrow(VoteError)
+    expect(() => parseQuantity(VOTE_QUANTITY_SANITY_MAX + 1)).toThrow(VoteError)
+  })
+
+  test('the most votes is what fits under the amount cap, never below one', () => {
+    expect(votePaymentMaxPesewas()).toBe(200_000)
+    expect(maxVotesFor(150)).toBe(1333)
+    expect(maxVotesFor(100)).toBe(2000)
+    expect(maxVotesFor(200_000)).toBe(1)
+    // A single vote can always be bought, even priced above the cap.
+    expect(maxVotesFor(500_000)).toBe(1)
+    expect(maxVotesFor(0)).toBe(1)
+    process.env.VOTE_PAYMENT_MAX_PESEWAS = '50000'
+    expect(maxVotesFor(150)).toBe(333)
+    // An unusable setting falls back to the default; it never removes the cap.
+    for (const bad of ['abc', '0', '-5', '1.5']) {
+      process.env.VOTE_PAYMENT_MAX_PESEWAS = bad
+      expect(votePaymentMaxPesewas()).toBe(200_000)
+    }
+  })
+
+  test('a payment over the cap is refused before anything is created', async () => {
+    const { nominee } = await seedLiveEvent()
+    expect((await quoteVote(nominee.code, NOW)).maxQuantity).toBe(1333)
+    await expect(
+      initiateVotePayment({ code: nominee.code, quantity: 1334, phone: '0241234567' }, { provider, now: NOW })
+    ).rejects.toThrow(/amountTooHigh/)
+    expect(fake.dump('payments')).toHaveLength(0)
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 1333, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    expect(payment.amount).toBe(199_950)
   })
 })
 
@@ -137,6 +176,20 @@ describe('initiateVotePayment (rules 1, 4a, 6)', () => {
     }
     await initiateVotePayment({ code: nominee.code, quantity: 1, phone: '0241234567' }, { provider: spy, now: NOW })
     expect(pendingAtInitiate).toBe(1)
+  })
+
+  test("charges the live round's own price when it sets one (decision #30)", async () => {
+    const { event, round, nominee } = await seedLiveEvent()
+    // Set on the row directly: the price can only be changed through the API before the round opens.
+    await fake.updateDocument('voteapp', 'rounds', round.$id, { votePrice: 250 })
+    const quote = await quoteVote(nominee.code, NOW)
+    expect([event.votePrice, quote.votePrice]).toEqual([150, 250])
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 4, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    expect(payment.amount).toBe(1000)
+    expect(payment.platformFee + payment.organizerNet).toBe(1000)
   })
 
   test('marks the payment failed when the provider throws', async () => {
@@ -375,6 +428,146 @@ describe('confirmPayment (rules 3, 4, 5)', () => {
     expect(verified).toMatchObject({ providerReference: payment.providerReference, status: 'success' })
     const { outcome } = await confirmPayment(verified!)
     expect(outcome).toBe('confirmed')
+  })
+})
+
+describe('integrity review of rounds and prices (2026-11-13)', () => {
+  test('the total the voter was shown must be the total charged', async () => {
+    const { round, nominee } = await seedLiveEvent()
+    const buy = (expectedAmount: number | undefined) =>
+      initiateVotePayment(
+        { code: nominee.code, quantity: 4, phone: '0241234567', expectedAmount },
+        { provider, now: NOW }
+      )
+    // GHS 1.50 a vote: 4 votes are GHS 6.00.
+    expect((await buy(600)).payment.amount).toBe(600)
+    // A round with another price is live now: the page's GHS 6.00 is stale.
+    await fake.updateDocument('voteapp', 'rounds', round.$id, { votePrice: 250 })
+    const before = fake.dump('payments').length
+    await expect(buy(600)).rejects.toThrow(/priceChanged/)
+    expect(fake.dump('payments')).toHaveLength(before)
+    expect((await buy(1000)).payment.amount).toBe(1000)
+    // Callers that show no total (none today) are charged the current price.
+    expect((await buy(undefined)).payment.amount).toBe(1000)
+  })
+
+  test('a paid vote is still counted if its round entry was removed after the payment started', async () => {
+    const { round, nominee, entry } = await seedLiveEvent()
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 7, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    await fake.deleteDocument('voteapp', 'round_entries', entry.$id)
+
+    const { outcome } = await confirmPayment(callbackFor(payment.providerReference))
+    expect(outcome).toBe('confirmed')
+    expect(fake.dump('votes')).toHaveLength(1)
+    const entries = fake.dump('round_entries')
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toMatchObject({
+      roundId: round.$id,
+      nomineeId: nominee.$id,
+      voteCount: 7,
+      organizationId: 'org1',
+    })
+    expect(fake.dump('audit_logs').filter((a) => a.action === 'vote.entry_restored')).toHaveLength(1)
+    expect(fake.dump('ledger_entries')).toHaveLength(1)
+    // A replay does not add a second entry or more votes.
+    expect((await confirmPayment(callbackFor(payment.providerReference))).outcome).toBe('duplicate')
+    expect(fake.dump('round_entries')[0].voteCount).toBe(7)
+  })
+
+  test('a collision while restoring an entry leaves the payment pending and throws, so the provider retries', async () => {
+    const { round, nominee, entry } = await seedLiveEvent()
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 7, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    await fake.deleteDocument('voteapp', 'round_entries', entry.$id)
+
+    // Another payment's confirmation restores the entry between this one's read and its commit.
+    const list = fake.listDocuments.bind(fake)
+    let raced = false
+    const spy = vi.spyOn(fake, 'listDocuments').mockImplementation(async (...args: Parameters<typeof list>) => {
+      if (args[1] !== 'round_entries' || raced) return list(...args)
+      raced = true
+      await fake.createDocument('voteapp', 'round_entries', 'restored_elsewhere', {
+        organizationId: 'org1',
+        eventId: round.eventId,
+        roundId: round.$id,
+        nomineeId: nominee.$id,
+        voteCount: 3,
+      })
+      return { total: 0, documents: [] } as unknown as Awaited<ReturnType<typeof list>>
+    })
+
+    await expect(confirmPayment(callbackFor(payment.providerReference))).rejects.toThrow()
+    spy.mockRestore()
+    expect(fake.dump('payments').find((p) => p.$id === payment.$id)?.status).toBe('pending')
+    expect(fake.dump('votes')).toHaveLength(0)
+    expect(fake.dump('ledger_entries')).toHaveLength(0)
+
+    // The provider's retry finds the entry and counts the votes once.
+    expect((await confirmPayment(callbackFor(payment.providerReference))).outcome).toBe('confirmed')
+    expect(fake.dump('round_entries')).toHaveLength(1)
+    expect(fake.dump('round_entries')[0].voteCount).toBe(10)
+    expect(fake.dump('votes')).toHaveLength(1)
+  })
+})
+
+describe("provider's charge off the top (decision #36)", () => {
+  test('the reported fee is deducted first; the ledger is credited the settled share, once', async () => {
+    const { event, nominee } = await seedLiveEvent()
+    // 100 votes at GHS 1.50 = GHS 150.00; 10% at initiation.
+    const { payment } = await initiateVotePayment(
+      { code: nominee.code, quantity: 100, phone: '0241234567' },
+      { provider, now: NOW }
+    )
+    expect([payment.amount, payment.platformFee, payment.organizerNet]).toEqual([15000, 1500, 13500])
+
+    const paid = { ...callbackFor(payment.providerReference), feePesewas: 293 }
+    const { outcome, payment: confirmed } = await confirmPayment(paid)
+    expect(outcome).toBe('confirmed')
+    // 15000 - 293 = 14707, shared 10/90: 1470 (rounded down) and 13237.
+    expect([confirmed?.providerFee, confirmed?.platformFee, confirmed?.organizerNet]).toEqual([293, 1470, 13237])
+    expect(293 + 1470 + 13237).toBe(15000)
+    expect(fake.dump('ledger_entries')).toHaveLength(1)
+    expect(fake.dump('ledger_entries')[0]).toMatchObject({ type: 'vote_credit', amount: 13237 })
+    // The votes are what was paid for; the fee never changes the count.
+    expect(fake.dump('votes')[0]).toMatchObject({ quantity: 100 })
+
+    // A replay, even one claiming another fee, changes nothing.
+    expect((await confirmPayment({ ...paid, feePesewas: 900 })).outcome).toBe('duplicate')
+    const row = await fake.getDocument('voteapp', 'payments', payment.$id)
+    expect([row.providerFee, row.platformFee, row.organizerNet]).toEqual([293, 1470, 13237])
+    expect(fake.dump('ledger_entries')).toHaveLength(1)
+
+    expect(await eventFigures(owner, event.$id)).toMatchObject({
+      gross: 15000,
+      charges: 293,
+      platformShare: 1470,
+      organizerShare: 13237,
+    })
+  })
+
+  test('without a reported fee, or with one that is not believable, the initiation split stands', async () => {
+    const { nominee } = await seedLiveEvent()
+    for (const [phone, fee] of [
+      ['0241234567', undefined],
+      ['0551234567', 5000],
+    ] as const) {
+      const { payment } = await initiateVotePayment(
+        { code: nominee.code, quantity: 100, phone },
+        { provider, now: NOW }
+      )
+      const { payment: confirmed } = await confirmPayment({
+        ...callbackFor(payment.providerReference),
+        ...(fee === undefined ? {} : { feePesewas: fee }),
+      })
+      expect([confirmed?.status, confirmed?.platformFee, confirmed?.organizerNet]).toEqual(['success', 1500, 13500])
+      expect(confirmed?.providerFee ?? null).toBeNull()
+    }
+    expect(fake.dump('ledger_entries').map((l) => l.amount)).toEqual([13500, 13500])
   })
 })
 
@@ -663,6 +856,7 @@ describe('tallies and figures (PRD 5.4)', () => {
       freeVotes: 0,
       totalVotes: 15,
       gross: 2250,
+      charges: 0,
       platformShare: 225,
       organizerShare: 2025,
       successfulPayments: 3,

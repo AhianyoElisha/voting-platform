@@ -1,7 +1,7 @@
 import PublicEventCard from '@/components/events/PublicEventCard'
 import { getTranslations } from '@/lib/i18n-server'
 import { groupPublicEvents } from '@/lib/public-events'
-import { listDirectoryEvents } from '@/lib/public-events-server'
+import { currentVotePrices, listDirectoryEvents } from '@/lib/public-events-server'
 import { Heading } from '@/shared/Heading'
 import { Metadata } from 'next'
 
@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function EventsPage() {
   const { t } = await getTranslations()
   const entries = await listDirectoryEvents()
+  const prices = await currentVotePrices(entries.map((e) => e.event))
   const groups = groupPublicEvents(
     entries.map(({ event, organization }) => ({
       id: event.$id,
@@ -27,7 +28,7 @@ export default async function EventsPage() {
       status: event.status,
       startsAt: event.startsAt,
       endsAt: event.endsAt,
-      votePrice: event.votePrice,
+      votePrice: prices.get(event.$id) ?? event.votePrice,
       organizationSlug: organization.slug,
       organizationName: organization.name,
     }))

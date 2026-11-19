@@ -1,9 +1,9 @@
 import { ID, Query, type Models } from 'node-appwrite'
 import { createAdminClient, withRetry } from './appwrite-server'
 import { writeAuditLog } from './audit'
-import { APPWRITE, VOTE_QUANTITY_MAX_PLACEHOLDER, VOTE_QUANTITY_MIN } from './constants'
+import { APPWRITE } from './constants'
 import { databaseId, getOrganization, listTenantDocuments, runInTransaction, type TenantContext } from './db'
-import { FeesNotConfiguredError, effectiveCommissionBps, splitAmount } from './fees'
+import { FeesNotConfiguredError, effectiveCommissionBps, settleWithProviderFee, splitAmount } from './fees'
 import { findNomineeByCode } from './nominee-code'
 import {
   PaymentProviderNotConfiguredError,
@@ -13,6 +13,7 @@ import {
 } from './payments'
 import { normalizeGhanaPhone } from './phone'
 import { rateLimit } from './rate-limit'
+import { effectiveVotePrice } from './rounds-server'
 import type {
   CategoryDoc,
   EventDoc,
@@ -26,6 +27,7 @@ import type {
   TicketTierDoc,
   VoteDoc,
 } from './types'
+import { VOTE_QUANTITY_MIN, VOTE_QUANTITY_SANITY_MAX, maxVotesFor } from './vote-limits'
 
 /**
  * The paid-vote pipeline (USSD_AND_PAYMENTS.md "Payment rules", CLAUDE.md
@@ -49,6 +51,8 @@ export type VoteProblem =
   | 'noLiveRound'
   | 'notInRound'
   | 'quantityInvalid'
+  | 'amountTooHigh'
+  | 'priceChanged'
   | 'phoneInvalid'
   | 'feesNotConfigured'
   | 'providerNotConfigured'
@@ -68,10 +72,11 @@ export class VoteError extends Error {
 type Doc<T> = T & Models.Document
 const db = () => databaseId()
 
+/** A whole number of votes, at least 1. How many one payment may buy is the amount cap, checked at initiation. */
 export function parseQuantity(input: unknown): number {
   const n = typeof input === 'string' ? Number(input.trim()) : input
   if (typeof n !== 'number' || !Number.isInteger(n)) throw new VoteError('quantityInvalid')
-  if (n < VOTE_QUANTITY_MIN || n > VOTE_QUANTITY_MAX_PLACEHOLDER) throw new VoteError('quantityInvalid')
+  if (n < VOTE_QUANTITY_MIN || n > VOTE_QUANTITY_SANITY_MAX) throw new VoteError('quantityInvalid')
   return n
 }
 
@@ -82,6 +87,12 @@ export interface InitiateVoteInput {
   quantity: unknown
   phone: string
   channel?: 'web' | 'ussd'
+  /**
+   * The total the voter was shown, in pesewas. When given, a payment for any
+   * other amount is refused: the price can differ from the one quoted if a
+   * round with another price opened in between (decision #30).
+   */
+  expectedAmount?: number
 }
 
 export interface InitiateVoteResult {
@@ -102,8 +113,10 @@ export interface VoteQuote {
   round: Doc<RoundDoc>
   organization: Doc<OrganizationDoc>
   categoryName: string
-  /** Pesewas per vote. */
+  /** Pesewas per vote in the live round: the round's own price, else the event's. */
   votePrice: number
+  /** The most votes one payment can buy at that price (decision #16). */
+  maxQuantity: number
 }
 
 /**
@@ -157,7 +170,8 @@ export async function quoteVote(code: string, now = new Date()): Promise<VoteQuo
     round,
     organization,
     categoryName: categories.documents[0]?.name ?? '',
-    votePrice: event.votePrice,
+    votePrice: effectiveVotePrice(event, round),
+    maxQuantity: maxVotesFor(effectiveVotePrice(event, round)),
   }
 }
 
@@ -176,7 +190,7 @@ export async function initiateVotePayment(
     throw new VoteError('rateLimited')
   }
 
-  const { nominee, event, round, organization } = await quoteVote(input.code, now)
+  const { nominee, event, round, organization, votePrice } = await quoteVote(input.code, now)
   const { databases } = createAdminClient()
 
   let bps: number
@@ -186,8 +200,12 @@ export async function initiateVotePayment(
     if (err instanceof FeesNotConfiguredError) throw new VoteError('feesNotConfigured')
     throw err
   }
-  const amount = event.votePrice * quantity
+  // Decision #16: one payment buys at most what fits under the amount cap.
+  if (quantity > maxVotesFor(votePrice)) throw new VoteError('amountTooHigh')
+  // The live round's price when it sets one, else the event's (decision #30).
+  const amount = votePrice * quantity
   if (!Number.isSafeInteger(amount)) throw new VoteError('quantityInvalid')
+  if (input.expectedAmount !== undefined && input.expectedAmount !== amount) throw new VoteError('priceChanged')
   const { platformFee, organizerNet } = splitAmount(amount, bps)
 
   let provider: PaymentProvider
@@ -359,6 +377,28 @@ function isConflict(err: unknown): boolean {
 }
 
 /**
+ * The final split of a payment being confirmed (decision #36): the provider's
+ * reported charge off the top, the rest shared as fixed at initiation. A fee
+ * that is reported but not believable is logged and ignored.
+ */
+function settleFor(payment: Doc<PaymentDoc>, result: CallbackResult) {
+  const settled = settleWithProviderFee(payment, result.feePesewas)
+  if (result.feePesewas !== undefined && settled.providerFee === null) {
+    console.error(
+      `[payments] ${payment.$id}: provider fee ${result.feePesewas} on ${payment.amount} pesewas not believed, not deducted`
+    )
+  }
+  return settled
+}
+
+/** Columns written with the confirmation; none when no charge was taken, so the row keeps its initiation split. */
+function settledColumns(settled: ReturnType<typeof settleWithProviderFee>) {
+  return settled.providerFee === null
+    ? {}
+    : { providerFee: settled.providerFee, platformFee: settled.platformFee, organizerNet: settled.organizerNet }
+}
+
+/**
  * Applies a verified provider result. Idempotent on `providerReference`
  * (rule 5): a repeat returns `duplicate` and writes nothing. Success is one
  * transaction (rule 4).
@@ -448,15 +488,17 @@ export async function confirmPayment(
       Query.limit(1),
     ])
   )
-  const entry = entries.documents[0]
-  if (!entry)
-    throw new Error(`Payment ${payment.$id}: nominee ${payment.nomineeId} has no entry in round ${payment.roundId}`)
+  // The entry existed when the payment started (`quoteVote` requires it). If it has
+  // gone since (an organizer's pick racing the round opening), the paid vote is still
+  // owed: the entry is put back with this payment's votes inside the transaction below.
+  const entry = entries.documents[0] ?? null
   const round = await withRetry(() =>
     databases.getDocument<Doc<RoundDoc>>(db(), APPWRITE.TABLES.ROUNDS, payment.roundId as string)
   )
   applyLatePaymentPolicy(round)
 
   const now = new Date().toISOString()
+  const settled = settleFor(payment, result)
   try {
     await runInTransaction(async (tx) => {
       const fresh = await databases.getDocument<Doc<PaymentDoc>>(db(), APPWRITE.TABLES.PAYMENTS, payment.$id, [], tx)
@@ -471,6 +513,7 @@ export async function confirmPayment(
           confirmedAt: now,
           rawCallback: raw,
           network: result.network ?? payment.network,
+          ...settledColumns(settled),
           // Store the real reference if we only had the placeholder.
           ...(payment.providerReference.startsWith('local_') && result.providerReference !== payment.providerReference
             ? { providerReference: result.providerReference }
@@ -497,15 +540,50 @@ export async function confirmPayment(
         undefined,
         tx
       )
-      await databases.incrementDocumentAttribute(
-        db(),
-        APPWRITE.TABLES.ROUND_ENTRIES,
-        entry.$id,
-        'voteCount',
-        payment.quantity,
-        undefined,
-        tx
-      )
+      if (entry) {
+        await databases.incrementDocumentAttribute(
+          db(),
+          APPWRITE.TABLES.ROUND_ENTRIES,
+          entry.$id,
+          'voteCount',
+          payment.quantity,
+          undefined,
+          tx
+        )
+      } else {
+        await databases.createDocument<Doc<RoundEntryDoc>>(
+          db(),
+          APPWRITE.TABLES.ROUND_ENTRIES,
+          ID.unique(),
+          {
+            organizationId: payment.organizationId,
+            eventId: payment.eventId,
+            roundId: payment.roundId as string,
+            nomineeId: payment.nomineeId as string,
+            voteCount: payment.quantity,
+          },
+          undefined,
+          tx
+        )
+        await databases.createDocument(
+          db(),
+          APPWRITE.TABLES.AUDIT_LOGS,
+          ID.unique(),
+          {
+            actorId: 'system',
+            organizationId: payment.organizationId,
+            action: 'vote.entry_restored',
+            target: `payments/${payment.$id}`,
+            metadata: JSON.stringify({
+              roundId: payment.roundId,
+              nomineeId: payment.nomineeId,
+              quantity: payment.quantity,
+            }),
+          },
+          undefined,
+          tx
+        )
+      }
       await databases.createDocument<Doc<LedgerEntryDoc>>(
         db(),
         APPWRITE.TABLES.LEDGER_ENTRIES,
@@ -513,7 +591,7 @@ export async function confirmPayment(
         {
           organizationId: payment.organizationId,
           type: 'vote_credit',
-          amount: payment.organizerNet,
+          amount: settled.organizerNet,
           paymentId: payment.$id,
           note: null,
         },
@@ -547,7 +625,11 @@ export async function confirmPayment(
     // error code: Appwrite's commit error shape is not pinned down here.
     const current = await getPayment(payment.$id)
     if (current?.status === 'success') return { outcome: 'duplicate', payment: current }
-    if (isConflict(err)) return { outcome: 'duplicate', payment: current ?? payment }
+    // A conflict on a payment that is still pending is not a replay: something
+    // else collided (e.g. two confirmations restoring the same round entry).
+    // Throw, so the webhook answers 5xx and the provider retries; reconciliation
+    // is the backstop. Calling it a duplicate would leave the vote uncounted.
+    if (isConflict(err) && current && current.status !== 'pending') return { outcome: 'duplicate', payment: current }
     throw err
   }
 
@@ -573,6 +655,7 @@ async function confirmTicketPayment(
   )
   const now = new Date().toISOString()
   const { signTicketToken, ticketId } = await import('./tickets/token')
+  const settled = settleFor(payment, result)
   try {
     await runInTransaction(async (tx) => {
       const fresh = await databases.getDocument<Doc<PaymentDoc>>(db(), APPWRITE.TABLES.PAYMENTS, payment.$id, [], tx)
@@ -586,6 +669,7 @@ async function confirmTicketPayment(
           confirmedAt: now,
           rawCallback: raw,
           network: result.network ?? payment.network,
+          ...settledColumns(settled),
           ...(payment.providerReference.startsWith('local_') && result.providerReference !== payment.providerReference
             ? { providerReference: result.providerReference }
             : {}),
@@ -633,7 +717,7 @@ async function confirmTicketPayment(
         {
           organizationId: payment.organizationId,
           type: 'ticket_credit',
-          amount: payment.organizerNet,
+          amount: settled.organizerNet,
           paymentId: payment.$id,
           note: null,
         },
@@ -807,6 +891,8 @@ export interface EventFigures {
   freeVotes: number
   totalVotes: number
   gross: number
+  /** Payment provider charges taken off the gross (decision #36). gross = charges + platformShare + organizerShare. */
+  charges: number
   platformShare: number
   organizerShare: number
   successfulPayments: number
@@ -832,6 +918,7 @@ export async function eventFigures(ctx: TenantContext, eventId: string): Promise
     freeVotes: 0,
     totalVotes: 0,
     gross: 0,
+    charges: 0,
     platformShare: 0,
     organizerShare: 0,
     successfulPayments: 0,
@@ -839,6 +926,7 @@ export async function eventFigures(ctx: TenantContext, eventId: string): Promise
   for (const p of payments.documents) {
     figures.paidVotes += p.quantity
     figures.gross += p.amount
+    figures.charges += p.providerFee ?? 0
     figures.platformShare += p.platformFee
     figures.organizerShare += p.organizerNet
     figures.successfulPayments += 1

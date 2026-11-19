@@ -1,6 +1,6 @@
-import { VOTE_QUANTITY_MAX_PLACEHOLDER, VOTE_QUANTITY_MIN } from '../constants'
 import { formatPesewas } from '../money'
 import { isValidNomineeCode, normalizeNomineeCode } from '../nominee-code'
+import { VOTE_QUANTITY_MIN, maxVotesFor } from '../vote-limits'
 import type { VoteProblem } from '../votes-server'
 
 /**
@@ -20,7 +20,10 @@ export type MenuState =
   | { step: 'confirm'; code: string; nomineeName: string; quantity: number; amount: number }
   | { step: 'done' }
 
-export type MenuAction = { type: 'quote'; code: string } | { type: 'initiate'; code: string; quantity: number }
+export type MenuAction =
+  | { type: 'quote'; code: string }
+  /** `amount` is the total the voter confirmed on screen, in pesewas. */
+  | { type: 'initiate'; code: string; quantity: number; amount: number }
 
 export interface MenuResult {
   reply: string
@@ -46,7 +49,6 @@ export const MESSAGES = {
   ticketsSoon: 'Tickets by USSD are coming soon.',
   help: 'To vote: choose 1, enter the nominee code from their flyer, enter how many votes, then approve the MoMo prompt.',
   enterQuantity: 'Enter number of votes:',
-  invalidQuantity: `Enter a whole number of votes (${VOTE_QUANTITY_MIN} to ${VOTE_QUANTITY_MAX_PLACEHOLDER}):`,
   cancelled: 'Cancelled. Dial again to vote.',
   sent: 'A MoMo prompt has been sent to your phone. Approve it with your PIN to complete your vote.',
   otpUnsupported:
@@ -56,9 +58,17 @@ export const MESSAGES = {
   phoneInvalid: 'This number cannot be used for mobile money.',
   tooMany: 'Too many attempts from this number. Please wait a minute and dial again.',
   notOpen: 'Voting is not open for this event right now.',
+  priceChanged: 'The price per vote has just changed. You have not been charged. Dial again to vote.',
   noNominee: 'No nominee has that code. Enter nominee code:',
   nomineeInactive: 'That nominee is no longer in the running. Enter nominee code:',
 } as const
+
+/** Asked again when the number of votes is not one a single payment can buy. */
+export function invalidQuantity(max: number): string {
+  return max > VOTE_QUANTITY_MIN
+    ? `Enter a whole number of votes (${VOTE_QUANTITY_MIN} to ${max}):`
+    : `Enter ${VOTE_QUANTITY_MIN} to buy one vote:`
+}
 
 export function start(): MenuResult {
   return { reply: MESSAGES.main, state: { step: 'main' }, end: false }
@@ -82,8 +92,10 @@ export function step(state: MenuState, rawInput: string): MenuResult {
 
     case 'quantity': {
       const n = /^\d+$/.test(input) ? Number(input) : NaN
-      if (!Number.isInteger(n) || n < VOTE_QUANTITY_MIN || n > VOTE_QUANTITY_MAX_PLACEHOLDER) {
-        return { reply: MESSAGES.invalidQuantity, state, end: false }
+      // Decision #16: one payment buys at most what fits under the amount cap.
+      const max = maxVotesFor(state.votePrice)
+      if (!Number.isInteger(n) || n < VOTE_QUANTITY_MIN || n > max) {
+        return { reply: invalidQuantity(max), state, end: false }
       }
       const amount = state.votePrice * n
       const next: MenuState = { step: 'confirm', code: state.code, nomineeName: state.nomineeName, quantity: n, amount }
@@ -95,7 +107,7 @@ export function step(state: MenuState, rawInput: string): MenuResult {
         return {
           reply: '',
           state,
-          action: { type: 'initiate', code: state.code, quantity: state.quantity },
+          action: { type: 'initiate', code: state.code, quantity: state.quantity, amount: state.amount },
           end: false,
         }
       if (input === '2') return { reply: MESSAGES.cancelled, state: { step: 'done' }, end: true }
@@ -157,6 +169,7 @@ export function initiateFailed(problem: VoteProblem | 'unknown'): MenuResult {
   if (problem === 'phoneInvalid') return { reply: MESSAGES.phoneInvalid, state: { step: 'done' }, end: true }
   if (problem === 'providerFailed') return { reply: MESSAGES.paymentFailed, state: { step: 'done' }, end: true }
   if (problem === 'rateLimited') return { reply: MESSAGES.tooMany, state: { step: 'done' }, end: true }
+  if (problem === 'priceChanged') return { reply: MESSAGES.priceChanged, state: { step: 'done' }, end: true }
   if (
     [
       'eventNotLive',

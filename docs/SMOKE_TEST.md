@@ -60,7 +60,11 @@ key alone, so Vercel's lack of a fixed egress IP does not matter.
 
 - Which networks asked for a one-time code, in `docs/USSD_AND_PAYMENTS.md`.
 - Paystack's fee on the test payment (Paystack deducts it from settlement),
-  to check the off-the-top split decided for #36.
+  to check the off-the-top split decided for #36: the payment's
+  `providerFee` must equal Paystack's fee in pesewas, and `providerFee +
+  platformFee + organizerNet` must equal `amount`. If `fees` turns out not to
+  be in pesewas, only `parseTransaction` in `src/lib/payments/paystack/parse.ts`
+  needs to change.
 
 ## USSD (Hubtel)
 

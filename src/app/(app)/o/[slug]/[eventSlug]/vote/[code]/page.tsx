@@ -10,6 +10,8 @@ import { findNomineeByCode } from '@/lib/nominee-code'
 import { isMockProviderActive } from '@/lib/payments'
 import { focusOf } from '@/lib/photo-focus'
 import { isPublicEvent } from '@/lib/public-events'
+import { effectiveVotePrice, findLiveRound } from '@/lib/rounds-server'
+import { maxVotesFor } from '@/lib/vote-limits'
 import type { CategoryDoc, EventDoc } from '@/lib/types'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -45,6 +47,8 @@ export default async function VotePage({ params }: Props) {
   ])
   const { t } = await getTranslations()
   const live = event.status === 'live'
+  // The same price the payment will be charged at (`quoteVote`): the live round's own, else the event's.
+  const votePrice = effectiveVotePrice(event, await findLiveRound(ctx, event.$id))
 
   return (
     <main className="container py-16 lg:py-24">
@@ -75,7 +79,7 @@ export default async function VotePage({ params }: Props) {
                 {t('web:publicEvent.code')} <span className="font-mono">{nominee.code}</span>
               </span>
               <span className="rounded-full bg-neutral-100 px-3 py-1 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200">
-                {t('web:publicEvent.pricePerVote', { price: formatPesewas(event.votePrice) })}
+                {t('web:publicEvent.pricePerVote', { price: formatPesewas(votePrice) })}
               </span>
             </div>
             {nominee.bio && <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-300">{nominee.bio}</p>}
@@ -85,7 +89,8 @@ export default async function VotePage({ params }: Props) {
           <VoteForm
             code={nominee.code}
             nomineeName={nominee.name}
-            votePrice={event.votePrice}
+            votePrice={votePrice}
+            maxQuantity={maxVotesFor(votePrice)}
             mockProvider={process.env.NODE_ENV !== 'production' && isMockProviderActive()}
           />
         ) : (

@@ -160,6 +160,22 @@ describe('purchase initiation (rules 1, 6)', () => {
 })
 
 describe('ticket confirmation (rules 2, 4, 5)', () => {
+  test("the provider's charge comes off the top of a ticket payment too (decision #36)", async () => {
+    const { tier, event } = await seed()
+    const { payment } = await buy(tier.$id, 2, '0241234567', { email: 'buyer@example.com' })
+    await confirmPayment({ ...callbackFor(payment.providerReference), feePesewas: 195 })
+    const row = await fake.getDocument('voteapp', 'payments', payment.$id)
+    // 10000 gross - 195 = 9805, shared 10/90: 980 (rounded down) and 8825.
+    expect([row.providerFee, row.platformFee, row.organizerNet]).toEqual([195, 980, 8825])
+    expect(fake.dump('ledger_entries')[0]).toMatchObject({ type: 'ticket_credit', amount: 8825 })
+    expect(await ticketFigures(owner, event.$id)).toMatchObject({
+      gross: 10000,
+      charges: 195,
+      platformShare: 980,
+      organizerShare: 8825,
+    })
+  })
+
   test('a verified success issues one signed ticket per seat, bumps the counter and credits the ledger once', async () => {
     const { tier, event } = await seed()
     const { payment } = await buy(tier.$id, 2, '0241234567', { email: 'buyer@example.com' })
@@ -190,7 +206,14 @@ describe('ticket confirmation (rules 2, 4, 5)', () => {
     expect((await fake.getDocument('voteapp', 'ticket_tiers', tier.$id)).quantitySold).toBe(2)
 
     const figures = await ticketFigures(owner, event.$id)
-    expect(figures).toEqual({ ticketsSold: 2, ticketsUsed: 0, gross: 10000, platformShare: 1000, organizerShare: 9000 })
+    expect(figures).toEqual({
+      ticketsSold: 2,
+      ticketsUsed: 0,
+      gross: 10000,
+      charges: 0,
+      platformShare: 1000,
+      organizerShare: 9000,
+    })
     expect(await listTickets(otherOrg, event.$id)).toEqual([])
   })
 

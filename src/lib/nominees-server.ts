@@ -13,8 +13,9 @@ import { allocateNomineeCode, isNomineeCodeTaken } from './nominee-code'
 import { releaseInviteAccount } from './nominee-invite-server'
 import { focusColumns, focusOf, parsePhotoFocus, sameFocus } from './photo-focus'
 import { storeNomineePhoto } from './portal-server'
+import { nextOpenRound } from './rounds-server'
 import { assertCanManage, canManage } from './tenant'
-import type { CategoryDoc, EventDoc, MembershipRole, NomineeDoc, RoundDoc, RoundEntryDoc } from './types'
+import type { CategoryDoc, EventDoc, MembershipRole, NomineeDoc, RoundEntryDoc } from './types'
 
 /**
  * Categories and nominees (PRD 5.2) and morale candidates (PRD 5.4a, behind
@@ -114,9 +115,11 @@ function isConflict(err: unknown): boolean {
 }
 
 /**
- * Creates the nominee with a platform-wide unique code and its round 1 entry.
- * A nominee added after round 1 closed gets no entry: placing nominees into
- * later rounds is OPEN_QUESTIONS #30.
+ * Creates the nominee with a platform-wide unique code and an entry in the
+ * event's next open round: round 1 until it closes, then the lowest-numbered
+ * round that is not closed, where they start at zero like everyone else
+ * (decision #30). With every round closed there is no entry yet; the
+ * organizer picks them into the next round they add.
  */
 export async function createNominee(
   ctx: TenantContext,
@@ -187,14 +190,10 @@ export async function createNominee(
     })
   }
 
-  const roundOne = await listTenantDocuments<RoundDoc>(ctx, APPWRITE.TABLES.ROUNDS, [
-    Query.equal('eventId', [event.$id]),
-    Query.equal('number', [1]),
-    Query.limit(1),
-  ])
-  const round = roundOne.documents[0]
+  // Round 1 while it is open; after that, the next round that is not closed (decision #30).
+  const round = await nextOpenRound(ctx, event.$id)
   let entry: RoundEntryDoc | null = null
-  if (round && round.status !== 'closed') {
+  if (round) {
     entry = await createTenantDocument<RoundEntryDoc>(ctx, APPWRITE.TABLES.ROUND_ENTRIES, {
       eventId: event.$id,
       roundId: round.$id,

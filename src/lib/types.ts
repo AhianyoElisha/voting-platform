@@ -91,6 +91,11 @@ export interface RoundDoc extends TenantDoc {
   endsAt: string | null
   status: RoundStatus
   closedAt: string | null
+  /**
+   * Pesewas per vote in this round; null or absent means the event's price (decision #30).
+   * Optional: rounds are created without it and it is only written when the organizer sets one.
+   */
+  votePrice?: number | null
 }
 
 export interface CategoryDoc extends TenantDoc {
@@ -174,6 +179,11 @@ export interface PaymentDoc extends TenantDoc {
   amount: number
   platformFee: number
   organizerNet: number
+  /**
+   * The payment provider's charge taken off the top at confirmation (decision #36); null or
+   * absent when none was reported. `providerFee + platformFee + organizerNet === amount`.
+   */
+  providerFee?: number | null
   provider: string
   /** Unique; the idempotency key for callbacks (rule 5). */
   providerReference: string

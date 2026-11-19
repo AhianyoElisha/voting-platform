@@ -131,6 +131,8 @@ export interface TicketFigures {
   ticketsSold: number
   ticketsUsed: number
   gross: number
+  /** Payment provider charges taken off the gross (decision #36). */
+  charges: number
   platformShare: number
   organizerShare: number
 }
@@ -148,10 +150,11 @@ export async function ticketFigures(ctx: TenantContext, eventId: string): Promis
       Query.limit(5000),
     ]),
   ])
-  const f: TicketFigures = { ticketsSold: 0, ticketsUsed: 0, gross: 0, platformShare: 0, organizerShare: 0 }
+  const f: TicketFigures = { ticketsSold: 0, ticketsUsed: 0, gross: 0, charges: 0, platformShare: 0, organizerShare: 0 }
   for (const p of payments.documents) {
     f.ticketsSold += p.quantity
     f.gross += p.amount
+    f.charges += p.providerFee ?? 0
     f.platformShare += p.platformFee
     f.organizerShare += p.organizerNet
   }

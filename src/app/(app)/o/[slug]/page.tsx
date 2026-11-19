@@ -5,6 +5,7 @@ import { APPWRITE } from '@/lib/constants'
 import { getOrganizationBySlug, listTenantDocuments, type TenantContext } from '@/lib/db'
 import { getTranslations } from '@/lib/i18n-server'
 import { PUBLIC_EVENT_STATUSES, groupPublicEvents } from '@/lib/public-events'
+import { currentVotePrices } from '@/lib/public-events-server'
 import type { EventDoc } from '@/lib/types'
 import { Heading } from '@/shared/Heading'
 import { Metadata } from 'next'
@@ -46,7 +47,8 @@ export default async function OrganizationHomePage({ params }: Props) {
     Query.equal('status', [...PUBLIC_EVENT_STATUSES]),
     Query.limit(100),
   ])
-  const groups = groupPublicEvents(events.documents)
+  const prices = await currentVotePrices(events.documents)
+  const groups = groupPublicEvents(events.documents.map((e) => ({ ...e, votePrice: prices.get(e.$id) ?? e.votePrice })))
   const sections = [
     { key: 'live', items: groups.live },
     { key: 'upcoming', items: groups.upcoming },

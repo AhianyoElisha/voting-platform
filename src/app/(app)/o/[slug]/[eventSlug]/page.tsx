@@ -10,6 +10,7 @@ import { isMockProviderActive } from '@/lib/payments'
 import { focusOf } from '@/lib/photo-focus'
 import { isPublicEvent } from '@/lib/public-events'
 import { shapeResults } from '@/lib/results'
+import { effectiveVotePrice } from '@/lib/rounds-server'
 import { availableNow } from '@/lib/tickets/purchase-server'
 import { listPublicTiers } from '@/lib/tickets/tiers-server'
 import type { CategoryDoc, EventDoc, NomineeDoc, RoundDoc, RoundEntryDoc } from '@/lib/types'
@@ -81,6 +82,11 @@ export default async function PublicEventPage({ params }: Props) {
   }
   const resultFor = (nomineeId: string) => results?.find((r) => r.nomineeId === nomineeId)
   const live = event.status === 'live'
+  // What a vote costs now: the live round's own price when it sets one (decision #30).
+  const votePrice = effectiveVotePrice(
+    event,
+    rounds.documents.find((r) => r.status === 'live')
+  )
   const tiers = await listPublicTiers(organization.$id, event.$id)
   const tierOptions = await Promise.all(
     tiers.map(async (tier) => ({
@@ -124,7 +130,7 @@ export default async function PublicEventPage({ params }: Props) {
           {event.description && <p className="mt-3 max-w-2xl opacity-90">{event.description}</p>}
           <div className="mt-6 flex flex-wrap gap-2 text-sm font-medium">
             <span className="rounded-full bg-white px-4 py-1.5 text-primary-700 shadow-sm">
-              {t('web:publicEvent.pricePerVote', { price: formatPesewas(event.votePrice) })}
+              {t('web:publicEvent.pricePerVote', { price: formatPesewas(votePrice) })}
             </span>
             <span className="rounded-full bg-white/15 px-4 py-1.5 backdrop-blur-sm">
               {t('web:publicEvent.nominees', { count: nominees.documents.length })}

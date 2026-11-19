@@ -35,6 +35,8 @@ export async function POST(req: Request) {
       quantity,
       phone,
       channel: 'web',
+      // What the page showed; refused if the price has changed since (a new round opened).
+      expectedAmount: typeof body?.amount === 'number' ? body.amount : undefined,
     })
     return NextResponse.json(
       {

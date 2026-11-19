@@ -39,6 +39,7 @@ Everything is documented in `.env.example`. Beyond the Appwrite keys and `SESSIO
 | `PAYSTACK_*` | Secret key and customer email domain for payments; see `docs/SMOKE_TEST.md` |
 | `HUBTEL_*` | Only if payments run on Hubtel instead (not in use); see `docs/SMOKE_TEST.md` |
 | `PLATFORM_COMMISSION_BPS` | Overrides the 10% default |
+| `VOTE_PAYMENT_MAX_PESEWAS` | The most one vote payment may charge; default GHS 2,000 |
 | `TICKET_SECRET` | Signs ticket QR tokens |
 | `USSD_SHORTCODE` | Printed on flyers once Hubtel assigns it |
 | `USSD_WEBHOOK_SECRET` / `USSD_CALLBACK_IPS` | At least one is required in production for the USSD webhook |

@@ -60,9 +60,9 @@ export const FREE_VOTE_REASON_MIN = 3
 export const FREE_VOTE_REASON_MAX = 500
 
 /**
- * PLACEHOLDER for OPEN_QUESTIONS #16 (minimum and maximum votes per
- * transaction). The minimum is 1 by nature; the ceiling here is a technical
- * guard against absurd debits, not a product decision.
+ * The most free votes an admin can grant at once (PRD 5.4a, "e.g. 1,000 at
+ * once"). A technical ceiling, not the paid limit: paid votes are capped by
+ * amount per payment (decision #16, `vote-limits.ts`).
  */
 export const VOTE_QUANTITY_MIN = 1
 export const VOTE_QUANTITY_MAX_PLACEHOLDER = 10_000

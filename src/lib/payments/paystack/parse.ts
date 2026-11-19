@@ -41,6 +41,8 @@ export interface PaystackTransaction {
   status: string
   /** Pesewas, as Paystack reports it. */
   amount: number | null
+  /** Paystack's charge on the transaction, in pesewas, when reported. */
+  fees: number | null
   currency: string | null
   network: string | null
   gatewayResponse: string | null
@@ -69,6 +71,7 @@ export function parseTransaction(data: unknown): PaystackTransaction | null {
     reference,
     status: status.toLowerCase(),
     amount,
+    fees: typeof d.fees === 'number' && Number.isSafeInteger(d.fees) && d.fees >= 0 ? d.fees : null,
     currency: str(d.currency)?.toUpperCase() ?? null,
     network: str(auth?.bank) ?? str(momo?.provider) ?? null,
     gatewayResponse: str(d.gateway_response) ?? str(d.message),

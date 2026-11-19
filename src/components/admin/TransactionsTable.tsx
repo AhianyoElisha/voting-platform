@@ -52,6 +52,7 @@ export default async function TransactionsTable({
               {formatPesewas(p.amount)}
               <span className="block text-xs text-neutral-500">
                 {t('web:admin.tx.fee')} {formatPesewas(p.platformFee)}
+                {p.providerFee !== null && ` · ${t('web:admin.tx.charge')} ${formatPesewas(p.providerFee)}`}
               </span>
             </td>
             <td className={`${td} font-mono text-xs`}>{p.payerPhone}</td>

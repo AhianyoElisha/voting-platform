@@ -58,12 +58,13 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 ### 5.2b Voting rounds (optional per event)
 - An organizer can run an event in **rounds** (e.g. round 1, round 2, final).
 - When a round closes, its votes are **frozen and saved to that round**. The next round starts every nominee at **zero**.
-- The organizer controls which nominees advance to the next round: a manual pick, with the closed round's ranking shown beside each name; no automatic top-N or threshold (decided 2026-11-12, #30). A new nominee can also be added between rounds and starts the next round at zero. *Not built yet.*
-- Each round can set its own price per vote; the event's price is the default (decided 2026-11-12, #30). *Not built yet: every round uses the event's price.*
+- The organizer controls which nominees advance to the next round: a manual pick, with the closed round's ranking shown beside each name; no automatic top-N or threshold (decided 2026-11-12, #30). A new nominee can also be added between rounds and starts the next round at zero. *Built 2026-11-13: each round that has not started has a setup panel on the event page where a manager ticks who is in it, with each nominee's place and votes in the last closed round beside their name; a nominee added after round 1 has closed joins the next round that is not closed. The pick can change until the round opens.*
+- Each round can set its own price per vote; the event's price is the default (decided 2026-11-12, #30). *Built 2026-11-13: set in the same panel, fixed once the round opens; public pages, the vote form and USSD all quote the live round's price.*
 - After the final round, the organizer can generate a **cumulative report**: total votes per nominee across all rounds, per category, exportable as **PDF**. *Built 2026-10-14 and decided 2026-11-12 (#35): per category and per nominee, one column per round, paid and free split, morale flag, organizer name and logo, and a "provisional" note while any round is open. Available at any time from the event page.*
 - Events without rounds behave as a single round.
 
 ### 5.3 Voting: two independent paths, one tally
+- One payment buys at least 1 vote and at most what fits under GHS 2,000 (a platform setting; decided 2026-11-13, #16; built).
 - **Web:** browse events, categories and nominees, see details, choose a number of votes, pay by MoMo, and the vote is counted once payment is confirmed.
 - **USSD:** dial the shortcode, enter or select the nominee code, enter the number of votes, approve the MoMo prompt, and the vote is counted once payment is confirmed. No smartphone or data needed.
 - Both paths write to the same vote records.
@@ -76,7 +77,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
   - total **paid** votes
   - total **free (non-paid)** votes
   - combined total
-  - gross revenue, the platform's percentage share, and the organizer's (faculty or department's) percentage share, with the split configurable per organization
+  - gross revenue, the payment charges taken off it, the platform's percentage share, and the organizer's (faculty or department's) percentage share, with the split configurable per organization
 
 ### 5.4a Morale candidates and free votes
 *Requested by the sales partner. Decided 2026-10-14 (see DECISIONS, was #29): the features ship with public disclosure. The organizer opts in per event; the platform and organization switches default to on and the super admin can turn either feature off per organization or platform-wide.*
@@ -111,7 +112,7 @@ A multi-tenant voting platform that matches the standard feature set (web and US
 
 ### 5.6 Payments and payouts
 - Votes are paid with mobile money via Paystack; Hubtel provides the USSD shortcode (decided 2026-10-14, amended 2026-11-12; see DECISIONS).
-- The platform takes a 10% commission on the gross paid amount; 90% goes to the organizer's balance. Commission only, no subscription or per-event fee (decided 2026-10-14, see DECISIONS). The super admin can set a different rate for an organization.
+- The payment provider's charge on each payment comes off first (the fee Paystack reports), and the platform takes a 10% commission on what is left; 90% of that goes to the organizer's balance (decided 2026-11-13, #36; built). Commission only, no subscription or per-event fee (decided 2026-10-14, see DECISIONS). The super admin can set a different rate for an organization.
 - Organizers request payouts; the super admin approves them (decided 2026-11-12, #3): manual approval, the money is transferred outside the platform, and marking it paid is what debits the ledger. A request reserves its amount; money out can never exceed settled credits. Minimum from `PAYOUT_MIN_PESEWAS`, none until set. Destination: MoMo or bank.
 
 ### 5.7 Super admin console

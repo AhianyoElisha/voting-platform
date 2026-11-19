@@ -3,7 +3,8 @@ import { createAdminClient, withRetry } from './appwrite-server'
 import { APPWRITE } from './constants'
 import { databaseId, type Doc } from './db'
 import { PUBLIC_EVENT_STATUSES } from './public-events'
-import type { EventDoc, OrganizationDoc } from './types'
+import { effectiveVotePrice } from './rounds-server'
+import type { EventDoc, OrganizationDoc, RoundDoc } from './types'
 
 /** How many events the platform directory reads at most. */
 export const DIRECTORY_LIMIT = 200
@@ -49,4 +50,36 @@ export async function listDirectoryEvents(): Promise<DirectoryEntry[]> {
     const organization = organizations.get(event.organizationId)
     return organization ? [{ event, organization }] : []
   })
+}
+
+/**
+ * What a vote costs right now in each of `events`: the live round's own price
+ * when it sets one, else the event's (decision #30). For public lists, where
+ * showing the event's base price beside a round that charges another would
+ * mislead. Events must already be ones the caller may show.
+ */
+export async function currentVotePrices(
+  events: Pick<Doc<EventDoc>, '$id' | 'organizationId' | 'votePrice'>[]
+): Promise<Map<string, number>> {
+  const prices = new Map(events.map((e) => [e.$id, e.votePrice]))
+  if (events.length === 0) return prices
+  const { databases } = createAdminClient()
+  const byId = new Map(events.map((e) => [e.$id, e]))
+  const ids = [...byId.keys()]
+  for (let i = 0; i < ids.length; i += 100) {
+    const res = await withRetry(() =>
+      databases.listDocuments<Doc<RoundDoc>>(databaseId(), APPWRITE.TABLES.ROUNDS, [
+        Query.equal('eventId', ids.slice(i, i + 100)),
+        Query.equal('status', ['live']),
+        Query.limit(100),
+      ])
+    )
+    for (const round of res.documents) {
+      const event = byId.get(round.eventId)
+      if (event && round.organizationId === event.organizationId) {
+        prices.set(event.$id, effectiveVotePrice(event, round))
+      }
+    }
+  }
+  return prices
 }

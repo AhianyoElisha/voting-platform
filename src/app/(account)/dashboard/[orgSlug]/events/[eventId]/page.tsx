@@ -64,6 +64,30 @@ export default async function EventDetailPage({ params }: Props) {
     const tpl = published.find((x) => x.categoryId === categoryId) ?? published.find((x) => !x.categoryId)
     return tpl ? photoFrameOf(tpl.canvasJson, tpl.width, tpl.height) : null
   }
+  // For the round setup panels (decision #30): who can be picked, and how each
+  // finished, within their category, in the last round that closed.
+  const lastClosed = [...tallies].reverse().find(({ round }) => round.status === 'closed')
+  const previousByNominee = new Map<string, { rank: number; votes: number }>()
+  if (lastClosed) {
+    const seen = new Map<string, number>()
+    for (const row of lastClosed.rows) {
+      const rank = (seen.get(row.nominee.categoryId) ?? 0) + 1
+      seen.set(row.nominee.categoryId, rank)
+      previousByNominee.set(row.nominee.$id, { rank, votes: row.entry.voteCount })
+    }
+  }
+  const roundSetup = {
+    candidates: nominees
+      .filter((n) => n.status === 'active')
+      .map((n) => ({ id: n.$id, name: n.name, categoryId: n.categoryId, previous: previousByNominee.get(n.$id) })),
+    categories: categories.map((c) => ({ id: c.$id, name: c.name })),
+    entrantsByRound: Object.fromEntries(tallies.map(({ round, rows }) => [round.$id, rows.map((r) => r.nominee.$id)])),
+    eventPrice: formatPesewas(event.votePrice),
+    previousRoundName: lastClosed?.round.name ?? null,
+    priceByRound: Object.fromEntries(
+      rounds.flatMap((r) => (typeof r.votePrice === 'number' ? [[r.$id, formatPesewas(r.votePrice)]] : []))
+    ),
+  }
   const tierName = new Map(tiers.map((tier) => [tier.$id, tier.name]))
   const { report } = await loadCumulativeReport(ctx, eventId)
   const grants = await listFreeVoteGrants(ctx, eventId)
@@ -130,13 +154,14 @@ export default async function EventDetailPage({ params }: Props) {
 
       <section className="space-y-4">
         <h2 className="section-title">{t('web:events.results.title')}</h2>
-        <dl className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
           {(
             [
               ['paidVotes', String(figures.paidVotes)],
               ['freeVotes', String(figures.freeVotes)],
               ['totalVotes', String(figures.totalVotes)],
               ['gross', formatPesewas(figures.gross)],
+              ['charges', formatPesewas(figures.charges)],
               ['platformShare', formatPesewas(figures.platformShare)],
               ['organizerShare', formatPesewas(figures.organizerShare)],
             ] as const
@@ -268,7 +293,13 @@ export default async function EventDetailPage({ params }: Props) {
 
       <section className="space-y-4">
         <h2 className="section-title">{t('web:events.rounds.title')}</h2>
-        <RoundControls orgId={organization.$id} eventId={event.$id} rounds={rounds} canManage={manager && open} />
+        <RoundControls
+          orgId={organization.$id}
+          eventId={event.$id}
+          rounds={rounds}
+          canManage={manager && open}
+          setup={roundSetup}
+        />
       </section>
 
       <section className="space-y-4">

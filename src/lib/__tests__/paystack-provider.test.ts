@@ -206,6 +206,20 @@ describe('verifyCallback (rule 2: signed webhooks only)', () => {
     })
   })
 
+  test("Paystack's fee is passed on when it is a whole, non-negative number of pesewas (decision #36)", async () => {
+    const signed = (over: Record<string, unknown>) => {
+      const { body, headers } = webhook('pay1', over)
+      return provider.verifyCallback(headers, body)
+    }
+    expect(await signed({ fees: 29 })).toMatchObject({ status: 'success', feePesewas: 29 })
+    expect(await signed({ fees: 0 })).toMatchObject({ feePesewas: 0 })
+    for (const fees of [undefined, null, '29', 29.5, -1]) {
+      const result = await signed({ fees })
+      expect(result).toMatchObject({ status: 'success' })
+      expect((result as { feePesewas?: number }).feePesewas).toBeUndefined()
+    }
+  })
+
   test('unsigned, mis-signed, non-GHS or non-success payloads are rejected', async () => {
     const { body } = webhook('pay1')
     expect(await provider.verifyCallback(new Headers(), body)).toBeNull()

@@ -77,7 +77,13 @@ export async function handleUssd(
   } else if (result.action?.type === 'initiate') {
     try {
       const started = await initiateVotePayment(
-        { code: result.action.code, quantity: result.action.quantity, phone: session.phone, channel: 'ussd' },
+        {
+          code: result.action.code,
+          quantity: result.action.quantity,
+          phone: session.phone,
+          channel: 'ussd',
+          expectedAmount: result.action.amount,
+        },
         { provider: opts.provider, now }
       )
       result = started.nextAction === 'otp' ? initiatedNeedsOtp() : initiated()

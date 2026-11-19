@@ -146,7 +146,7 @@ describe('createNominee', () => {
     )
   })
 
-  test('a nominee added after round 1 closed gets no entry (#30)', async () => {
+  test('with every round closed a new nominee has no entry until the organizer picks them (#30)', async () => {
     const { event, round, category } = await seedEvent()
     await openRound(owner, round.$id)
     await closeRound(owner, round.$id)

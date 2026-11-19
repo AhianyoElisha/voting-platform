@@ -2,8 +2,10 @@ import { afterEach, describe, expect, test } from 'vitest'
 import {
   DEFAULT_COMMISSION_BPS,
   FeesNotConfiguredError,
+  PROVIDER_FEE_MAX_BPS,
   effectiveCommissionBps,
   platformCommissionBps,
+  settleWithProviderFee,
   splitAmount,
 } from '../fees'
 
@@ -52,5 +54,46 @@ describe('commission rate (decision #2)', () => {
     expect(effectiveCommissionBps(null)).toBe(1000)
     expect(effectiveCommissionBps(700)).toBe(700)
     expect(effectiveCommissionBps(0)).toBe(0)
+  })
+})
+
+describe("provider's charge off the top (decision #36)", () => {
+  const split = (amount: number, bps = 1000) => ({ amount, ...splitAmount(amount, bps) })
+
+  test('the charge comes off first and the rest keeps the initiation proportion', () => {
+    // GHS 100.00 at 10%, Paystack takes 1.95: 98.05 is shared 9.80 / 88.25.
+    expect(settleWithProviderFee(split(10000), 195)).toEqual({ providerFee: 195, platformFee: 980, organizerNet: 8825 })
+    // An organization on 7.5%.
+    expect(settleWithProviderFee(split(10000, 750), 195)).toEqual({
+      providerFee: 195,
+      platformFee: 735,
+      organizerNet: 9070,
+    })
+    // A zero charge is a charge: recorded, nothing deducted.
+    expect(settleWithProviderFee(split(10000), 0)).toEqual({ providerFee: 0, platformFee: 1000, organizerNet: 9000 })
+  })
+
+  test('the three parts always sum to the amount, in whole pesewas', () => {
+    for (const amount of [1, 50, 99, 150, 1999, 10000, 123457, 200000]) {
+      for (const bps of [0, 500, 750, 1000, 10000]) {
+        for (const fee of [0, 1, Math.floor(amount * 0.0195), Math.floor(amount / 10)]) {
+          const s = settleWithProviderFee(split(amount, bps), fee)
+          const taken = s.providerFee ?? 0
+          expect(taken + s.platformFee + s.organizerNet).toBe(amount)
+          expect(Number.isInteger(s.platformFee) && Number.isInteger(s.organizerNet)).toBe(true)
+          expect(s.platformFee).toBeGreaterThanOrEqual(0)
+          expect(s.organizerNet).toBeGreaterThanOrEqual(0)
+        }
+      }
+    }
+  })
+
+  test('no charge reported, or one that is not believable, deducts nothing', () => {
+    const unchanged = { providerFee: null, platformFee: 1000, organizerNet: 9000 }
+    for (const fee of [undefined, null, -1, 1.5, NaN, 1001, 10000, 999999]) {
+      expect(settleWithProviderFee(split(10000), fee as number)).toEqual(unchanged)
+    }
+    // Exactly at the ceiling is still accepted.
+    expect(settleWithProviderFee(split(10000), (10000 * PROVIDER_FEE_MAX_BPS) / 10000).providerFee).toBe(1000)
   })
 })

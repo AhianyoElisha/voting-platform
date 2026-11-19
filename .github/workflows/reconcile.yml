@@ -1,0 +1,39 @@
+# Payment reconciliation (USSD_AND_PAYMENTS.md rule 5): re-checks stale
+# `pending` payments against Paystack so a missed webhook never loses a vote.
+# A backstop to the daily Vercel cron in vercel.json (Hobby allows only daily).
+#
+# Setup (repo Settings → Secrets and variables → Actions):
+#   Variable  APP_URL              e.g. https://voteapp.example.com (no trailing slash)
+#   Secret    INTERNAL_JOB_SECRET  same value as the Vercel env var
+#
+# GitHub runs scheduled workflows on a best-effort basis: runs can start late
+# or be skipped under load, and are disabled after 60 days without repo activity.
+name: Reconcile payments
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: reconcile
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the reconcile route
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          INTERNAL_JOB_SECRET: ${{ secrets.INTERNAL_JOB_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$INTERNAL_JOB_SECRET" ]; then
+            echo "APP_URL variable or INTERNAL_JOB_SECRET secret is not set"; exit 1
+          fi
+          curl --fail-with-body --silent --show-error --max-time 120 \
+            -X POST "$APP_URL/api/internal/payments/reconcile" \
+            -H "x-internal-secret: $INTERNAL_JOB_SECRET"

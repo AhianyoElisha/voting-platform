@@ -31,11 +31,14 @@ export default function VoteForm({
   code,
   nomineeName,
   votePrice,
+  maxQuantity,
   mockProvider,
 }: {
   code: string
   nomineeName: string
   votePrice: number
+  /** The most votes one payment can buy at this price (decision #16); the server enforces it too. */
+  maxQuantity: number
   mockProvider: boolean
 }) {
   const { t } = useTranslation()
@@ -81,7 +84,7 @@ export default function VoteForm({
         payment: { id: string; amount: number; quantity: number }
         instructions: string | null
         nextAction: 'otp' | null
-      }>('/api/public/votes/initiate', { code, quantity: qty, phone })
+      }>('/api/public/votes/initiate', { code, quantity: qty, phone, amount })
       setStage({
         kind: 'pending',
         paymentId: data.payment.id,
@@ -207,6 +210,7 @@ export default function VoteForm({
           id="vote-qty"
           type="number"
           min={1}
+          max={maxQuantity}
           step={1}
           inputMode="numeric"
           value={quantity}
@@ -214,6 +218,9 @@ export default function VoteForm({
           required
           className={inputClass}
         />
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+          {t('web:vote.form.maxHelper', { count: maxQuantity })}
+        </p>
       </div>
       <div>
         <label htmlFor="vote-phone" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">

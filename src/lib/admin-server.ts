@@ -278,6 +278,8 @@ export interface TransactionView {
   amount: number
   platformFee: number
   organizerNet: number
+  /** The provider's charge taken off the top; null when none was taken. */
+  providerFee: number | null
   payerPhone: string
   confirmedAt: string | null
 }
@@ -298,6 +300,7 @@ export function transactionView(p: Doc<PaymentDoc>): TransactionView {
     amount: p.amount,
     platformFee: p.platformFee,
     organizerNet: p.organizerNet,
+    providerFee: p.providerFee ?? null,
     payerPhone: maskPhone(p.payerPhone),
     confirmedAt: p.confirmedAt ?? null,
   }
