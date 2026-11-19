@@ -730,7 +730,10 @@ async function confirmTicketPayment(
       return { outcome: 'duplicate', payment: (await getPayment(payment.$id)) ?? payment }
     const current = await getPayment(payment.$id)
     if (current?.status === 'success') return { outcome: 'duplicate', payment: current }
-    if (isConflict(err)) return { outcome: 'duplicate', payment: current ?? payment }
+    // As in confirmPayment: a conflict on a payment that is still pending is
+    // not a replay, so throw and let the provider retry rather than leave the
+    // tickets unissued.
+    if (isConflict(err) && current && current.status !== 'pending') return { outcome: 'duplicate', payment: current }
     throw err
   }
 

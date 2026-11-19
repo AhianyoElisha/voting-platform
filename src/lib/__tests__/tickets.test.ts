@@ -176,6 +176,23 @@ describe('ticket confirmation (rules 2, 4, 5)', () => {
     })
   })
 
+  test('a conflict while the payment is still pending throws, so the provider retries', async () => {
+    const { tier } = await seed()
+    const { payment } = await buy(tier.$id, 2, '0241234567', { email: 'buyer@example.com' })
+    // A stray row holding the first ticket's id: the confirmation collides, yet nothing was issued.
+    await fake.createDocument('voteapp', 'tickets', ticketId(payment.$id, 0), { organizationId: 'org1' })
+
+    await expect(confirmPayment(callbackFor(payment.providerReference))).rejects.toThrow()
+    expect((await fake.getDocument('voteapp', 'payments', payment.$id)).status).toBe('pending')
+    expect(fake.dump('ledger_entries')).toHaveLength(0)
+
+    // Once the collision is gone, the provider's retry issues the tickets once.
+    await fake.deleteDocument('voteapp', 'tickets', ticketId(payment.$id, 0))
+    expect((await confirmPayment(callbackFor(payment.providerReference))).outcome).toBe('confirmed')
+    expect(fake.dump('tickets')).toHaveLength(2)
+    expect(fake.dump('ledger_entries')).toHaveLength(1)
+  })
+
   test('a verified success issues one signed ticket per seat, bumps the counter and credits the ledger once', async () => {
     const { tier, event } = await seed()
     const { payment } = await buy(tier.$id, 2, '0241234567', { email: 'buyer@example.com' })
