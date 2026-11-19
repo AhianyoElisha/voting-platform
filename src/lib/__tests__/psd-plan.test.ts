@@ -60,6 +60,7 @@ function psd(extra: Partial<PsdLike> = {}): PsdLike {
 describe('placeholderOf', () => {
   it('reads layer names and text, with spacing and case tolerated', () => {
     expect(placeholderOf({ name: '{{ Name }}' })).toEqual({ kind: 'nominee.name', round: false })
+    expect(placeholderOf({ name: '{{privacy}}' })).toEqual({ kind: 'privacy.notice', round: false })
     expect(placeholderOf({ name: 'Layer 7', text: { text: '{{ussd}}' } })).toEqual({
       kind: 'ussd.instruction',
       round: false,

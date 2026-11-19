@@ -105,6 +105,7 @@ const KINDS: Record<string, PlaceholderKind> = {
   category: 'category.name',
   event: 'event.title',
   ussd: 'ussd.instruction',
+  privacy: 'privacy.notice',
   photo: 'photo',
 }
 const ROUND = new Set(['round', 'circle', 'ellipse', 'oval'])

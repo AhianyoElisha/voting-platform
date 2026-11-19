@@ -1,6 +1,6 @@
 import { GlobalFonts, createCanvas, loadImage, type SKRSContext2D } from '@napi-rs/canvas'
 import path from 'path'
-import { resolveBinding, type BindingContext } from './bindings'
+import { privacyNotice, resolveBinding, type BindingContext } from './bindings'
 import { coverCrop, fitText, placePhoto } from './layout'
 import { FALLBACK_FONT, type PhotoSlot, type SlotModel, type TextSlot } from './model'
 
@@ -42,7 +42,7 @@ export interface RenderInputs {
  * existing flyer look different. It is part of each flyer's source hash, so
  * the next `ensureFlyer` re-renders flyers made by an older renderer.
  */
-export const RENDERER_VERSION = 2
+export const RENDERER_VERSION = 3
 
 const registered = new Set<string>()
 
@@ -188,7 +188,41 @@ export async function renderFlyer(inputs: RenderInputs): Promise<Uint8Array> {
     ctx.restore()
   }
 
+  // Decision #28: every flyer names the privacy policy. A template whose
+  // designer placed no privacy slot gets a small line along the bottom.
+  if (!inputs.model.slots.some((sl) => sl.type === 'text' && sl.binding === 'privacy.notice')) {
+    drawPrivacyLine(ctx, inputs.width, inputs.height, privacyNotice(inputs.context.appUrl))
+  }
+
   return new Uint8Array(canvas.toBuffer('image/png'))
+}
+
+/**
+ * The fallback privacy line: white text on a translucent dark band, so it
+ * reads on any design, sized to the flyer (about 1.6% of its height, never
+ * below 12px) and shrunk to fit its width.
+ */
+function drawPrivacyLine(ctx: SKRSContext2D, width: number, height: number, text: string): void {
+  const size = Math.max(12, Math.round(height * 0.016))
+  const maxWidth = width * 0.94
+  const spec = (s: number) => `400 ${s}px "${FALLBACK_FONT}"`
+  const fit = fitText(
+    { text, maxWidth, maxHeight: size * 1.2, fontSize: size, minFontSize: Math.min(size, 8), maxLines: 1 },
+    (t, s) => {
+      ctx.font = spec(s)
+      return ctx.measureText(t).width
+    }
+  )
+  const band = Math.round(fit.fontSize * 2)
+  ctx.save()
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)'
+  ctx.fillRect(0, height - band, width, band)
+  ctx.font = spec(fit.fontSize)
+  ctx.fillStyle = '#ffffff'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(fit.lines[0] ?? '', width / 2, height - band / 2)
+  ctx.restore()
 }
 
 /** Solid-colour PNG, for tests and for a template that has no background yet. */

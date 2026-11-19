@@ -56,7 +56,11 @@ export async function GET(req: Request, { params }: Params) {
       photoMask,
       photo: solidPng(600, 800, '#6b7280'),
       model,
-      context: { ...SAMPLE_CONTEXT, ussdShortcode: process.env.USSD_SHORTCODE ?? null },
+      context: {
+        ...SAMPLE_CONTEXT,
+        ussdShortcode: process.env.USSD_SHORTCODE ?? null,
+        appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
+      },
       fonts: fontFiles,
     })
     return new NextResponse(png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength) as ArrayBuffer, {

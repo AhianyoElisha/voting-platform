@@ -101,6 +101,8 @@ export async function ensureFlyer(
     categoryName: categories.documents[0]?.name ?? '',
     eventTitle: event.title,
     ussdShortcode: process.env.USSD_SHORTCODE ?? null,
+    // The privacy notice's address (decision #28); part of the hash, so setting it re-renders.
+    appUrl: process.env.NEXT_PUBLIC_APP_URL ?? null,
   }
   const focus = focusOf(nominee)
   const hash = sourceHash({

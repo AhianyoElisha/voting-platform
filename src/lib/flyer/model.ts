@@ -13,6 +13,7 @@ export const TEXT_BINDINGS = [
   'category.name',
   'event.title',
   'ussd.instruction',
+  'privacy.notice',
   'custom',
 ] as const
 export type TextBinding = (typeof TEXT_BINDINGS)[number]

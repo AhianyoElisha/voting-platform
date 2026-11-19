@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { SAMPLE_CONTEXT, resolveBinding, ussdInstruction } from '../flyer/bindings'
+import {
+  PRIVACY_ADDRESS_PLACEHOLDER,
+  SAMPLE_CONTEXT,
+  privacyNotice,
+  resolveBinding,
+  ussdInstruction,
+} from '../flyer/bindings'
 import { coverCrop, fitText, placePhoto, wrapLines } from '../flyer/layout'
 import {
   EMPTY_MODEL,
@@ -223,5 +229,17 @@ describe('layout', () => {
     )
     expect(one.lines).toEqual(['Ama Owusu'])
     expect(one.fontSize).toBe(12)
+  })
+})
+
+describe('privacy notice binding (decision #28)', () => {
+  test('names the /privacy page on the app host, without the scheme or a trailing slash', () => {
+    expect(privacyNotice('https://voteapp.example/')).toBe('Privacy policy: voteapp.example/privacy')
+    expect(privacyNotice('http://localhost:3000')).toBe('Privacy policy: localhost:3000/privacy')
+    expect(privacyNotice(null)).toBe(`Privacy policy: ${PRIVACY_ADDRESS_PLACEHOLDER}`)
+    const slot = { ...newTextSlot(1000, 1000, 'privacy.notice'), uppercase: false }
+    expect(resolveBinding(slot, { ...SAMPLE_CONTEXT, appUrl: 'https://voteapp.example' })).toBe(
+      'Privacy policy: voteapp.example/privacy'
+    )
   })
 })

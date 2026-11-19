@@ -111,7 +111,14 @@ describe('renderFlyer', () => {
         height: H,
         background: solidPng(1, 1, '#ffffff'),
         photo: null,
-        model: { version: 1, slots: [{ ...slot, color: '#000000' }] },
+        // A white-on-white privacy slot keeps the fallback band (decision #28) out of the ink count.
+        model: {
+          version: 1,
+          slots: [
+            { ...slot, color: '#000000' },
+            { ...newTextSlot(W, H, 'privacy.notice'), id: 'pv', color: '#ffffff' },
+          ],
+        },
         context: { nomineeName: 'Hgx', nomineeCode: '1', categoryName: '', eventTitle: '', ussdShortcode: null },
         fonts: [],
       })
@@ -203,6 +210,38 @@ describe('foreground and photo mask (PSD import)', () => {
   test('with no photo slot the foreground still draws, under the text', async () => {
     const foreground = overlayPng(W, H, [0, 0, W, H], '#ff0000')
     const png = await renderFlyer({ ...base, foreground, model: { version: 1, slots: [name] } })
-    expect(await pixelAt(png, 5, 195)).toEqual([255, 0, 0, 255])
+    // Above the privacy band along the bottom edge (decision #28).
+    expect(await pixelAt(png, 5, 150)).toEqual([255, 0, 0, 255])
+  })
+})
+
+describe('privacy notice (decision #28)', () => {
+  const W = 300
+  const H = 400
+  const context = {
+    nomineeName: 'Ama Owusu',
+    nomineeCode: '4321',
+    categoryName: 'C',
+    eventTitle: 'E',
+    ussdShortcode: null,
+    appUrl: 'https://voteapp.example',
+  }
+  const render = (model: SlotModel) =>
+    renderFlyer({ width: W, height: H, background: solidPng(W, H, '#ffffff'), photo: null, model, context, fonts: [] })
+
+  test('a template without a privacy slot gets a dark band with the notice along the bottom', async () => {
+    const png = await render({ version: 1, slots: [] })
+    // Left edge of the band: no text there, just the translucent dark fill over white.
+    const [r, g, b] = await pixelAt(png, 2, H - 3)
+    expect(r).toBeLessThan(200)
+    expect([r, g, b].every((v) => v === r)).toBe(true)
+    // Above the band the design is untouched.
+    expect(await pixelAt(png, 2, H - 40)).toEqual([255, 255, 255, 255])
+  })
+
+  test("a designer's privacy slot replaces the fallback band", async () => {
+    const slot = { ...newTextSlot(W, H, 'privacy.notice'), id: 'pv', x: 0, y: 0, w: W, h: 40, color: '#000000' }
+    const png = await render({ version: 1, slots: [slot] })
+    expect(await pixelAt(png, 2, H - 3)).toEqual([255, 255, 255, 255])
   })
 })

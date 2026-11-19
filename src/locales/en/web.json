@@ -532,6 +532,7 @@
       "category.name": "Category",
       "event.title": "Event title",
       "ussd.instruction": "USSD instruction",
+      "privacy.notice": "Privacy notice",
       "custom": "Custom text"
     },
     "panel": {
