@@ -36,7 +36,7 @@ const getNavigation = (
   ],
   legal: [
     { name: t('web:footer.legal.terms'), href: '#' },
-    { name: t('web:footer.legal.privacy'), href: '#' },
+    { name: t('web:footer.legal.privacy'), href: '/privacy' },
   ],
   social: [
     {

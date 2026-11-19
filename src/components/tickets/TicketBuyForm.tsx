@@ -2,6 +2,7 @@
 
 import { apiErrorMessage, postJson } from '@/components/events/api'
 import { inputClass } from '@/components/organization/OrganizationFields'
+import PaymentNotice from '@/components/PaymentNotice'
 import OtpEntry from '@/components/vote/OtpEntry'
 import { formatPesewas } from '@/lib/money'
 import { CheckmarkCircle02Icon } from '@hugeicons/core-free-icons'
@@ -252,6 +253,7 @@ export default function TicketBuyForm({ tiers, mockProvider }: { tiers: TierOpti
             className={`${inputClass} mt-1`}
             placeholder="024 123 4567"
           />
+          <PaymentNotice />
         </label>
         <label className="text-sm font-medium text-neutral-700 sm:col-span-2 dark:text-neutral-300">
           {t('web:tickets.form.email')}

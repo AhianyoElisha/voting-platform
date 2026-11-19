@@ -2,6 +2,7 @@
 
 import { apiErrorMessage, postJson } from '@/components/events/api'
 import { inputClass } from '@/components/organization/OrganizationFields'
+import PaymentNotice from '@/components/PaymentNotice'
 import OtpEntry from '@/components/vote/OtpEntry'
 import { formatPesewas } from '@/lib/money'
 import { ArrowRight01Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons'
@@ -238,6 +239,7 @@ export default function VoteForm({
           placeholder="024 123 4567"
         />
         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{t('web:vote.form.phoneHelper')}</p>
+        <PaymentNotice />
       </div>
       <div className="flex items-center justify-between rounded-xl bg-neutral-100 px-4 py-3 text-sm dark:bg-neutral-800">
         <span className="text-neutral-600 dark:text-neutral-300">{t('web:vote.form.total')}</span>

@@ -1035,5 +1035,75 @@
     "marker": "Chosen point",
     "helperNoTemplate": "Tap the part of the photo that must stay in view, usually the face, and zoom in if you want it larger. It is applied when the flyer is made.",
     "zoom": "Zoom: {{percent}}%"
+  },
+  "paymentNotice": {
+    "text": "Your number is used only to process this payment.",
+    "link": "Privacy policy"
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "description": "How voteapp collects, uses and protects personal data when you vote, buy a ticket or run an event.",
+    "updated": "Last updated {{date}}",
+    "intro": "voteapp is a platform for paid voting and ticketing at award shows, pageants and similar events. Organizers (faculties, departments, halls, student groups and event companies) run their events on it. This policy explains what personal data we handle, why, who we share it with, how long we keep it and the rights you have under Ghana's Data Protection Act, 2012 (Act 843).",
+    "contactLabel": "Questions or requests about your data:",
+    "sections": [
+      {
+        "title": "What we collect",
+        "items": [
+          "Voters: the mobile money number you pay with and its network, the nominee you voted for, how many votes and the amount. Web voters type the number; for USSD voters the network passes it to us. You do not need an account to vote.",
+          "Ticket buyers: your name, mobile money number and, if you give it, your email address, plus the tickets you bought and whether they have been scanned at the door.",
+          "Nominees: your name, email address, photo, bio and voting code. Your name, photo, category and code appear on public event pages and on your flyer.",
+          "Organizers and their team: your name, email address, phone number and your role in each workspace.",
+          "Technical data: a sign-in cookie for signed-in users and a cookie that remembers your language. Error reports are stripped of email addresses and phone numbers before they leave our servers. We use no advertising or analytics trackers."
+        ]
+      },
+      {
+        "title": "Why we use it",
+        "items": [
+          "To charge the payment you asked for and, once the payment is confirmed, to count your votes or issue your tickets.",
+          "To send ticket QR codes and links, and sign-in links for nominees and team members.",
+          "To keep accurate payment records, settle money owed to organizers and handle disputes and refunds.",
+          "To prevent abuse: we limit how often a number or connection can start payments, using a one-way hash rather than the number itself."
+        ],
+        "paragraphs": [
+          "We do not sell personal data and we do not use it for marketing. Votes are never shown with the voter's number: public results show only totals per nominee."
+        ]
+      },
+      {
+        "title": "Who sees it",
+        "items": [
+          "The organizer of the event: owners and admins of the workspace see buyers' and payers' full numbers; other team members, such as door staff, see only the last three digits.",
+          "Paystack and the mobile money networks, to process your payment.",
+          "Hubtel, which runs the USSD shortcode and sends ticket links by SMS for tickets bought over USSD.",
+          "Resend, which delivers our emails.",
+          "Our hosting providers: Appwrite Cloud (data stored in Frankfurt, Germany) and Vercel, plus Sentry for error reports with personal details removed. Data stored outside Ghana is protected by these providers' security and contractual safeguards.",
+          "Authorities, where the law requires it."
+        ]
+      },
+      {
+        "title": "How long we keep it",
+        "paragraphs": [
+          "Ninety days after an event closes, we erase the names, phone numbers and email addresses on its payments and tickets. We keep the amounts, vote counts, ticket status and payment references, without those details, because organizers' accounts and payouts depend on them. Nominee and organizer accounts are kept until they are deleted at your request."
+        ]
+      },
+      {
+        "title": "Your rights",
+        "paragraphs": [
+          "Under Act 843 you can ask to see the personal data we hold about you, have it corrected, or have it deleted where we no longer need it, and you can object to how we use it. Contact us using the details on this page. If you are not satisfied with our answer, you can complain to the Data Protection Commission of Ghana."
+        ]
+      },
+      {
+        "title": "Voting by USSD",
+        "paragraphs": [
+          "This policy covers USSD voting and ticket purchases too. When you dial the shortcode, your network passes us your number so the payment prompt reaches you; we use it exactly as described above."
+        ]
+      },
+      {
+        "title": "Changes to this policy",
+        "paragraphs": [
+          "When we change this policy we update the date at the top of this page. Significant changes will also be shown on the site."
+        ]
+      }
+    ]
   }
 }
